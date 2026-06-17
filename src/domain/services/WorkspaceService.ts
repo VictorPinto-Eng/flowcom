@@ -138,7 +138,14 @@ export class WorkspaceService {
           taskuser_seqid: card.taskuser_seqid?.toString(),
           columnId: card.columnId.toString(),
           card_act: card.card_act?.map((act: any) => ({
-            seqid: act.seqid.toString()
+            seqid: act.seqid.toString(),
+            description: act.description,
+            created_at: act.created_at,
+            user_seqid: act.user_seqid?.toString(),
+            users: act.users ? {
+              name: act.users.name,
+              image: act.users.image
+            } : null
           })) || []
         })) || []
       })) || [];
@@ -171,7 +178,14 @@ export class WorkspaceService {
                 taskuser_seqid: card.taskuser_seqid?.toString(),
                 columnId: card.columnId.toString(),
                 card_act: card.card_act?.map((act: any) => ({
-                  seqid: act.seqid.toString()
+                  seqid: act.seqid.toString(),
+                  description: act.description,
+                  created_at: act.created_at,
+                  user_seqid: act.user_seqid?.toString(),
+                  users: act.users ? {
+                    name: act.users.name,
+                    image: act.users.image
+                  } : null
                 })) || []
               }))
             };

@@ -63,8 +63,18 @@ export class WorkspaceRepository {
                 task_user: true,
                 users: true,
                 card_act: {
+                  orderBy: { created_at: 'desc' },
                   select: {
-                    seqid: true
+                    seqid: true,
+                    description: true,
+                    created_at: true,
+                    user_seqid: true,
+                    users: {
+                      select: {
+                        name: true,
+                        image: true
+                      }
+                    }
                   }
                 }
               }
