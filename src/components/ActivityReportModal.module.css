@@ -1,0 +1,805 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.45); /* Frosty premium overlay background */
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal {
+  background: #ffffff; /* World-Class Pure White frosted glass card */
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 920px;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 
+    0 30px 80px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.noPrintHeader {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 10;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #64748b; /* slate-500 */
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.closeBtn:hover {
+  color: #0f172a; /* slate-900 */
+  transform: rotate(90deg);
+}
+
+.content {
+  padding: 3rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Document Header / Letterhead */
+.docHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0; /* Soft slate border */
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.headerBrand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logoBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 800;
+  color: #7c3aed;
+}
+
+.logoGlyph {
+  font-size: 1.35rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logoText {
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.workspacePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.workspacePillDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7c3aed;
+}
+
+.docInfoGrid {
+  display: flex;
+  gap: 2rem;
+}
+
+.infoBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.infoLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b; /* slate-500 */
+  letter-spacing: 0.08em;
+}
+
+.infoValue {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #334155; /* slate-700 */
+}
+
+.infoValueMono {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.documentTitleArea {
+  margin-bottom: 2rem;
+}
+
+.reportTitle {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0f172a; /* Slate 900 */
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem 0;
+}
+
+.reportSubtitle {
+  font-size: 0.88rem;
+  color: #475569; /* Slate 600 */
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* KPI Cards (Premium Grid) */
+.kpiContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.25rem;
+}
+
+.kpiCard {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kpiCard:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.05);
+}
+
+.kpiHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpiLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b; /* slate-500 */
+}
+
+.kpiIcon {
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.kpiBody {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.kpiValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a; /* slate-900 */
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.kpiTrendPositive, .kpiTrendNeutral, .kpiTrendInfo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b; /* slate-500 */
+}
+
+/* Section Header Line */
+.sectionHeaderLine {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0 1rem 0;
+}
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569; /* slate-600 */
+  white-space: nowrap;
+  margin: 0;
+}
+
+.sectionDivider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Table */
+.tableWrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+}
+
+.reportTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.reportTable th {
+  background: #f8fafc;
+  padding: 0.85rem 1.25rem;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569; /* slate-600 */
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reportTable td {
+  background: #ffffff;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  transition: background 0.15s ease;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.reportTable tr:hover td {
+  background: rgba(124, 58, 237, 0.015); /* Satin row-hover elevation effect */
+}
+
+.reportTable tr:last-child td {
+  border-bottom: none;
+}
+
+.boardNameCell {
+  color: #0f172a;
+  padding-top: 1.1rem !important;
+  padding-bottom: 1.1rem !important;
+}
+
+.boardNameHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.boardNameText {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #0f172a; /* slate-900 */
+}
+
+.boardSubtext {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  color: #64748b; /* slate-500 */
+}
+
+.boardSubtext strong {
+  color: #334155;
+  font-weight: 400;
+}
+
+/* Slim Visual Progress Bar Styles */
+.progressContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 190px;
+  margin: 0 auto;
+}
+
+.progressHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 5px;
+  background: #e2e8f0; /* soft slate track */
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressPercentBadge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+  line-height: 1;
+  display: inline-block;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.progressText {
+  font-size: 0.7rem;
+  color: #64748b; /* slate-500 */
+  font-weight: 500;
+  text-align: left;
+}
+
+.noEventsText {
+  font-size: 0.76rem;
+  color: #94a3b8; /* slate-400 */
+  font-style: italic;
+}
+
+.previstoColWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.previstoDate {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #0f172a; /* slate-900 */
+}
+
+.workingDaysText {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  color: #64748b; /* slate-500 */
+}
+
+/* Letterhead Footer / Audit Trail */
+.docFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.75rem;
+  margin-top: 2rem;
+  color: #64748b;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.footerDisclaimer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.footerAudit {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.footerSignBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.signLine {
+  border-top: 1px solid #cbd5e1;
+  width: 180px;
+}
+
+.signLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Actions bar (Hidden in print) */
+.actionsBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 3rem;
+  background: #f8fafc; /* Crisp light slate-50 */
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.printBtn {
+  background: var(--accent-gradient);
+  border: none;
+  color: white;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.printBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+}
+
+/* PRINT STYLES */
+@media print {
+  /* Reset height/overflow limits on body and all wrapper containers for seamless multi-page print */
+  :global(html), :global(body), :global(main), :global(div) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  :global(body) {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  :global(body) * {
+    visibility: hidden;
+  }
+
+  /* Completely remove the dashboard header and workspace layout from the printable flow to avoid blank pages */
+  :global(header),
+  :global([class*="workspaceLayout"]) {
+    display: none !important;
+  }
+  
+  .overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    display: block !important;
+    z-index: 999999 !important;
+  }
+
+  .modal {
+    visibility: visible !important;
+    position: relative !important; /* Changed from absolute to relative to layout perfectly! */
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: black !important;
+    overflow: visible !important;
+  }
+
+  .modal * {
+    visibility: visible;
+  }
+
+  .content {
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    flex: none !important;
+  }
+
+  /* No Print elements */
+  .noPrintHeader, .actionsBar {
+    display: none !important;
+  }
+
+  /* PDF-like styling */
+  .docHeader {
+    border-bottom: 1.5px solid #cbd5e1 !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .logoText {
+    color: black !important;
+    font-size: 0.95rem !important;
+  }
+
+  .workspacePill {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    font-size: 0.6rem !important;
+    padding: 0.15rem 0.45rem !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .workspacePillDot {
+    background: #475569 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .infoLabel {
+    font-size: 0.55rem !important;
+  }
+
+  .infoValue, .infoValueMono {
+    font-size: 0.65rem !important;
+  }
+
+  .documentTitleArea {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .reportTitle {
+    color: black !important;
+    font-size: 1.25rem !important;
+  }
+
+  .reportSubtitle {
+    color: #475569 !important;
+    font-size: 0.72rem !important;
+  }
+
+  .kpiContainer {
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .kpiCard {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 0.85rem !important;
+    gap: 0.35rem !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .kpiLabel {
+    color: #475569 !important;
+    font-size: 0.6rem !important;
+  }
+
+  .kpiValue {
+    color: black !important;
+    font-size: 1.35rem !important;
+  }
+
+  .kpiTrendPositive, .kpiTrendNeutral, .kpiTrendInfo {
+    font-size: 0.65rem !important;
+  }
+
+  .sectionTitle {
+    color: black !important;
+    font-size: 0.8rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .tableWrapper {
+    border: 1px solid #cbd5e1 !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .reportTable th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 12px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .reportTable td {
+    color: black !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    background: white !important;
+    padding: 0.5rem 0.75rem !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+  }
+
+  .boardNameCell {
+    color: black !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+  }
+
+  .boardNameText {
+    color: black !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+  }
+
+  .sectorBadge {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: normal !important;
+  }
+
+  .sectorBadge span {
+    background: #64748b !important;
+  }
+
+  .boardSubtext {
+    color: #475569 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: normal !important;
+  }
+
+  .boardSubtext strong {
+    color: #475569 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: normal !important;
+  }
+
+  .progressContainer {
+    max-width: 150px !important;
+    gap: 0.2rem !important;
+  }
+
+  .progressTrack {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
+    height: 4px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .progressFill {
+    background: #475569 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .progressPercentBadge {
+    font-size: 0.6rem !important;
+    padding: 0.1rem 0.3rem !important;
+    min-width: 26px !important;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+  }
+
+  .progressText {
+    color: #475569 !important;
+    font-size: 0.65rem !important;
+  }
+
+  .noEventsText {
+    color: #64748b !important;
+    font-size: 0.68rem !important;
+  }
+
+  .previstoDate {
+    color: black !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+  }
+
+  .workingDaysText {
+    color: #475569 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: normal !important;
+  }
+
+  .docFooter {
+    border-top: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+    padding-top: 1rem !important;
+    margin-top: 1rem !important;
+    font-size: 0.65rem !important;
+  }
+
+  .footerAudit {
+    font-size: 0.6rem !important;
+  }
+
+  .signLine {
+    border-top: 1px solid #cbd5e1 !important;
+    width: 140px !important;
+  }
+
+  .signLabel {
+    font-size: 0.62rem !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}

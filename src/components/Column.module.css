@@ -1,0 +1,375 @@
+.column {
+  position: relative;
+  width: 290px;
+  min-width: 290px;
+  flex-shrink: 0;
+  padding: 1.25rem;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.01);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+.column.dragOver {
+  border-color: var(--accent-primary);
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 0.25rem;
+}
+
+.header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  opacity: 0.9;
+}
+
+.count {
+  background: var(--surface-hover);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.cardsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex-grow: 1;
+}
+
+.addCardBtn {
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.addCardBtn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-secondary);
+  border-style: solid;
+}
+
+.form {
+  margin-top: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+}
+
+.input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent-primary);
+  color: white;
+  padding: 0.5rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.confirmBtn {
+  background: var(--accent-primary);
+  border: none;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.followBadge {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.menuBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 3.5rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  background: #111115;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem;
+  z-index: 100;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px rgba(124, 58, 237, 0.05);
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.menuHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.menuHeader span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.closeMenuBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.closeMenuBtn:hover {
+  color: white;
+}
+
+.menuList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menuList li {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.menuList li:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dangerItem {
+  color: #ef4444 !important;
+}
+
+.dangerItem:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.menuDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 0.65rem 0;
+}
+
+.menuSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.menuSectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 0.5rem;
+  text-align: left;
+}
+
+.upgradeCard {
+  background: rgba(124, 58, 237, 0.03);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 8px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.upgradeCard h5 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a78bfa;
+  margin: 0;
+  text-align: left;
+}
+
+.upgradeCard p {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+  text-align: left;
+}
+
+.upgradeLink {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b5cf6;
+  text-decoration: underline;
+  align-self: flex-start;
+  transition: color 0.15s ease;
+}
+
+.upgradeLink:hover {
+  color: #a78bfa;
+}
+
+.addCardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.addCardTextarea {
+  width: 100%;
+  background: #ffffff;
+  color: #1a1a1e;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  line-height: 1.4;
+}
+
+.addCardTextarea::placeholder {
+  color: #64748b;
+  opacity: 0.8;
+}
+
+.addCardTextarea:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.addCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.addCardConfirmBtn {
+  background: #0ea5e9;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addCardConfirmBtn:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.addCardConfirmBtn:active {
+  transform: translateY(0);
+}
+
+.addCardCancelBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+.addCardCancelBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ef4444;
+}

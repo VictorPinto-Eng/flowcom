@@ -1,0 +1,683 @@
+.container {
+  padding: 0.75rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.titleWrapper h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.titleWrapper p {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-top: 0.1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: translateX(-2px);
+}
+
+.printBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15);
+}
+
+.printBtn:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25);
+}
+
+.reportContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.reportGrid {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.reportListHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.activityGroup {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.activityGroup:last-child {
+  border-bottom: none;
+}
+
+.activityGroupActive {
+  background: #f8fafc;
+}
+
+.activityGroupActive .groupHeader {
+  background: transparent;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  background: white;
+}
+
+.groupHeaderActive {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.listHeaderCol {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.listHeaderTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.listHeaderDates {
+  width: 220px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.listHeaderPrevisto {
+  width: 120px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.listHeaderCount {
+  width: 100px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.groupTitleCol {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 400; /* RETIRADO O BOLD CONFORME SOLICITADO */
+  color: #0f172a;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupDatesCol {
+  width: 220px;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 400;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.groupPrevistoCol {
+  width: 120px;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 400;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.groupCountCol {
+  width: 100px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.groupCount {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  background: #f1f5f9;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Stats Cards */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.statCard {
+  background: white;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.statValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.statSub {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Filters */
+.filtersSection {
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.filterGroup label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.selectInput, .dateInput {
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.75rem;
+  color: #1e293b;
+  outline: none;
+  min-width: 140px;
+  height: 28px;
+}
+
+.selectInput:focus, .dateInput:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Table */
+.tableWrapper {
+  background: transparent;
+  border-top: none;
+  overflow: hidden;
+  padding: 0 1rem 0.75rem 1rem;
+  margin-left: 1.5rem;
+  border-left: 2px solid #e2e8f0;
+}
+
+.reportTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.reportTable th {
+  background: transparent;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.reportTable td {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  color: #334155;
+  font-weight: 400; 
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.mainRow td {
+  background: transparent;
+  border-bottom: none;
+}
+
+.subRow td {
+  padding: 0;
+  border-bottom: none;
+}
+
+.subCell {
+  padding-left: 1.5rem !important;
+}
+
+.andamentosWrapper {
+  position: relative;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
+}
+
+.andamentoItem {
+  position: relative;
+  padding: 0.15rem 0;
+  border-bottom: 1px dashed #e2e8f0;
+  width: 100%;
+}
+
+.andamentoItem:last-child {
+  border-bottom: none;
+}
+
+.andamentoContent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.2;
+}
+
+.andamentoText {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #334155;
+}
+
+.andamentoMeta {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.andamentoMeta strong {
+  color: #64748b;
+}
+
+.spacerRow td {
+  height: 0.2rem;
+  padding: 0 !important;
+  background: #f8fafc;
+  border: none;
+}
+
+.reportTable tr:last-child td {
+  border-bottom: none;
+}
+
+.reportTable tr:hover td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.eventInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventName {
+  font-weight: 400; /* Letra normal conforme solicitado */
+  color: #0f172a;
+}
+
+.eventPath {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.userAvatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dateCell {
+  white-space: nowrap;
+}
+
+.durationText {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #15803d;
+}
+
+.durationPendingText {
+  color: #b45309;
+}
+
+/* Print Styles */
+@media print {
+  /* Force global visibility */
+  html, body, .container, .reportContent, .activityGroup, .tableWrapper, .reportTable, .reportTable * {
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  .reportTable {
+    display: table !important;
+  }
+  
+  .reportTable tr {
+    display: table-row !important;
+  }
+  
+  .reportTable th, .reportTable td {
+    display: table-cell !important;
+  }
+
+  .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: white !important;
+  }
+
+  /* Hide UI elements */
+  .actions, .filtersSection, .backBtn, .printBtn, .noPrintHeader, .header p {
+    display: none !important;
+  }
+
+  .header {
+    margin-bottom: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .header h1 {
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+  }
+
+  .statsGrid {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .statCard {
+    flex: 1 !important;
+    padding: 0.25rem !important;
+    gap: 0.3rem !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+  }
+
+  .statIcon {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 0.65rem !important;
+  }
+
+  .statValue {
+    font-size: 0.85rem !important;
+  }
+
+  .statLabel {
+    font-size: 0.55rem !important;
+  }
+
+  .statSub {
+    display: none !important;
+  }
+
+  .reportGrid {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+  }
+
+  .activityGroup {
+    animation: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 0 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+
+  .activityGroup:last-child {
+    border-bottom: none !important;
+  }
+
+  .reportListHeader {
+    background: #e2e8f0 !important;
+    padding: 0.2rem 0.35rem !important;
+    margin-bottom: 0 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-radius: 0 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .listHeaderCol {
+    font-size: 0.55rem !important;
+  }
+
+  .activityGroupActive {
+    background: #f8fafc !important;
+  }
+
+  .activityGroupActive .groupHeader {
+    background: transparent !important;
+  }
+
+  .groupHeader {
+    padding: 0.2rem 0.35rem !important;
+    margin-bottom: 0 !important;
+    background: white !important;
+  }
+
+  .groupHeaderActive {
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  .tableWrapper {
+    background: transparent !important;
+    padding: 0 0.5rem 0.5rem 0.5rem !important;
+    margin-left: 1rem !important;
+    border-left: 2px solid #cbd5e1 !important;
+  }
+
+  .groupTitleCol {
+    font-size: 0.72rem !important;
+  }
+
+  .groupDatesCol {
+    font-size: 0.65rem !important;
+  }
+
+  .groupPrevistoCol {
+    font-size: 0.65rem !important;
+  }
+
+  .groupCount {
+    font-size: 0.55rem !important;
+    padding: 0.1rem 0.3rem !important;
+  }
+
+  .reportTable th {
+    background: transparent !important;
+    color: black !important;
+    padding: 0.15rem 0.3rem !important;
+    font-size: 0.55rem !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .reportTable td {
+    padding: 0.12rem 0.3rem !important;
+    font-size: 0.65rem !important;
+  }
+
+  .mainRow td {
+    background: transparent !important;
+  }
+
+  .userAvatar {
+    width: 14px !important;
+    height: 14px !important;
+    font-size: 0.5rem !important;
+  }
+
+  .durationText {
+    padding: 0.05rem 0.25rem !important;
+    font-size: 0.55rem !important;
+  }
+
+  .andamentosWrapper {
+    gap: 0.1rem !important;
+  }
+
+  .andamentoItem {
+    padding: 0.05rem 0.2rem !important;
+  }
+
+  .andamentoText {
+    font-size: 0.65rem !important;
+  }
+
+  .andamentoMeta {
+    font-size: 0.55rem !important;
+  }
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.1rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  accent-color: #6366f1;
+  cursor: pointer;
+  transition: all 0.2s;
+}

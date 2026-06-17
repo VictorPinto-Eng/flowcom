@@ -1,0 +1,149 @@
+.card {
+  padding: 1rem 1rem 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent-gradient);
+  opacity: 0.8;
+  transition: width 0.3s ease;
+}
+
+.card:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent-primary);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-glow), var(--shadow-lg);
+}
+
+.card:hover::before {
+  width: 6px;
+  opacity: 1;
+}
+
+.card h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.card p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-weight: 300;
+  margin-bottom: 0.75rem;
+}
+
+.cardFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 0.5rem;
+}
+
+.cardAgeWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-left: 0.2rem;
+}
+
+.cardAgeText {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.previstoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.previstoLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.previstoInput {
+  background: transparent;
+  border: none;
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.previstoInput::-webkit-calendar-picker-indicator {
+  filter: invert(1) hue-rotate(180deg);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.previstoWrapper.danger {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.previstoWrapper.warning {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+
+.previstoWrapper.success {
+  border-color: rgba(22, 163, 74, 0.3) !important;
+  background: rgba(22, 163, 74, 0.08) !important;
+}
+
+.previstoInput.danger {
+  color: #ef4444 !important;
+}
+
+.previstoInput.warning {
+  color: #d97706 !important;
+}
+
+.previstoInput.success {
+  color: #16a34a !important;
+}
+
+.cardAgeText.danger {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+.cardAgeText.warning {
+  color: #d97706 !important;
+  font-weight: 600;
+}
+
+.cardAgeText.success {
+  color: #16a34a !important;
+  font-weight: 600;
+}

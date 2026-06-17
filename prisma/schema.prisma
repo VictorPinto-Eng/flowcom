@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Department {
+  seqid        Int       @id(map: "pk_department") @default(autoincrement())
+  id_sector    Int?
+  nmdep        String?   @db.VarChar(15)
+  id_diretoria Int?
+  ativo        Boolean   @default(true)
+  dtinc        DateTime? @default(now()) @db.Timestamptz(6)
+  inclogin     Int?
+  dtmod        DateTime? @db.Timestamptz(6)
+  modlogin     Int?
+
+  @@map("department")
+}
+
+model Sector {
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  acronym String
+  active  Boolean @default(true)
+  boards  Board[]
+
+  @@map("sector")
+}
+
+model Board {
+  seqId       BigInt    @id @default(autoincrement()) @map("seqid")
+  workspaceId BigInt    @map("workspace_id")
+  name        String
+  detalhes    String?
+  user_seqid  BigInt?   @map("user_seqid")
+  sectorId    Int?      @map("sector_id")
+  dtatv       DateTime? @db.Date
+  previsto    DateTime? @db.Date
+  dtcon       DateTime? @db.Date
+  created_by  BigInt?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  moduser     BigInt?
+  dtmod       DateTime? @default(now()) @db.Timestamptz(6)
+  sector      Sector?   @relation(fields: [sectorId], references: [id])
+  user        User?     @relation(fields: [user_seqid], references: [seqid])
+  workspace   Workspace @relation(fields: [workspaceId], references: [seqid])
+  card        Card[]
+
+  @@index([user_seqid], map: "idx_board_user_seqid")
+  @@map("board")
+}
+
+model Card {
+  seqid          BigInt           @id @default(autoincrement())
+  title          String
+  description    String?
+  board_seqid    BigInt?
+  user_seqid     BigInt?
+  taskuser_seqid BigInt?
+  dtatv          DateTime?        @map("dtatv") @db.Date
+  doc            Int?
+  previsto       DateTime?        @map("previsto") @db.Date
+  dtcon          DateTime?        @map("dtcon") @db.Date
+  order          Int              @default(0) @map("sort_order")
+  created_by     BigInt?          @map("created_by")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  moduser        BigInt?          @map("moduser")
+  dtmod          DateTime?        @map("dtmod") @db.Timestamptz(6)
+  columnId       BigInt           @map("column_id")
+  board          Board?           @relation(fields: [board_seqid], references: [seqId], onDelete: Cascade)
+  column         Column           @relation(fields: [columnId], references: [seqid], onDelete: Cascade)
+  task_user      User?            @relation("CardTaskUser", fields: [taskuser_seqid], references: [seqid])
+  users          User?            @relation("CardOwner", fields: [user_seqid], references: [seqid])
+  card_act       card_act[]
+
+  @@index([board_seqid], map: "idx_card_board_seqid")
+  @@index([user_seqid], map: "idx_card_user_seqid")
+  @@map("card")
+}
+
+model User {
+  seqid      BigInt      @id @default(autoincrement()) @map("seqid")
+  name       String
+  email      String      @unique
+  image      String?
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  active     Boolean     @default(false)
+  password   String?
+  role       String      @default("USER")
+  boards     Board[]
+  card_task  Card[]      @relation("CardTaskUser")
+  card_owner Card[]      @relation("CardOwner")
+  card_act   card_act[]
+  workspaces    Workspace[]
+  workspace_members WorkspaceMember[]
+  sent_invites      WorkspaceInvite[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+  type    String
+
+  @@unique([email, token])
+  @@map("verification_tokens")
+}
+
+model Workspace {
+  id               String             @unique @default(cuid())
+  name             String
+  description      String?
+  typeId           String             @map("type_id")
+  userId           String             @map("user_id")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  seqid            BigInt             @id @default(autoincrement())
+  users_seqid      BigInt
+  boards           Board[]
+  type             WorkspaceType      @relation(fields: [typeId], references: [id])
+  user             User               @relation(fields: [users_seqid], references: [seqid])
+  columns          Column[]
+  members          WorkspaceMember[]
+  invites          WorkspaceInvite[]
+
+  @@index([typeId], map: "idx_workspace_type_id")
+  @@index([userId], map: "idx_workspace_user_id")
+  @@map("workspace")
+}
+
+model WorkspaceType {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  workspaces Workspace[]
+
+  @@map("workspace_type")
+}
+
+model ActivityLog {
+  seqid       BigInt    @id @default(autoincrement())
+  boardId     String    @map("board_id")
+  userId      String    @map("user_id")
+  action      String
+  description String
+  dtatv       DateTime? @db.Date
+  doc         Int?
+  previsto    DateTime? @db.Date
+  dtcon       DateTime? @db.Date
+  id_status   Int?
+  incuser     Int?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  moduser     Int?
+  dtmod       DateTime? @db.Timestamptz(6)
+
+  @@index([boardId], map: "idx_activity_log_board_id")
+  @@index([createdAt], map: "idx_activity_log_created_at")
+  @@index([userId], map: "idx_activity_log_user_id")
+  @@map("activity_log")
+}
+
+model card_act {
+  seqid       BigInt    @id @default(autoincrement())
+  card_seqid  BigInt?
+  dtatv       DateTime? @db.Timestamptz(6)
+  user_seqid  BigInt?
+  description String?
+  created_by  BigInt?
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  moduser     BigInt?
+  dtmod       DateTime? @db.Timestamptz(6)
+  card        Card?     @relation(fields: [card_seqid], references: [seqid], onDelete: Cascade)
+  users       User?     @relation(fields: [user_seqid], references: [seqid])
+}
+
+model Column {
+  title          String
+  order          Int       @default(0) @map("sort_order")
+  visible        Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  seqid          BigInt    @id(map: "board_column_pkey") @default(autoincrement())
+  workspaceSeqid BigInt    @map("workspace_seqid")
+  cards          Card[]
+  workspace      Workspace @relation(fields: [workspaceSeqid], references: [seqid], onDelete: Cascade, onUpdate: NoAction, map: "fk_workspace_column_workspace")
+
+  @@index([workspaceSeqid], map: "idx_workspace_column_workspace_seqid")
+  @@map("workspace_column")
+}
+
+model WorkspaceMember {
+  seqid          BigInt    @id @default(autoincrement())
+  workspaceSeqid BigInt    @map("workspace_seqid")
+  userSeqid      BigInt    @map("user_seqid")
+  role           String    @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  workspace      Workspace @relation(fields: [workspaceSeqid], references: [seqid], onDelete: Cascade)
+  user           User      @relation(fields: [userSeqid], references: [seqid], onDelete: Cascade)
+
+  @@unique([workspaceSeqid, userSeqid])
+  @@map("workspace_member")
+}
+
+model WorkspaceInvite {
+  seqid          BigInt    @id @default(autoincrement())
+  workspaceSeqid BigInt    @map("workspace_seqid")
+  email          String
+  role           String    @default("MEMBER")
+  token          String    @unique
+  invitedBySeqid BigInt    @map("invited_by_seqid")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  workspace      Workspace @relation(fields: [workspaceSeqid], references: [seqid], onDelete: Cascade)
+  invitedBy      User      @relation(fields: [invitedBySeqid], references: [seqid], onDelete: Cascade)
+
+  @@map("workspace_invite")
+}
