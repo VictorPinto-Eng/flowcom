@@ -170,35 +170,6 @@ export default function PremiumWorkspaceGridModal({
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             className={styles.addWorkspaceBtn}
-            style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.2)' }}
-            onClick={async () => {
-              const { value: token } = await Swal.fire({
-                title: 'Aceitar Convite',
-                text: 'Insira o código/token do convite enviado por e-mail:',
-                input: 'text',
-                inputPlaceholder: 'ex: 8f9b9a67-...',
-                showCancelButton: true,
-                confirmButtonText: 'Aceitar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#7c3aed',
-                cancelButtonColor: '#6b7280',
-                inputValidator: (value) => {
-                  if (!value) {
-                    return 'Você precisa inserir o token!';
-                  }
-                }
-              });
-
-              if (token && token.trim()) {
-                onAcceptInvite(token.trim());
-              }
-            }}
-            title="Aceitar Convite para Área de Trabalho"
-          >
-            <span>✉️</span> Aceitar Convite
-          </button>
-          <button
-            className={styles.addWorkspaceBtn}
             onClick={onCreateWorkspace}
             title="Criar Nova Área de Trabalho"
           >
