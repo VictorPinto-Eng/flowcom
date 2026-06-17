@@ -417,6 +417,7 @@ export class CardService {
         boardDtatv: c.board?.dtatv,
         boardDtcon: c.board?.dtcon,
         boardPrevisto: c.board?.previsto,
+        boardOwnerName: c.board?.user?.name || 'Não atribuído',
         card_act: c.card_act?.map((act: any) => ({
           ...act,
           seqid: act.seqid.toString(),

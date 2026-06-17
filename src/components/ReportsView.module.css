@@ -151,6 +151,12 @@
   flex-shrink: 0;
 }
 
+.listHeaderOwner {
+  width: 160px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
 .listHeaderCount {
   width: 100px;
   text-align: right;
@@ -163,6 +169,18 @@
   font-weight: 400; /* RETIRADO O BOLD CONFORME SOLICITADO */
   color: #0f172a;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupOwnerCol {
+  width: 160px;
+  font-size: 0.75rem;
+  color: #334155;
+  font-weight: 500;
+  text-align: left;
+  flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

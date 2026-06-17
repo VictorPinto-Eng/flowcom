@@ -101,7 +101,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       return matchesUser && matchesWorkspace && matchesWorkspaceSelect && matchesStatus && matchesDtconStart && matchesDtconEnd;
     });
 
-    const groups: { [key: string]: { name: string, dtatv?: any, dtcon?: any, previsto?: any, cards: any[] } } = {};
+    const groups: { [key: string]: { name: string, dtatv?: any, dtcon?: any, previsto?: any, boardOwnerName?: string, cards: any[] } } = {};
     filtered.forEach(card => {
       // Agrupamos pelo boardSeqId para bater 100% com o banco de dados
       const boardKey = card.boardSeqId || 'default';
@@ -114,6 +114,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           dtatv: card.boardDtatv,
           dtcon: card.boardDtcon,
           previsto: card.boardPrevisto,
+          boardOwnerName: card.boardOwnerName,
           cards: []
         };
       }
@@ -318,6 +319,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           <div className={styles.reportGrid}>
             <div className={styles.reportListHeader}>
               <div className={`${styles.listHeaderCol} ${styles.listHeaderTitle}`}>Atividade / Área de Trabalho</div>
+              <div className={`${styles.listHeaderCol} ${styles.listHeaderOwner}`}>Responsável</div>
               <div className={`${styles.listHeaderCol} ${styles.listHeaderPrevisto}`}>Previsto</div>
               <div className={`${styles.listHeaderCol} ${styles.listHeaderDates}`}>Período (Início — Conclusão)</div>
               <div className={`${styles.listHeaderCol} ${styles.listHeaderCount}`}>Total Eventos</div>
@@ -328,6 +330,9 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
                 <div className={`${styles.groupHeader} ${showEvents ? styles.groupHeaderActive : ''}`}>
                   <div className={styles.groupTitleCol}>
                     {group.name}
+                  </div>
+                  <div className={styles.groupOwnerCol}>
+                    {group.boardOwnerName || '—'}
                   </div>
                   <div className={styles.groupPrevistoCol}>
                     {group.previsto ? formatDate(group.previsto) : 'Sem data'}

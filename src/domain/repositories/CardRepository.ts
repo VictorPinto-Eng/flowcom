@@ -98,7 +98,8 @@ export class CardRepository {
         task_user: true,
         board: {
           include: {
-            workspace: true
+            workspace: true,
+            user: true
           }
         },
         card_act: {
