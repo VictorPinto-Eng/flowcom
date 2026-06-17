@@ -402,7 +402,7 @@ export class BoardService {
     return latestDate;
   }
 
-  async completeActivity(boardId: string, user: any) {
+  async completeActivity(boardId: string, user: any, localDateStr?: string) {
     const board = await this.boardRepo.findById(boardId);
     if (!board) throw new Error('Quadro não encontrado');
 
@@ -412,7 +412,12 @@ export class BoardService {
     );
     if (!doneCol) throw new Error('Coluna "Concluído" não encontrada neste quadro');
 
-    const now = new Date();
+    let dtconDate = new Date();
+    if (localDateStr) {
+      const [year, month, day] = localDateStr.split('-').map(Number);
+      dtconDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    }
+
     const userSeqid = user.seqid ? BigInt(user.seqid) : BigInt(1);
 
     // 1. Atualizar todos os cards que NÃO estão na coluna concluído
@@ -424,9 +429,9 @@ export class BoardService {
           where: { columnId: col.seqid },
           data: {
             columnId: doneCol.seqid,
-            dtcon: now,
+            dtcon: dtconDate,
             moduser: userSeqid,
-            dtmod: now
+            dtmod: new Date()
           }
         });
       }
@@ -434,9 +439,9 @@ export class BoardService {
 
     // 2. Marcar o board como concluído
     await this.boardRepo.updateBoard(boardId, {
-      dtcon: now,
+      dtcon: dtconDate,
       moduser: userSeqid,
-      dtmod: now
+      dtmod: new Date()
     });
 
     // 3. Criar o card "PROCESSO CONCLUÍDO"
@@ -446,12 +451,12 @@ export class BoardService {
       board_seqid: board.seqId,
       columnId: doneCol.seqid,
       order: 0,
-      dtatv: now,
-      dtcon: now,
+      dtatv: new Date(),
+      dtcon: dtconDate,
       user_seqid: BigInt(1),
       taskuser_seqid: BigInt(1),
       created_by: BigInt(1),
-      createdAt: now
+      createdAt: new Date()
     });
 
     // 4. Log de Auditoria

@@ -248,8 +248,15 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
     if (!confirm(`Deseja realmente finalizar o evento "${cardTitle}"?`)) return;
 
     setIsCompletingEvent(cardId);
+
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const localDateStr = `${year}-${month}-${day}`;
+
     try {
-      await completeCardDirectlyAction(cardId);
+      await completeCardDirectlyAction(cardId, localDateStr);
       if (onEventsChange) {
         onEventsChange((prev: any[]) => prev.filter(ev => ev.id !== cardId));
       }

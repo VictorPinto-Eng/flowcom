@@ -556,8 +556,15 @@ export default function DashboardClient({
   const handleCompleteEvent = async (card: any) => {
     if (isCompletingEvent) return;
     setIsCompletingEvent(card.id);
+
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const localDateStr = `${year}-${month}-${day}`;
+
     try {
-      await completeCardDirectlyAction(card.id);
+      await completeCardDirectlyAction(card.id, localDateStr);
       Swal.fire({
         title: 'Sucesso!',
         text: 'Evento finalizado com sucesso.',
@@ -821,8 +828,14 @@ export default function DashboardClient({
     });
 
     if (result.isConfirmed) {
+      const localDate = new Date();
+      const year = localDate.getFullYear();
+      const month = String(localDate.getMonth() + 1).padStart(2, '0');
+      const day = String(localDate.getDate()).padStart(2, '0');
+      const localDateStr = `${year}-${month}-${day}`;
+
       try {
-        await completeBoardAction(boardId);
+        await completeBoardAction(boardId, localDateStr);
         
         setWorkspaces(prevWorkspaces => {
           return prevWorkspaces.map(workspace => {

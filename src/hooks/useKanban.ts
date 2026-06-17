@@ -129,8 +129,14 @@ export function useKanban(initialColumns: ColumnType[], boardId: string) {
       });
     });
 
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const localDateStr = `${year}-${month}-${day}`;
+
     try {
-      await completeCardAction(cardId, targetColId);
+      await completeCardAction(cardId, targetColId, localDateStr);
     } catch (error) {
       console.error('Falha ao concluir card:', error);
       setColumns(initialColumns);

@@ -97,7 +97,7 @@ export class CardService {
     }
   }
 
-  async completeCard(cardId: string, targetColId: string, user: any) {
+  async completeCard(cardId: string, targetColId: string, user: any, localDateStr?: string) {
     const card = await this.cardRepo.findById(cardId);
     if (!card) return;
 
@@ -107,10 +107,16 @@ export class CardService {
     const lastCardInTarget = await this.cardRepo.findLastByColumnId(targetColId);
     const nextOrder = lastCardInTarget ? lastCardInTarget.order + 1 : 0;
 
+    let dtconDate = new Date();
+    if (localDateStr) {
+      const [year, month, day] = localDateStr.split('-').map(Number);
+      dtconDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    }
+
     await this.cardRepo.updateCard(cardId, {
       columnId: targetColId,
       order: nextOrder,
-      dtcon: new Date(),
+      dtcon: dtconDate,
       moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
       dtmod: new Date()
     });
@@ -295,7 +301,7 @@ export class CardService {
     return this.serializeCard(updatedCard);
   }
 
-  async completeCardDirectly(cardId: string, user: any) {
+  async completeCardDirectly(cardId: string, user: any, localDateStr?: string) {
     const card = await this.cardRepo.findById(cardId);
     if (!card) throw new Error('Atividade não encontrada');
 
@@ -307,7 +313,7 @@ export class CardService {
     const doneCol = columns.find(c => c.title.toLowerCase().includes('concluído'));
     if (!doneCol) throw new Error('Coluna "Concluído" não encontrada na Área correspondente');
 
-    await this.completeCard(cardId, doneCol.seqid.toString(), user);
+    await this.completeCard(cardId, doneCol.seqid.toString(), user, localDateStr);
   }
 
   async addCardActionLog(cardSeqid: bigint, description: string, user: any) {

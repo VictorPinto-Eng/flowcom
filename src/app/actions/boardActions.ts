@@ -62,7 +62,7 @@ export async function getBoardActivityLogs(boardId: string) {
   return await boardService.getBoardActivityLogs(boardId, user);
 }
 
-export async function completeBoardAction(boardId: string) {
+export async function completeBoardAction(boardId: string, localDateStr?: string) {
   const user = await userRepo.getLoggedUser();
 
   const board = await prisma.board.findUnique({
@@ -76,7 +76,7 @@ export async function completeBoardAction(boardId: string) {
     throw new Error('Permissão negada. Apenas Proprietários e Administradores podem concluir este fluxo.');
   }
 
-  await boardService.completeActivity(boardId, user);
+  await boardService.completeActivity(boardId, user, localDateStr);
   revalidatePath('/dashboard');
   revalidatePath('/');
 }

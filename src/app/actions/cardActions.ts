@@ -70,10 +70,10 @@ export async function moveCardAction(cardId: string, targetColId: string) {
   revalidatePath('/');
 }
 
-export async function completeCardAction(cardId: string, targetColId: string) {
+export async function completeCardAction(cardId: string, targetColId: string, localDateStr?: string) {
   const user = await userRepo.getLoggedUser();
   await checkCardPermission(cardId, user, false);
-  await cardService.completeCard(cardId, targetColId, user);
+  await cardService.completeCard(cardId, targetColId, user, localDateStr);
   revalidatePath('/');
 }
 
@@ -197,10 +197,10 @@ export async function transferCardWorkspaceAction(cardId: string, workspaceSeqid
   return card;
 }
 
-export async function completeCardDirectlyAction(cardId: string) {
+export async function completeCardDirectlyAction(cardId: string, localDateStr?: string) {
   const user = await userRepo.getLoggedUser();
   await checkCardPermission(cardId, user, false);
-  await cardService.completeCardDirectly(cardId, user);
+  await cardService.completeCardDirectly(cardId, user, localDateStr);
   revalidatePath('/');
 }
 
