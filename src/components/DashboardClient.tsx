@@ -896,13 +896,7 @@ export default function DashboardClient({
           className={styles.logo}
           onClick={(e) => {
             e.preventDefault();
-            router.push('/dashboard');
-            setClientView('ongoing');
-            setOptimisticWorkspaceId(null);
-            setSearchTerm('');
-            setSelectedSectorId('');
-            setCurrentBoard(null);
-            setCurrentWorkspace(null);
+            window.location.href = '/dashboard';
           }}
         >
           <span>FLOW</span>
