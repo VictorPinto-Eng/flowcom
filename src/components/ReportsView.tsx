@@ -61,6 +61,20 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
     return Array.from(list).sort((a, b) => a.localeCompare(b));
   }, [initialCards]);
 
+  // Lista de Usuários (Criadores e Responsáveis) para o select dropdown
+  const usersList = useMemo(() => {
+    const list = new Set<string>();
+    initialCards.forEach(card => {
+      if (card.creatorName && card.creatorName !== '—' && card.creatorName !== 'Sistema') {
+        list.add(card.creatorName);
+      }
+      if (card.assignedName && card.assignedName !== '—' && card.assignedName !== 'Não atribuído') {
+        list.add(card.assignedName);
+      }
+    });
+    return Array.from(list).sort((a, b) => a.localeCompare(b));
+  }, [initialCards]);
+
   // Agrupamento por Atividade (Quadro)
   const groupedCards = useMemo(() => {
     const filtered = initialCards.filter(card => {
@@ -215,13 +229,16 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       <section className={styles.filtersSection}>
         <div className={styles.filterGroup}>
           <label>Pesquisar Usuário</label>
-          <input 
-            type="text" 
+          <select 
             className={styles.selectInput} 
-            placeholder="Criador ou Responsável..." 
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
-          />
+          >
+            <option value="">Todos os Usuários</option>
+            {usersList.map(usr => (
+              <option key={usr} value={usr}>{usr}</option>
+            ))}
+          </select>
         </div>
         {isGlobal && (
           <div className={styles.filterGroup}>
