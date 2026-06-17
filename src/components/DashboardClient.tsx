@@ -894,7 +894,9 @@ export default function DashboardClient({
         <Link
           href="/dashboard"
           className={styles.logo}
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            router.push('/dashboard');
             setClientView('ongoing');
             setOptimisticWorkspaceId(null);
             setSearchTerm('');
