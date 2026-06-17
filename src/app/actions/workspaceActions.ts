@@ -83,3 +83,40 @@ export async function acceptWorkspaceInviteAction(token: string) {
   revalidatePath('/');
   return member;
 }
+
+import prisma from '@/lib/prisma';
+
+export async function getPendingInvitesAction() {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return [];
+  const invites = await prisma.workspaceInvite.findMany({
+    where: {
+      email: {
+        equals: user.email,
+        mode: 'insensitive'
+      },
+      expiresAt: {
+        gt: new Date()
+      }
+    },
+    include: {
+      workspace: true,
+      invitedBy: true
+    }
+  });
+
+  return invites.map(i => ({
+    seqid: i.seqid.toString(),
+    workspaceName: i.workspace.name,
+    workspaceId: i.workspace.id,
+    invitedByName: i.invitedBy.name,
+    token: i.token
+  }));
+}
+
+export async function rejectWorkspaceInviteAction(token: string) {
+  const user = await userRepo.getLoggedUser();
+  await workspaceService.rejectWorkspaceInvite(token, user);
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+}

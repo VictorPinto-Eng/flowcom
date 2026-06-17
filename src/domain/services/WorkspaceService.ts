@@ -1,6 +1,7 @@
 import { WorkspaceRepository } from '../repositories/WorkspaceRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import prisma from '@/lib/prisma';
+import { sendWorkspaceInviteEmail } from '@/lib/resend';
 
 export class WorkspaceService {
   private repo = new WorkspaceRepository();
@@ -197,15 +198,22 @@ export class WorkspaceService {
 
   async sendWorkspaceInvite(workspaceId: string, email: string, role: string, invitedBy: any) {
     let seqid: bigint;
+    let workspaceName = '';
     if (/^\d+$/.test(workspaceId)) {
       seqid = BigInt(workspaceId);
+      const ws = await prisma.workspace.findUnique({
+        where: { seqid },
+        select: { name: true }
+      });
+      workspaceName = ws?.name || '';
     } else {
       const ws = await prisma.workspace.findUnique({
         where: { id: workspaceId },
-        select: { seqid: true }
+        select: { seqid: true, name: true }
       });
       if (!ws) throw new Error('Workspace não encontrado');
       seqid = ws.seqid;
+      workspaceName = ws.name;
     }
 
     // Check if the user is already a member
@@ -247,6 +255,14 @@ export class WorkspaceService {
         expiresAt
       }
     });
+
+    // Send workspace invite email asynchronously (do not block execution on failure)
+    const isRegistered = !!existingUser;
+    try {
+      await sendWorkspaceInviteEmail(email, invitedBy.name, workspaceName, token, isRegistered);
+    } catch (error) {
+      console.error('Failed to send workspace invite email:', error);
+    }
 
     return {
       ...invite,
@@ -418,5 +434,23 @@ export class WorkspaceService {
       workspaceSeqid: newMember.workspaceSeqid.toString(),
       userSeqid: newMember.userSeqid.toString()
     };
+  }
+
+  async rejectWorkspaceInvite(token: string, user: any) {
+    const invite = await prisma.workspaceInvite.findUnique({
+      where: { token }
+    });
+
+    if (!invite) {
+      throw new Error('Convite inválido ou expirado.');
+    }
+
+    if (invite.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new Error('Este convite não foi enviado para este usuário.');
+    }
+
+    await prisma.workspaceInvite.delete({
+      where: { token }
+    });
   }
 }

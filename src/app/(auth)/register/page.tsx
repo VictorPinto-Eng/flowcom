@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { registerAction, resendActivationAction } from '@/app/actions/authActions';
 import styles from '../auth.module.css';
 import Link from 'next/link';
 
-export default function RegisterPage() {
+function RegisterPage() {
+  const searchParams = useSearchParams();
+  const emailParam = searchParams.get('email');
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,6 +17,12 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  useEffect(() => {
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [emailParam]);
 
   const requirements = useMemo(() => [
     { label: 'Mínimo 8 caracteres', met: password.length >= 8 },
@@ -163,5 +173,17 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#a78bfa' }}>
+        Carregando formulário...
+      </div>
+    }>
+      <RegisterPage />
+    </Suspense>
   );
 }

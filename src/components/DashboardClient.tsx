@@ -17,7 +17,7 @@ import PremiumWorkspaceGridModal from '@/components/PremiumWorkspaceGridModal';
 
 import WorkspaceColumnsModal from '@/components/WorkspaceColumnsModal';
 import EditWorkspaceModal from '@/components/EditWorkspaceModal';
-import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction } from '@/app/actions/workspaceActions';
+import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction, getPendingInvitesAction, rejectWorkspaceInviteAction } from '@/app/actions/workspaceActions';
 import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs } from '@/app/actions/boardActions';
 import {
   getMyEventsAction,
@@ -245,6 +245,13 @@ export default function DashboardClient({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSectorId, setSelectedSectorId] = useState('');
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+
+  useEffect(() => {
+    getPendingInvitesAction()
+      .then(setPendingInvites)
+      .catch(err => console.error('Erro ao buscar convites pendentes:', err));
+  }, []);
 
   // Controla se o usuário navegou internamente no app (para evitar voltar para outro site)
   useEffect(() => {
@@ -961,6 +968,100 @@ export default function DashboardClient({
       <div className={styles.workspaceLayout}>
         <main className={styles.boardArea}>
           <div className={styles.boardContent}>
+            {pendingInvites.length > 0 && pendingInvites.map((invite) => (
+              <div key={invite.token} className={styles.inviteBanner} style={{
+                background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.05))',
+                border: '1px solid rgba(124, 58, 237, 0.3)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ fontSize: '1.8rem' }}>✉️</span>
+                  <div>
+                    <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>
+                      Convite para Área de Trabalho
+                    </h4>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
+                      <strong>{invite.invitedByName}</strong> convidou você para participar da área de trabalho <strong>{invite.workspaceName}</strong>.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await acceptWorkspaceInviteAction(invite.token);
+                        Swal.fire({
+                          title: 'Sucesso!',
+                          text: `Você agora faz parte da área de trabalho ${invite.workspaceName}.`,
+                          icon: 'success',
+                          confirmButtonColor: '#7c3aed'
+                        }).then(() => {
+                          window.location.reload();
+                        });
+                      } catch (err: any) {
+                        Swal.fire('Erro', err.message || 'Erro ao aceitar convite', 'error');
+                      }
+                    }}
+                    style={{
+                      background: '#7c3aed',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const result = await Swal.fire({
+                        title: 'Recusar Convite',
+                        text: `Tem certeza que deseja recusar o convite para a área ${invite.workspaceName}?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, recusar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#6b7280'
+                      });
+                      if (result.isConfirmed) {
+                        try {
+                          await rejectWorkspaceInviteAction(invite.token);
+                          setPendingInvites(prev => prev.filter(x => x.token !== invite.token));
+                          Swal.fire('Recusado', 'O convite foi recusado com sucesso.', 'success');
+                        } catch (err: any) {
+                          Swal.fire('Erro', err.message || 'Erro ao recusar convite', 'error');
+                        }
+                      }
+                    }}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    Recusar
+                  </button>
+                </div>
+              </div>
+            ))}
             {currentBoard && clientView !== 'my-events' && clientView !== 'my-activities' ? (
               <KanbanClient
                 initialColumns={currentBoard.columns}
