@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        <h1 className={styles.logo}>FLOW<span>COM</span></h1>
+        <h1 className={styles.logo}>FLOW</h1>
         <h2 className={styles.title}>Bem-vindo de volta</h2>
         <p className={styles.subtitle}>Acesse sua conta para gerenciar suas atividades</p>
 

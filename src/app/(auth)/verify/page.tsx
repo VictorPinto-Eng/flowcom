@@ -38,7 +38,7 @@ export default function VerifyPage({
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        <h1 className={styles.logo}>FLOW<span>COM</span></h1>
+        <h1 className={styles.logo}>FLOW</h1>
         <h2 className={styles.title}>Verificação de E-mail</h2>
         
         <div className={status === 'loading' ? styles.subtitle : (status === 'success' ? styles.success : styles.error)}>
