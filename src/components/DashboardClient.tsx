@@ -1551,7 +1551,6 @@ export default function DashboardClient({
                                       <Link
                                         href={`/dashboard?workspaceId=${ws.id}&view=kanban`}
                                         className={styles.miniKanbanLink}
-                                        title="Visualizar Quadro Kanban desta Área"
                                       >
                                         📊
                                       </Link>
