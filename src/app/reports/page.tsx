@@ -5,7 +5,7 @@ import { getCurrentUserAction } from '../actions/workspaceActions';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-  title: 'Dashboard Geral de Atividades | Flowcom',
+  title: 'Dashboard Geral de Atividades | Flow',
   description: 'Relatório estratégico de produtividade e acompanhamento de tarefas.',
 };
 

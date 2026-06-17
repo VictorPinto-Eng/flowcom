@@ -281,7 +281,7 @@ export default function ActivityReportModal({
           {/* Letterhead Footer / Audit Trail */}
           <div className={styles.docFooter}>
             <div className={styles.footerDisclaimer}>
-              <p>Relatório emitido eletronicamente via plataforma de controle operacional FLOWCOM.</p>
+              <p>Relatório emitido eletronicamente via plataforma de controle operacional FLOW.</p>
               <p className={styles.footerAudit}>Código de Autenticidade Auditada: SHA256-{(Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10)).toUpperCase()}</p>
             </div>
             <div className={styles.footerSignBlock}>
