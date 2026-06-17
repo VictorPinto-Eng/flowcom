@@ -120,3 +120,9 @@ export async function rejectWorkspaceInviteAction(token: string) {
   revalidatePath('/dashboard');
   revalidatePath('/');
 }
+
+export async function getUserRoleInWorkspaceAction(workspaceId: string) {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return null;
+  return await workspaceService.getUserRoleInWorkspace(workspaceId, BigInt(user.seqid));
+}

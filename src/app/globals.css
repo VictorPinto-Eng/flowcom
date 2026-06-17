@@ -2,18 +2,18 @@
 
 :root {
   /* Color Palette - Premium Sleek Ice (Modo Claro de Luxo) */
-  --bg-color: #f1f5f9; /* Soft ice-blue slate background */
-  --surface-color: rgba(255, 255, 255, 0.7); /* Frosted clean white glass surface */
-  --surface-hover: rgba(255, 255, 255, 0.9);
-  --border-color: rgba(0, 0, 0, 0.05); /* Extremely subtle and thin boundaries */
+  --bg-color: #f8fafc; /* Crisp, clean ice-white slate background */
+  --surface-color: rgba(255, 255, 255, 0.75); /* Frosted clean white glass surface */
+  --surface-hover: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(148, 163, 184, 0.12); /* Clean, high-definition borders */
   
-  --text-primary: #0f172a; /* Rich, elegant slate dark text for high readability */
-  --text-secondary: #475569; /* Soft slate steel */
+  --text-primary: #0f172a; /* Deep slate dark text for high readability */
+  --text-secondary: #334155; /* Refined slate steel for better reading contrast */
   --text-muted: #64748b; /* Muted cool grey */
   
-  --accent-primary: #7c3aed; /* Deep Purple */
-  --accent-secondary: #0ea5e9; /* Sky Blue */
-  --accent-glow: rgba(124, 58, 237, 0.08);
+  --accent-primary: #6366f1; /* Premium Indigo */
+  --accent-secondary: #0ea5e9; /* Vibrant Sky Blue */
+  --accent-glow: rgba(99, 102, 241, 0.08);
   --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   
   --error: #ef4444;
@@ -21,12 +21,12 @@
   --warning: #f59e0b;
   
   /* Glassmorphism Refined for Light Mode */
-  --glass-bg: rgba(255, 255, 255, 0.5); /* Frosted glass */
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-blur: blur(20px);
+  --glass-bg: rgba(255, 255, 255, 0.6); /* Frosted glass */
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(24px);
   
   /* Shadows - Light and elegant, high definition */
-  --shadow-glow: 0 4px 20px rgba(124, 58, 237, 0.08);
+  --shadow-glow: 0 4px 20px rgba(99, 102, 241, 0.08);
   --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 

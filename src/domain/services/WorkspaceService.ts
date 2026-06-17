@@ -90,11 +90,38 @@ export class WorkspaceService {
   async getUserWorkspaces(userId: string, userSeqid?: string) {
     const workspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined);
 
+    // Check in-memory if there are any duplicate columns in any workspace
+    let hasDuplicates = false;
     for (const ws of workspaces) {
-      await this.deduplicateWorkspaceColumns(ws.seqid);
+      if (ws.columns && ws.columns.length > 0) {
+        const seenTitles = new Set<string>();
+        for (const col of ws.columns) {
+          const cleanTitle = col.title.trim().toLowerCase();
+          if (seenTitles.has(cleanTitle)) {
+            hasDuplicates = true;
+            break;
+          }
+          seenTitles.add(cleanTitle);
+        }
+      }
+      if (hasDuplicates) break;
     }
 
-    const cleanWorkspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined);
+    let cleanWorkspaces = workspaces;
+    if (hasDuplicates) {
+      for (const ws of workspaces) {
+        await this.deduplicateWorkspaceColumns(ws.seqid);
+      }
+      cleanWorkspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined);
+    }
+    
+    const userSeqIdVal = userSeqid ? BigInt(userSeqid) : undefined;
+    const memberRoles = userSeqIdVal
+      ? await prisma.workspaceMember.findMany({
+          where: { userSeqid: userSeqIdVal },
+          select: { workspaceSeqid: true, role: true }
+        })
+      : [];
 
     return cleanWorkspaces.map(ws => {
       const wsColumns = (ws as any).columns?.map((c: any) => ({
@@ -109,14 +136,21 @@ export class WorkspaceService {
           board_seqid: card.board_seqid?.toString(),
           user_seqid: card.user_seqid?.toString(),
           taskuser_seqid: card.taskuser_seqid?.toString(),
-          columnId: card.columnId.toString()
+          columnId: card.columnId.toString(),
+          card_act: card.card_act?.map((act: any) => ({
+            seqid: act.seqid.toString()
+          })) || []
         })) || []
       })) || [];
+
+      const memberRecord = memberRoles.find(mr => mr.workspaceSeqid === ws.seqid);
+      const userRole = memberRecord?.role || (ws.users_seqid === userSeqIdVal ? 'OWNER' : 'MEMBER');
 
       return {
         ...ws,
         seqid: ws.seqid.toString(),
         users_seqid: ws.users_seqid.toString(),
+        currentUserRole: userRole,
         columns: wsColumns,
         boards: (ws as any).boards?.map((b: any) => {
           const boardSeqIdStr = b.seqId.toString();
@@ -135,7 +169,10 @@ export class WorkspaceService {
                 board_seqid: card.board_seqid?.toString(),
                 user_seqid: card.user_seqid?.toString(),
                 taskuser_seqid: card.taskuser_seqid?.toString(),
-                columnId: card.columnId.toString()
+                columnId: card.columnId.toString(),
+                card_act: card.card_act?.map((act: any) => ({
+                  seqid: act.seqid.toString()
+                })) || []
               }))
             };
           });
@@ -452,5 +489,31 @@ export class WorkspaceService {
     await prisma.workspaceInvite.delete({
       where: { token }
     });
+  }
+
+  async getUserRoleInWorkspace(workspaceId: string, userSeqid: bigint): Promise<string | null> {
+    let seqid: bigint;
+    if (/^\d+$/.test(workspaceId)) {
+      seqid = BigInt(workspaceId);
+    } else {
+      const ws = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { seqid: true }
+      });
+      if (!ws) return null;
+      seqid = ws.seqid;
+    }
+
+    const member = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceSeqid: seqid,
+        userSeqid: userSeqid
+      },
+      select: {
+        role: true
+      }
+    });
+
+    return member?.role || null;
   }
 }
