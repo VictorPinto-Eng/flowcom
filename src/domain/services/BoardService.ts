@@ -370,9 +370,9 @@ export class BoardService {
     return this.serializeBoard(updated);
   }
 
-  async getBoardActivityLogs(boardId: string) {
+  async getBoardActivityLogs(boardId: string, currentUser?: any) {
     try {
-      const logs = await this.logRepo.getLogsByBoardId(boardId);
+      const logs = await this.logRepo.getLogsByBoardId(boardId, currentUser);
       return logs.map(l => ({
         ...l,
         seqid: l.seqid.toString()

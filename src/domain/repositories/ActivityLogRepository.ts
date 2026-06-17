@@ -5,8 +5,59 @@ export class ActivityLogRepository {
     return await prisma.activityLog.create({ data });
   }
 
-  async getLogsByBoardId(boardId: string) {
-    const whereClause = boardId === 'ALL' ? {} : { boardId };
+  async getLogsByBoardId(boardId: string, currentUser?: any) {
+    let whereClause: any = {};
+
+    if (boardId !== 'ALL') {
+      whereClause = { boardId };
+    } else if (currentUser) {
+      const userSeqId = BigInt(currentUser.seqid || currentUser.id);
+      
+      // Get all workspaces owned by the user
+      const ownedWorkspaces = await prisma.workspace.findMany({
+        where: {
+          users_seqid: userSeqId
+        },
+        select: {
+          seqid: true
+        }
+      });
+      const ownedWorkspaceSeqids = ownedWorkspaces.map(w => w.seqid);
+
+      // Get all board IDs belonging to these workspaces
+      const boardsInOwnedWorkspaces = await prisma.board.findMany({
+        where: {
+          workspaceId: {
+            in: ownedWorkspaceSeqids
+          }
+        },
+        select: {
+          seqId: true
+        }
+      });
+      const ownedBoardIds = boardsInOwnedWorkspaces.map(b => b.seqId.toString());
+
+      // User identifiers
+      const userIdStr = userSeqId.toString();
+      const userEmailStr = currentUser.email;
+
+      whereClause = {
+        OR: [
+          {
+            boardId: {
+              in: ownedBoardIds
+            }
+          },
+          {
+            userId: userIdStr
+          },
+          {
+            userId: userEmailStr
+          }
+        ]
+      };
+    }
+
     const logs = await prisma.activityLog.findMany({
       where: whereClause,
       orderBy: {

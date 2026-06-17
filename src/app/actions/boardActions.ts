@@ -39,7 +39,8 @@ export async function updateBoardAction(boardId: string, name: string, detalhes:
 }
 
 export async function getBoardActivityLogs(boardId: string) {
-  return await boardService.getBoardActivityLogs(boardId);
+  const user = await userRepo.getLoggedUser();
+  return await boardService.getBoardActivityLogs(boardId, user);
 }
 
 export async function completeBoardAction(boardId: string) {
