@@ -1553,7 +1553,7 @@ export default function DashboardClient({
                                         className={styles.miniKanbanLink}
                                         title="Visualizar Quadro Kanban desta Área"
                                       >
-                                        📊 Kanban
+                                        📊
                                       </Link>
                                     </div>
                                     <span className={styles.barValText}>
