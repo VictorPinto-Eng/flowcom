@@ -129,5 +129,6 @@ export async function completeCardDirectlyAction(cardId: string) {
 }
 
 export async function getAllCardsReportAction(workspaceId?: string) {
-  return await cardService.getAllCardsReport(workspaceId);
+  const user = await userRepo.getLoggedUser();
+  return await cardService.getAllCardsReport(workspaceId, user);
 }

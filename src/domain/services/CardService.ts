@@ -340,13 +340,48 @@ export class CardService {
     await (this.cardRepo as any).deleteCardAction(actionSeqid);
   }
 
-  async getAllCardsReport(workspaceId?: string) {
+  async getAllCardsReport(workspaceId?: string, currentUser?: any) {
+    if (!currentUser) return [];
+
+    const userSeqId = BigInt(currentUser.seqid || currentUser.id);
+
+    // Get all workspaces owned by the user or where they are a member
+    const userWorkspaces = await prisma.workspace.findMany({
+      where: {
+        OR: [
+          { users_seqid: userSeqId },
+          {
+            members: {
+              some: {
+                userSeqid: userSeqId
+              }
+            }
+          }
+        ]
+      },
+      select: {
+        seqid: true,
+        id: true
+      }
+    });
+
+    const allowedWorkspaceSeqids = userWorkspaces.map(w => w.seqid);
+    const allowedWorkspaceIds = userWorkspaces.map(w => w.id);
+
+    // If a specific workspace is requested, verify access
+    if (workspaceId && !allowedWorkspaceIds.includes(workspaceId)) {
+      return [];
+    }
+
     const cards = await this.cardRepo.findAllWithFullRelations();
 
-    // Filtro por Workspace se fornecido
+    // Filter cards: by specific workspace if provided, otherwise only those in allowed workspaces
     const filteredCards = workspaceId
       ? cards.filter(c => (c.column as any)?.board?.workspace?.id === workspaceId)
-      : cards;
+      : cards.filter(c => {
+          const wsSeqid = c.column?.workspaceSeqid;
+          return wsSeqid ? allowedWorkspaceSeqids.includes(wsSeqid) : false;
+        });
 
     return filteredCards.map(c => {
       let durationStr = 'Pendente';
