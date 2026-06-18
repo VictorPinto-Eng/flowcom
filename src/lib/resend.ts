@@ -1,6 +1,10 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_dev_mode');
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+if (!RESEND_API_KEY) {
+  throw new Error('RESEND_API_KEY environment variable is required');
+}
+const resend = new Resend(RESEND_API_KEY);
 
 export async function sendActivationEmail(email: string, name: string, token: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
