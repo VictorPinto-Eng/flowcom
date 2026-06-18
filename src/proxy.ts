@@ -11,7 +11,9 @@ export function proxy(request: NextRequest) {
   const publicRoutes = ['/login', '/register', '/verify', '/api/auth', '/forgot-password', '/reset-password'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  if (!token && !isPublicRoute && pathname !== '/') {
+  const isMockEnv = process.env.MOCK_USER_ENABLED === 'true';
+
+  if (!token && !isPublicRoute && pathname !== '/' && !isMockEnv) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
