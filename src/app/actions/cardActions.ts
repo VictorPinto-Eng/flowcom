@@ -208,3 +208,102 @@ export async function getAllCardsReportAction(workspaceId?: string) {
   const user = await userRepo.getLoggedUser();
   return await cardService.getAllCardsReport(workspaceId, user);
 }
+
+export async function requestTransferAction(cardId: string, targetUserSeqid: string) {
+  const user = await userRepo.getLoggedUser();
+  const { userRole } = await checkCardPermission(cardId, user, true); // Requer admin/proprietário
+
+  const targetUser = await prisma.user.findUnique({
+    where: { seqid: BigInt(targetUserSeqid) }
+  });
+  if (!targetUser) throw new Error('Destinatário não encontrado');
+
+  const description = `[SOLICITACAO_PENDENTE:${targetUser.seqid.toString()}:${targetUser.name}] O administrador ${user.name} solicitou a transferência deste evento para ${targetUser.name}.`;
+
+  const action = await cardService.addCardActionLog(BigInt(cardId), description, user);
+
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+  return {
+    ...action,
+    seqid: action.seqid.toString(),
+    card_seqid: action.card_seqid?.toString(),
+    user_seqid: action.user_seqid?.toString(),
+    created_by: action.created_by?.toString()
+  };
+}
+
+export async function respondTransferRequestAction(cardId: string, actionSeqid: string, accept: boolean) {
+  const user = await userRepo.getLoggedUser();
+
+  const log = await prisma.card_act.findUnique({
+    where: { seqid: BigInt(actionSeqid) }
+  });
+  if (!log || !log.description) throw new Error('Solicitação não encontrada');
+
+  const prefix = `[SOLICITACAO_PENDENTE:${user.seqid.toString()}:`;
+  if (!log.description.startsWith(prefix)) {
+    throw new Error('Você não tem permissão para responder a esta solicitação.');
+  }
+
+  const card = await prisma.card.findUnique({
+    where: { seqid: BigInt(cardId) }
+  });
+  if (!card) throw new Error('Card não encontrado');
+
+  const newStatus = accept ? 'ACEITA' : 'RECUSADA';
+  const cleanDesc = log.description.replace('[SOLICITACAO_PENDENTE:', `[SOLICITACAO_${newStatus}:`);
+
+  await prisma.card_act.update({
+    where: { seqid: BigInt(actionSeqid) },
+    data: { description: cleanDesc }
+  });
+
+  if (accept) {
+    await prisma.card.update({
+      where: { seqid: BigInt(cardId) },
+      data: { taskuser_seqid: user.seqid }
+    });
+
+    await cardService.addCardActionLog(BigInt(cardId), `Transferência aceita. Responsável atual: ${user.name}`, user);
+  } else {
+    await cardService.addCardActionLog(BigInt(cardId), `Transferência recusada por ${user.name}`, user);
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+}
+
+export async function getPendingTransferRequestsAction() {
+  const user = await userRepo.getLoggedUser();
+
+  const pendingRequests = await prisma.card_act.findMany({
+    where: {
+      description: {
+        startsWith: `[SOLICITACAO_PENDENTE:${user.seqid.toString()}:`
+      },
+      card: {
+        dtcon: null
+      }
+    },
+    include: {
+      card: {
+        include: {
+          column: {
+            include: {
+              workspace: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return pendingRequests.map(req => ({
+    seqid: req.seqid.toString(),
+    cardSeqid: req.card_seqid?.toString(),
+    cardTitle: req.card?.title || 'Sem título',
+    workspaceName: req.card?.column.workspace.name || 'Sem workspace',
+    description: req.description || ''
+  }));
+}

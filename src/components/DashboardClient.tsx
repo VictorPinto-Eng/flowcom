@@ -18,7 +18,7 @@ import PremiumWorkspaceGridModal from '@/components/PremiumWorkspaceGridModal';
 import WorkspaceColumnsModal from '@/components/WorkspaceColumnsModal';
 import EditWorkspaceModal from '@/components/EditWorkspaceModal';
 import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction, getPendingInvitesAction, rejectWorkspaceInviteAction } from '@/app/actions/workspaceActions';
-import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs } from '@/app/actions/boardActions';
+import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs, requestBoardCompletionAction, respondBoardCompletionAction, getPendingBoardCompletionRequestsAction } from '@/app/actions/boardActions';
 import {
   getMyEventsAction,
   updateCardPrevistoAction,
@@ -29,7 +29,10 @@ import {
   transferCardAction,
   transferCardWorkspaceAction,
   completeCardDirectlyAction,
-  moveCardAction
+  moveCardAction,
+  requestTransferAction,
+  respondTransferRequestAction,
+  getPendingTransferRequestsAction
 } from '@/app/actions/cardActions';
 import styles from './DashboardClient.module.css';
 
@@ -251,6 +254,14 @@ export default function DashboardClient({
     getPendingInvitesAction()
       .then(setPendingInvites)
       .catch(err => console.error('Erro ao buscar convites pendentes:', err));
+
+    getPendingTransferRequestsAction()
+      .then(setPendingTransfers)
+      .catch(err => console.error('Erro ao buscar transferências pendentes:', err));
+
+    getPendingBoardCompletionRequestsAction()
+      .then(setPendingCompletionRequests)
+      .catch(err => console.error('Erro ao buscar solicitações de finalização pendentes:', err));
   }, []);
 
   // Controla se o usuário navegou internamente no app (para evitar voltar para outro site)
@@ -369,6 +380,8 @@ export default function DashboardClient({
   const [isSavingAction, setIsSavingAction] = useState(false);
   const [editingActionSeqid, setEditingActionSeqid] = useState<bigint | null>(null);
   const [editingActionText, setEditingActionText] = useState('');
+  const [pendingTransfers, setPendingTransfers] = useState<any[]>([]);
+  const [pendingCompletionRequests, setPendingCompletionRequests] = useState<any[]>([]);
 
   const [transferModalData, setTransferModalData] = useState<{
     cardId: string;
@@ -550,6 +563,88 @@ export default function DashboardClient({
       console.error('Erro ao transferir atividade:', err);
     } finally {
       setIsTransferringWorkspace(false);
+    }
+  };
+
+  const handleRespondTransfer = async (cardId: string, actionSeqid: string, accept: boolean) => {
+    try {
+      await respondTransferRequestAction(cardId, actionSeqid, accept);
+      Swal.fire({
+        title: 'Sucesso!',
+        text: accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.',
+        icon: 'success',
+        confirmButtonColor: '#7c3aed'
+      });
+      setPendingTransfers(prev => prev.filter(x => x.seqid !== actionSeqid));
+      router.refresh();
+      if (selectedEvent && selectedEvent.seqid.toString() === cardId.toString()) {
+        setSelectedEvent(null);
+      }
+    } catch (err: any) {
+      console.error('Erro ao responder transferência:', err);
+      Swal.fire('Erro', err.message || 'Erro ao responder transferência', 'error');
+    }
+  };
+
+  const handleRespondBoardCompletion = async (boardId: string, logSeqid: string, accept: boolean) => {
+    try {
+      await respondBoardCompletionAction(boardId, logSeqid, accept);
+      Swal.fire({
+        title: 'Sucesso!',
+        text: accept ? 'Atividade finalizada e encerrada.' : 'Solicitação recusada.',
+        icon: 'success',
+        confirmButtonColor: '#7c3aed'
+      });
+      setPendingCompletionRequests(prev => prev.filter(x => x.seqid !== logSeqid));
+      router.refresh();
+    } catch (err: any) {
+      console.error('Erro ao responder finalização:', err);
+      Swal.fire('Erro', err.message || 'Erro ao processar solicitação', 'error');
+    }
+  };
+
+  const handleAdminTransferRequest = async (event: any) => {
+    try {
+      const workspaceSeqid = activeWorkspace?.seqid?.toString() || '';
+      const members = await getWorkspaceMembersAction(workspaceSeqid);
+      
+      const inputOptions: { [key: string]: string } = {};
+      members.forEach((m: any) => {
+        if (m.seqid.toString() !== event.taskuser_seqid?.toString()) {
+          inputOptions[m.seqid.toString()] = m.name;
+        }
+      });
+
+      const { value: targetUserSeqid } = await Swal.fire({
+        title: 'Solicitar Transferência de Atividade',
+        input: 'select',
+        inputOptions,
+        inputPlaceholder: 'Selecione o novo responsável',
+        showCancelButton: true,
+        confirmButtonColor: '#7c3aed',
+        confirmButtonText: 'Solicitar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+          if (!value) return 'Você precisa selecionar um responsável!';
+        }
+      });
+
+      if (targetUserSeqid) {
+        await requestTransferAction(event.id || event.seqid.toString(), targetUserSeqid);
+        Swal.fire({
+          title: 'Solicitado!',
+          text: 'Solicitação de transferência registrada no histórico do evento.',
+          icon: 'success',
+          confirmButtonColor: '#7c3aed'
+        });
+        router.refresh();
+        if (selectedEvent && selectedEvent.id === event.id) {
+          setSelectedEvent(null);
+        }
+      }
+    } catch (err: any) {
+      console.error('Erro ao solicitar transferência:', err);
+      Swal.fire('Erro', err.message || 'Erro ao solicitar transferência', 'error');
     }
   };
 
@@ -814,6 +909,38 @@ export default function DashboardClient({
   };
 
   const handleCompleteBoard = async (boardId: string, boardName: string) => {
+    const role = (activeWorkspace as any)?.currentUserRole;
+    const isOwner = role === 'OWNER';
+
+    if (!isOwner) {
+      const result = await Swal.fire({
+        title: 'Solicitar Encerramento?',
+        text: `Deseja enviar uma solicitação de finalização para o Proprietário encerrar a atividade "${boardName}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#7c3aed',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sim, solicitar!',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await requestBoardCompletionAction(boardId);
+          Swal.fire({
+            title: 'Solicitado!',
+            text: 'A solicitação de finalização foi enviada ao proprietário da atividade.',
+            icon: 'success',
+            confirmButtonColor: '#7c3aed'
+          });
+          router.refresh();
+        } catch (error: any) {
+          Swal.fire('Erro', error.message || 'Erro ao solicitar finalização', 'error');
+        }
+      }
+      return;
+    }
+
     const result = await Swal.fire({
       title: 'Encerrar Atividade?',
       text: `Deseja realmente encerrar a atividade "${boardName}"? Todos os eventos pendentes serão marcados como concluídos.`,
@@ -993,6 +1120,124 @@ export default function DashboardClient({
       <div className={styles.workspaceLayout}>
         <main className={styles.boardArea}>
           <div className={styles.boardContent}>
+            {pendingTransfers.length > 0 && pendingTransfers.map((req) => (
+              <div key={req.seqid} className={styles.inviteBanner} style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ fontSize: '1.8rem' }}>🔄</span>
+                  <div>
+                    <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>
+                      Solicitação de Transferência de Evento
+                    </h4>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
+                      Foi solicitada a transferência do evento <strong>{req.cardTitle}</strong> (Área: <strong>{req.workspaceName}</strong>) para você.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    onClick={() => handleRespondTransfer(req.cardSeqid, req.seqid, true)}
+                    style={{
+                      background: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={() => handleRespondTransfer(req.cardSeqid, req.seqid, false)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Recusar
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {pendingCompletionRequests.length > 0 && pendingCompletionRequests.map((req) => (
+              <div key={req.seqid} className={styles.inviteBanner} style={{
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ fontSize: '1.8rem' }}>🔒</span>
+                  <div>
+                    <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>
+                      Solicitação de Encerramento de Atividade
+                    </h4>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
+                      Solicitado o encerramento da atividade <strong>{req.boardName}</strong> (Área: <strong>{req.workspaceName}</strong>).
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    onClick={() => handleRespondBoardCompletion(req.boardId, req.seqid, true)}
+                    style={{
+                      background: '#d97706',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Autorizar
+                  </button>
+                  <button
+                    onClick={() => handleRespondBoardCompletion(req.boardId, req.seqid, false)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Recusar
+                  </button>
+                </div>
+              </div>
+            ))}
+
             {pendingInvites.length > 0 && pendingInvites.map((invite) => (
               <div key={invite.token} className={styles.inviteBanner} style={{
                 background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.05))',
@@ -1538,11 +1783,11 @@ export default function DashboardClient({
                                     >
                                       ✅
                                     </Link>
-                                    {(activeWorkspace as any)?.currentUserRole === 'OWNER' && (
+                                    {((activeWorkspace as any)?.currentUserRole === 'OWNER' || (activeWorkspace as any)?.currentUserRole === 'ADMIN') && (
                                       <button
                                         className={styles.tableCompleteBoardBtn}
                                         onClick={() => handleCompleteBoard(board.id, board.name)}
-                                        title="Finalizar e Encerrar Atividade"
+                                        title={(activeWorkspace as any)?.currentUserRole === 'OWNER' ? "Finalizar e Encerrar Atividade" : "Solicitar Finalização da Atividade"}
                                       >
                                         🔒
                                       </button>
@@ -1861,95 +2106,190 @@ export default function DashboardClient({
         />
       )}
 
-      {selectedEvent && (
-        <div className={styles.drawerOverlay} onClick={() => setSelectedEvent(null)}>
-          <div className={styles.drawerContainer} onClick={e => e.stopPropagation()}>
-            <div className={styles.drawerHeader}>
-              <div>
-                <h3 className={styles.drawerTitle}>Andamentos do Evento</h3>
-                <p className={styles.drawerSubtitle}>{selectedEvent.title}</p>
-              </div>
-              <button className={styles.drawerCloseBtn} onClick={() => setSelectedEvent(null)}>✕</button>
-            </div>
-            <div className={styles.drawerContent}>
-              <div className={styles.drawerAddAction}>
-                <textarea
-                  className={styles.drawerTextarea}
-                  placeholder="Escreva um novo andamento aqui..."
-                  value={newActionText}
-                  onChange={(e) => setNewActionText(e.target.value)}
-                />
-                <button
-                  className={styles.drawerSaveBtn}
-                  onClick={handleAddAction}
-                  disabled={!newActionText.trim() || isSavingAction}
-                >
-                  {isSavingAction ? 'Salvando...' : 'Salvar Andamento'}
-                </button>
-              </div>
+      {selectedEvent && (() => {
+        const isEventAssignedToMe = !!(userSeqid && selectedEvent.taskuser_seqid && selectedEvent.taskuser_seqid.toString() === userSeqid);
+        const role = (activeWorkspace as any)?.currentUserRole;
+        const isAdminOrOwner = role === 'OWNER' || role === 'ADMIN';
 
-              <div className={styles.drawerListHeader}>
-                <h4>Histórico de Ações ({selectedEvent.card_act ? selectedEvent.card_act.length : 0})</h4>
+        return (
+          <div className={styles.drawerOverlay} onClick={() => setSelectedEvent(null)}>
+            <div className={styles.drawerContainer} onClick={e => e.stopPropagation()}>
+              <div className={styles.drawerHeader}>
+                <div>
+                  <h3 className={styles.drawerTitle}>Andamentos do Evento</h3>
+                  <p className={styles.drawerSubtitle}>{selectedEvent.title}</p>
+                </div>
+                <button className={styles.drawerCloseBtn} onClick={() => setSelectedEvent(null)}>✕</button>
               </div>
-              <div className={styles.drawerActionsList}>
-                {!selectedEvent.card_act || selectedEvent.card_act.length === 0 ? (
-                  <p className={styles.drawerEmptyText}>Nenhum andamento registrado para este evento.</p>
-                ) : (
-                  selectedEvent.card_act.map((act: any) => (
-                    <div key={act.seqid.toString()} className={styles.drawerActionCard}>
-                      {editingActionSeqid?.toString() === act.seqid.toString() ? (
-                        <div className={styles.editActionForm}>
-                          <textarea
-                            className={styles.drawerTextarea}
-                            value={editingActionText}
-                            onChange={(e) => setEditingActionText(e.target.value)}
-                            autoFocus
-                          />
-                          <div className={styles.editActionBtns}>
-                            <button className={styles.cancelEditBtn} onClick={() => setEditingActionSeqid(null)}>Cancelar</button>
-                            <button
-                              className={styles.confirmEditBtn}
-                              onClick={() => handleEditActionSubmit(BigInt(act.seqid))}
-                            >
-                              Salvar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className={styles.actionCardTop}>
-                            <p className={styles.drawerActionText}>{act.description}</p>
-                            <div className={styles.actionQuickBtns}>
-                              <button
-                                title="Editar andamento"
-                                onClick={() => {
-                                  setEditingActionSeqid(BigInt(act.seqid));
-                                  setEditingActionText(act.description);
-                                }}
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                title="Excluir andamento"
-                                onClick={() => handleDeleteAction(BigInt(act.seqid))}
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
-                          <span className={styles.drawerActionMeta}>
-                            {act.users?.name || 'Sistema'} • {new Date(act.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  ))
+              <div className={styles.drawerContent}>
+                {isAdminOrOwner && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.25rem' }}>
+                    <button
+                      onClick={() => handleAdminTransferRequest(selectedEvent)}
+                      style={{
+                        background: 'rgba(124, 58, 237, 0.08)',
+                        border: '1px solid rgba(124, 58, 237, 0.2)',
+                        color: '#7c3aed',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      🔄 Solicitar Transferência
+                    </button>
+                  </div>
                 )}
+
+                {isEventAssignedToMe ? (
+                  <div className={styles.drawerAddAction}>
+                    <textarea
+                      className={styles.drawerTextarea}
+                      placeholder="Escreva um novo andamento aqui..."
+                      value={newActionText}
+                      onChange={(e) => setNewActionText(e.target.value)}
+                    />
+                    <button
+                      className={styles.drawerSaveBtn}
+                      onClick={handleAddAction}
+                      disabled={!newActionText.trim() || isSavingAction}
+                    >
+                      {isSavingAction ? 'Salvando...' : 'Salvar Andamento'}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.85rem',
+                    textAlign: 'center',
+                    marginBottom: '1.5rem',
+                    fontStyle: 'italic'
+                  }}>
+                    Apenas visualização. Você não é o responsável por este evento.
+                  </div>
+                )}
+
+                <div className={styles.drawerListHeader}>
+                  <h4>Histórico de Ações ({selectedEvent.card_act ? selectedEvent.card_act.length : 0})</h4>
+                </div>
+                <div className={styles.drawerActionsList}>
+                  {!selectedEvent.card_act || selectedEvent.card_act.length === 0 ? (
+                    <p className={styles.drawerEmptyText}>Nenhum andamento registrado para este evento.</p>
+                  ) : (
+                    selectedEvent.card_act.map((act: any) => {
+                      const isTransferPendente = act.description?.startsWith(`[SOLICITACAO_PENDENTE:${userSeqid}:`);
+                      return (
+                        <div key={act.seqid.toString()} className={styles.drawerActionCard}>
+                          {editingActionSeqid?.toString() === act.seqid.toString() ? (
+                            <div className={styles.editActionForm}>
+                              <textarea
+                                className={styles.drawerTextarea}
+                                value={editingActionText}
+                                onChange={(e) => setEditingActionText(e.target.value)}
+                                autoFocus
+                              />
+                              <div className={styles.editActionBtns}>
+                                <button className={styles.cancelEditBtn} onClick={() => setEditingActionSeqid(null)}>Cancelar</button>
+                                <button
+                                  className={styles.confirmEditBtn}
+                                  onClick={() => handleEditActionSubmit(BigInt(act.seqid))}
+                                >
+                                  Salvar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className={styles.actionCardTop}>
+                                <p className={styles.drawerActionText}>
+                                  {act.description?.startsWith('[SOLICITACAO_PENDENTE:') ? (
+                                    act.description.replace(/^\[SOLICITACAO_[A-Z]+:[^\]]+\]\s*/, '')
+                                  ) : act.description?.startsWith('[SOLICITACAO_ACEITA:') ? (
+                                    act.description.replace(/^\[SOLICITACAO_[A-Z]+:[^\]]+\]\s*/, '') + ' (Aceita)'
+                                  ) : act.description?.startsWith('[SOLICITACAO_RECUSADA:') ? (
+                                    act.description.replace(/^\[SOLICITACAO_[A-Z]+:[^\]]+\]\s*/, '') + ' (Recusada)'
+                                  ) : (
+                                    act.description
+                                  )}
+                                </p>
+                                {isEventAssignedToMe && (
+                                  <div className={styles.actionQuickBtns}>
+                                    <button
+                                      title="Editar andamento"
+                                      onClick={() => {
+                                        setEditingActionSeqid(BigInt(act.seqid));
+                                        setEditingActionText(act.description);
+                                      }}
+                                    >
+                                      ✏️
+                                    </button>
+                                    <button
+                                      title="Excluir andamento"
+                                      onClick={() => handleDeleteAction(BigInt(act.seqid))}
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              {isTransferPendente && (
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                  <button
+                                    onClick={() => handleRespondTransfer(selectedEvent.seqid.toString(), act.seqid.toString(), true)}
+                                    style={{
+                                      background: '#10b981',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      padding: '0.35rem 0.75rem',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Aceitar
+                                  </button>
+                                  <button
+                                    onClick={() => handleRespondTransfer(selectedEvent.seqid.toString(), act.seqid.toString(), false)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      color: '#ef4444',
+                                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                                      borderRadius: '6px',
+                                      padding: '0.35rem 0.75rem',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Recusar
+                                  </button>
+                                </div>
+                              )}
+                              <span className={styles.drawerActionMeta}>
+                                {act.users?.name || 'Sistema'} • {new Date(act.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {transferModalData && (
         <div className={styles.modalOverlay} onClick={() => setTransferModalData(null)}>

@@ -80,3 +80,119 @@ export async function completeBoardAction(boardId: string, localDateStr?: string
   revalidatePath('/dashboard');
   revalidatePath('/');
 }
+
+export async function requestBoardCompletionAction(boardId: string) {
+  const user = await userRepo.getLoggedUser();
+
+  const board = await prisma.board.findUnique({
+    where: { seqId: BigInt(boardId) },
+    include: { workspace: true }
+  });
+  if (!board) throw new Error('Atividade não encontrada');
+
+  const role = await workspaceService.getUserRoleInWorkspace(board.workspaceId.toString(), BigInt(user.seqid));
+  if (role !== 'OWNER' && role !== 'ADMIN') {
+    throw new Error('Permissão negada. Apenas Administradores podem solicitar a finalização.');
+  }
+
+  const log = await prisma.activityLog.create({
+    data: {
+      boardId: boardId,
+      userId: user.id,
+      action: 'REQUEST_COMPLETION',
+      description: `[SOLICITACAO_CONCLUSAO_BOARD:${boardId}] O administrador ${user.name} solicitou a finalização e encerramento da atividade ${board.name}.`
+    }
+  });
+
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+  return {
+    ...log,
+    seqid: log.seqid.toString()
+  };
+}
+
+export async function respondBoardCompletionAction(boardId: string, logSeqid: string, accept: boolean) {
+  const user = await userRepo.getLoggedUser();
+
+  const board = await prisma.board.findUnique({
+    where: { seqId: BigInt(boardId) },
+    include: { workspace: true }
+  });
+  if (!board) throw new Error('Atividade não encontrada');
+
+  const role = await workspaceService.getUserRoleInWorkspace(board.workspaceId.toString(), BigInt(user.seqid));
+  if (role !== 'OWNER') {
+    throw new Error('Permissão negada. Apenas o Proprietário da área de trabalho pode responder a esta solicitação.');
+  }
+
+  const log = await prisma.activityLog.findUnique({
+    where: { seqid: BigInt(logSeqid) }
+  });
+  if (!log) throw new Error('Solicitação não encontrada');
+
+  const newAction = accept ? 'REQUEST_COMPLETION_APPROVED' : 'REQUEST_COMPLETION_REJECTED';
+  const cleanDesc = log.description.replace('[SOLICITACAO_CONCLUSAO_BOARD:', accept ? '[SOLICITACAO_CONCLUSAO_ACEITA:' : '[SOLICITACAO_CONCLUSAO_RECUSADA:');
+
+  await prisma.activityLog.update({
+    where: { seqid: BigInt(logSeqid) },
+    data: {
+      action: newAction,
+      description: cleanDesc
+    }
+  });
+
+  if (accept) {
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const localDateStr = `${year}-${month}-${day}`;
+
+    await boardService.completeActivity(boardId, user, localDateStr);
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+}
+
+export async function getPendingBoardCompletionRequestsAction() {
+  const user = await userRepo.getLoggedUser();
+
+  const ownedWorkspaces = await prisma.workspace.findMany({
+    where: { users_seqid: user.seqid },
+    select: { seqid: true }
+  });
+  const ownedWorkspaceSeqids = ownedWorkspaces.map(w => w.seqid);
+
+  const activeBoards = await prisma.board.findMany({
+    where: {
+      workspaceId: { in: ownedWorkspaceSeqids },
+      dtcon: null
+    },
+    select: { seqId: true, name: true, workspace: { select: { name: true } } }
+  });
+
+  const activeBoardIdsStr = activeBoards.map(b => b.seqId.toString());
+
+  const logs = await prisma.activityLog.findMany({
+    where: {
+      action: 'REQUEST_COMPLETION',
+      boardId: { in: activeBoardIdsStr },
+      description: {
+        startsWith: '[SOLICITACAO_CONCLUSAO_BOARD:'
+      }
+    }
+  });
+
+  return logs.map(log => {
+    const matchedBoard = activeBoards.find(b => b.seqId.toString() === log.boardId);
+    return {
+      seqid: log.seqid.toString(),
+      boardId: log.boardId,
+      boardName: matchedBoard?.name || 'Atividade',
+      workspaceName: matchedBoard?.workspace?.name || 'Workspace',
+      description: log.description
+    };
+  });
+}
