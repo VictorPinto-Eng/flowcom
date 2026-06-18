@@ -51,3 +51,13 @@ next-env.d.ts
 /debug-seq.js
 /debug-seq.sql
 /SKILLS.md
+
+# AbacusAI temp files
+.abacusai/
+
+# Development logs
+build_output.log
+dev-server-error.log
+dev-server.log
+
+test_nvidia.py

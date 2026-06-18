@@ -133,12 +133,12 @@ export default function MyActivitiesView({
       );
     });
 
-    // Sort by previsto date ascending (oldest/most overdue first). Unscheduled at the end.
+    // Sort by previsto date descending (newest first). Unscheduled at the end.
     return filtered.sort((a, b) => {
       if (a.previsto && b.previsto) {
         const dA = new Date(a.previsto);
         const dB = new Date(b.previsto);
-        return dA.getTime() - dB.getTime();
+        return dB.getTime() - dA.getTime();
       }
       if (a.previsto) return -1;
       if (b.previsto) return 1;
