@@ -89,15 +89,31 @@
 .reportContent {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .reportGrid {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   background: white;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 280px);
+}
+
+.reportGrid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reportGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reportGrid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 .reportListHeader {
@@ -108,6 +124,9 @@
   padding: 0.45rem 0.5rem;
   background: #f1f5f9;
   border-bottom: 1px solid #cbd5e1;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .activityGroup {
