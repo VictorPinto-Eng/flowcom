@@ -655,7 +655,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       // Limpar o container temporário do body
       document.body.removeChild(tempDiv);
 
-      const MAX_TOTAL_HEIGHT_PER_PAGE = 1120; // Limite vertical total da página (980px)
+      const MAX_TOTAL_HEIGHT_PER_PAGE = 1020 // Limite vertical total da página (980px)
       const MAX_ROW_HEIGHT_PER_PAGE = MAX_TOTAL_HEIGHT_PER_PAGE - measuredHeaderHeight; // Altura disponível apenas para as linhas
 
       let bodyHtml = '';
