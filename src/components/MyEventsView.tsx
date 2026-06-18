@@ -44,18 +44,18 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
     return `${days} dias`;
   };
 
-  // Sort events by previsto descending (most recent first)
-  const sortedEvents = useMemo(() => {
-    if (!events) return [];
-    return [...events].sort((a, b) => {
-      if (a.previsto && b.previsto) {
-        return new Date(b.previsto).getTime() - new Date(a.previsto).getTime();
-      }
-      if (a.previsto) return -1;
-      if (b.previsto) return 1;
-      return 0;
-    });
-  }, [events]);
+// Sort events by previsto ascending (oldest first)
+const sortedEvents = useMemo(() => {
+  if (!events) return [];
+  return [...events].sort((a, b) => {
+    if (a.previsto && b.previsto) {
+      return new Date(a.previsto).getTime() - new Date(b.previsto).getTime(); // Oldest first
+    }
+    if (a.previsto) return -1;
+    if (b.previsto) return 1;
+    return 0;
+  });
+}, [events]);
 
   // Estados de Edição de Andamentos
   const [editingActionSeqid, setEditingActionSeqid] = useState<bigint | null>(null);
