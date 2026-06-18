@@ -95,6 +95,10 @@ export class CardService {
         description: `moveu o card "${card.title}" de "${card.column.title}" para "${targetCol.title}"`
       });
     }
+
+    if (isDone) {
+      await this.addCardActionLog(card.seqid, 'Evento concluído', user);
+    }
   }
 
   async completeCard(cardId: string, targetColId: string, user: any, localDateStr?: string) {
@@ -127,6 +131,8 @@ export class CardService {
       action: 'CARD_COMPLETED',
       description: `concluiu o evento "${card.title}"`
     });
+
+    await this.addCardActionLog(card.seqid, 'Evento concluído', user);
   }
 
   async updateCardPrevisto(cardId: string, previstoStr: string | null, user: any) {

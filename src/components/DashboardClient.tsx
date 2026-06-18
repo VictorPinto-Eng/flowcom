@@ -910,14 +910,14 @@ export default function DashboardClient({
   });
 
   const sortedBoards = [...filteredBoards].sort((a, b) => {
-    const timeA = a.previsto ? new Date(a.previsto).getTime() : Infinity;
-    const timeB = b.previsto ? new Date(b.previsto).getTime() : Infinity;
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     if (timeA !== timeB) {
-      return timeA - timeB;
+      return timeB - timeA;
     }
     const seqA = a.seqId ? parseInt(a.seqId) || 0 : 0;
     const seqB = b.seqId ? parseInt(b.seqId) || 0 : 0;
-    return seqA - seqB;
+    return seqB - seqA;
   });
 
   return (

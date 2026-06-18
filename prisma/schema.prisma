@@ -63,7 +63,7 @@ model Card {
   dtatv          DateTime?        @map("dtatv") @db.Date
   doc            Int?
   previsto       DateTime?        @map("previsto") @db.Date
-  dtcon          DateTime?        @map("dtcon") @db.Date
+  dtcon          DateTime?        @map("dtcon") @db.Timestamptz(6)
   order          Int              @default(0) @map("sort_order")
   created_by     BigInt?          @map("created_by")
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
