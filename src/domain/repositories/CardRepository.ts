@@ -98,7 +98,16 @@ export class CardRepository {
         task_user: true,
         board: {
           include: {
-            workspace: true,
+            workspace: {
+              include: {
+                user: true,
+                members: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            },
             user: true
           }
         },
@@ -110,7 +119,16 @@ export class CardRepository {
         },
         column: {
           include: {
-            workspace: true
+            workspace: {
+              include: {
+                user: true,
+                members: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            }
           }
         }
       },

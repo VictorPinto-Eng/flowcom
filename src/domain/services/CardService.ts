@@ -383,9 +383,9 @@ export class CardService {
 
     // Filter cards: by specific workspace if provided, otherwise only those in allowed workspaces
     const filteredCards = workspaceId
-      ? cards.filter(c => (c.column as any)?.board?.workspace?.id === workspaceId)
+      ? cards.filter(c => c.board?.workspace?.id === workspaceId || c.column?.workspace?.id === workspaceId)
       : cards.filter(c => {
-          const wsSeqid = c.column?.workspaceSeqid;
+          const wsSeqid = c.column?.workspaceSeqid || c.board?.workspaceId;
           return wsSeqid ? allowedWorkspaceSeqids.includes(wsSeqid) : false;
         });
 
@@ -397,6 +397,22 @@ export class CardService {
         const diffTime = Math.abs(end.getTime() - start.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         durationStr = `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+      }
+
+      // Extrai os membros e proprietário do workspace
+      const wsObj = c.board?.workspace || c.column?.workspace;
+      const workspaceMembersList: string[] = [];
+      if (wsObj) {
+        if (wsObj.user?.name) {
+          workspaceMembersList.push(wsObj.user.name);
+        }
+        if (wsObj.members && Array.isArray(wsObj.members)) {
+          wsObj.members.forEach((m: any) => {
+            if (m.user?.name) {
+              workspaceMembersList.push(m.user.name);
+            }
+          });
+        }
       }
 
       return {
@@ -418,6 +434,8 @@ export class CardService {
         boardDtcon: c.board?.dtcon,
         boardPrevisto: c.board?.previsto,
         boardOwnerName: c.board?.user?.name || 'Não atribuído',
+        boardCreatedAt: c.board?.createdAt,
+        workspaceMembers: workspaceMembersList,
         card_act: c.card_act?.map((act: any) => ({
           ...act,
           seqid: act.seqid.toString(),

@@ -142,3 +142,16 @@ a {
   font-weight: 600;
   font-size: 0.8rem;
 }
+
+@media print {
+  html, body, main {
+    background: white !important;
+    color: black !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+  body::before {
+    display: none !important;
+  }
+}
