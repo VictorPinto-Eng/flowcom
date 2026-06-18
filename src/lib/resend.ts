@@ -1,9 +1,8 @@
 import { Resend } from 'resend';
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-if (!RESEND_API_KEY) {
+const RESEND_API_KEY: string = process.env.RESEND_API_KEY ?? (() => {
   throw new Error('RESEND_API_KEY environment variable is required');
-}
+})();
 const resend = new Resend(RESEND_API_KEY);
 
 export async function sendActivationEmail(email: string, name: string, token: string) {
