@@ -366,23 +366,6 @@ export default function Board({
       {/* ── Barra de Contexto ── */}
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          <button
-            onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const from = params.get('from');
-              if (from === 'my-activities') {
-                router.push('/dashboard?view=my-activities');
-              } else if (from === 'workspace') {
-                router.push(`/dashboard?workspaceId=${workspaceId}`);
-              } else {
-                router.back();
-              }
-            }}
-            className={styles.actionBtn}
-            title="Voltar para a tela anterior"
-          >
-            ‹ Voltar
-          </button>
           <div className={styles.contextInfo}>
             <span className={styles.contextWorkspace}>{workspaceName || 'Área de Trabalho'}</span>
             <div className={styles.contextBoardWrapper}>
@@ -418,6 +401,29 @@ export default function Board({
               {isAdding ? '✕ Cancelar' : '+ Cadastrar Evento'}
             </button>
           )}
+          <button
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const from = params.get('from');
+              if (from === 'my-activities') {
+                router.push('/dashboard?view=my-activities');
+              } else if (from === 'workspace') {
+                router.push(`/dashboard?workspaceId=${workspaceId}`);
+              } else {
+                if (typeof window !== 'undefined' && (window as any).__hasInternalNavigation) {
+                  router.back();
+                } else if (workspaceId) {
+                  router.push(`/dashboard?workspaceId=${workspaceId}`);
+                } else {
+                  router.push('/dashboard');
+                }
+              }
+            }}
+            className={styles.backBtn}
+            title="Voltar para a tela anterior"
+          >
+            ‹ Voltar
+          </button>
         </div>
       </div>
 
