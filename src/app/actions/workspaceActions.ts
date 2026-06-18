@@ -3,7 +3,6 @@
 import { WorkspaceService } from '@/domain/services/WorkspaceService';
 import { UserRepository } from '@/domain/repositories/UserRepository';
 import { revalidatePath } from 'next/cache';
-import { getSession } from '@/lib/auth';
 
 const workspaceService = new WorkspaceService();
 const userRepo = new UserRepository();
@@ -24,16 +23,17 @@ export async function getUserWorkspaces(userId: string, userSeqid?: string) {
 }
 
 export async function getCurrentUserAction() {
-  const session = await getSession();
-  if (!session) return null;
-  
-  const user = await userRepo.findBySeqId(BigInt(session.userSeqId));
-  if (!user) return null;
-  
-  return {
-    ...user,
-    seqid: user.seqid.toString()
-  };
+  try {
+    const user = await userRepo.getLoggedUser();
+    if (!user) return null;
+    
+    return {
+      ...user,
+      seqid: user.seqid.toString()
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function updateWorkspaceAction(workspaceId: string, data: { name: string; typeId: string; description?: string }) {
