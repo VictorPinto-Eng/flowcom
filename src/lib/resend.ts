@@ -1,16 +1,19 @@
 import { Resend } from 'resend';
 
-const RESEND_API_KEY: string = process.env.RESEND_API_KEY ?? (() => {
-  throw new Error('RESEND_API_KEY environment variable is required');
-})();
-const resend = new Resend(RESEND_API_KEY);
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    throw new Error('RESEND_API_KEY environment variable is required');
+  }
+  return new Resend(key);
+}
 
 export async function sendActivationEmail(email: string, name: string, token: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const activationLink = `${appUrl}/verify?token=${token}`;
 
   try {
-    const data = await resend.emails.send({
+    const data = await getResend().emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Flow <onboarding@resend.dev>',
       to: email,
       subject: 'Ative sua conta no Flow',
@@ -42,7 +45,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
   const resetLink = `${appUrl}/reset-password?token=${token}`;
 
   try {
-    const data = await resend.emails.send({
+    const data = await getResend().emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Flow <security@resend.dev>',
       to: email,
       subject: 'Recuperação de Senha - Flow',
@@ -85,7 +88,7 @@ export async function sendWorkspaceInviteEmail(email: string, inviterName: strin
     : `convidou você para colaborar na área de trabalho <strong>${workspaceName}</strong> no Flow. Como você ainda não tem uma conta, clique no botão abaixo para criar seu cadastro (o e-mail será preenchido automaticamente) e aceitar o convite diretamente no seu painel pós-login.`;
 
   try {
-    const data = await resend.emails.send({
+    const data = await getResend().emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Flow <onboarding@resend.dev>',
       to: email,
       subject,
