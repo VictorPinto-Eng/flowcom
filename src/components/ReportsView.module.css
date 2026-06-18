@@ -100,8 +100,6 @@
   border-radius: 6px;
   background: white;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
   max-height: 65vh;
 }
 
