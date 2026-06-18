@@ -1934,7 +1934,7 @@ export default function DashboardClient({
                             onClick={() => setIsPremiumGridOpen(true)}
                             title="Visualização Premium"
                           >
-                            👑 Painel
+                            🧩 Painel
                           </button>
                         </div>
                         {workspaces.length === 0 ? (
