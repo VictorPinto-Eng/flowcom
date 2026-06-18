@@ -168,6 +168,26 @@
   flex-direction: column;
   gap: 2rem;
   animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.workspaceOverview::-webkit-scrollbar {
+  width: 8px;
+}
+
+.workspaceOverview::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.workspaceOverview::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+
+.workspaceOverview::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .workspaceOverviewHeader {
@@ -354,7 +374,7 @@
   background: rgba(255, 255, 255, 0.01);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -927,7 +947,8 @@
 
 .sectorFilterSelect:focus {
   border-color: #7c3aed;
-  background: rgba(0, 0, 0, 0.8);
+  background: #ffffff;
+  color: var(--text-primary);
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
@@ -945,8 +966,8 @@
 }
 
 .sectorFilterSelect option {
-  background-color: #121214;
-  color: white;
+  background-color: #ffffff;
+  color: var(--text-primary);
   padding: 0.5rem;
 }
 
