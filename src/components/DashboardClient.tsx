@@ -247,6 +247,8 @@ export default function DashboardClient({
   const [selectedWorkspaceColumns, setSelectedWorkspaceColumns] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSectorId, setSelectedSectorId] = useState('');
+  const [filterDateStart, setFilterDateStart] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
 
@@ -1022,7 +1024,15 @@ export default function DashboardClient({
       if (!isCreator && !isAssigned) return false;
     }
 
-    // 3. Search query filter
+    // 3. Date range filter
+    if (filterDateStart || filterDateEnd) {
+      const d = board.previsto ? new Date(board.previsto).getTime() : 0;
+      if (!d) return false;
+      if (filterDateStart && d < new Date(filterDateStart).getTime()) return false;
+      if (filterDateEnd && d > new Date(filterDateEnd).getTime()) return false;
+    }
+
+    // 4. Search query filter
     if (!searchTerm) return true;
     const lowerSearch = searchTerm.toLowerCase();
 
@@ -1037,14 +1047,14 @@ export default function DashboardClient({
   });
 
   const sortedBoards = [...filteredBoards].sort((a, b) => {
-    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    const timeA = a.previsto ? new Date(a.previsto).getTime() : Infinity;
+    const timeB = b.previsto ? new Date(b.previsto).getTime() : Infinity;
     if (timeA !== timeB) {
-      return timeB - timeA;
+      return timeA - timeB;
     }
     const seqA = a.seqId ? parseInt(a.seqId) || 0 : 0;
     const seqB = b.seqId ? parseInt(b.seqId) || 0 : 0;
-    return seqB - seqA;
+    return seqA - seqB;
   });
 
   return (
@@ -1621,17 +1631,44 @@ export default function DashboardClient({
                               className={styles.sectorFilterSelect}
                             >
                               <option value="">Todos os Setores</option>
-                              {sectors.map((s: any) => (
-                                <option key={s.id} value={s.id.toString()}>
-                                  {s.name} ({s.acronym})
-                                </option>
-                              ))}
+                              {sectors
+                                .filter((s: any) => ongoingBoards.some((b: any) => b.sector?.id === s.id))
+                                .map((s: any) => (
+                                  <option key={s.id} value={s.id.toString()}>
+                                    {s.name} ({s.acronym})
+                                  </option>
+                                ))}
                             </select>
                           </div>
                         )}
+                        <div className={styles.dateFilterInline}>
+                          <input
+                            type="date"
+                            value={filterDateStart}
+                            onChange={e => setFilterDateStart(e.target.value)}
+                            className={styles.dateFilterInput}
+                            title="Data prevista inicial"
+                          />
+                          <span className={styles.dateFilterSep}>até</span>
+                          <input
+                            type="date"
+                            value={filterDateEnd}
+                            onChange={e => setFilterDateEnd(e.target.value)}
+                            className={styles.dateFilterInput}
+                            title="Data prevista final"
+                          />
+                          {(filterDateStart || filterDateEnd) && (
+                            <button
+                              className={styles.dateFilterClear}
+                              onClick={() => { setFilterDateStart(''); setFilterDateEnd(''); }}
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <span className={styles.searchCount}>
-                        {(searchTerm || selectedSectorId)
+                        {(searchTerm || selectedSectorId || filterDateStart || filterDateEnd)
                           ? `${filteredBoards.length} resultado(s)`
                           : `${ongoingBoards.length} atividade(s)`
                         }

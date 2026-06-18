@@ -82,8 +82,6 @@ export default function MyActivitiesView({
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
-  const [filterDateStart, setFilterDateStart] = useState('');
-  const [filterDateEnd, setFilterDateEnd] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Restore layout preference on mount
@@ -135,20 +133,12 @@ export default function MyActivitiesView({
       );
     });
 
-    // Filter by date range
-    const dateFiltered = filtered.filter(b => {
-      if (!filterDateStart && !filterDateEnd) return true;
-      if (!b.previsto) return false;
-      const d = new Date(b.previsto).getTime();
-      if (filterDateStart && d < new Date(filterDateStart).getTime()) return false;
-      if (filterDateEnd && d > new Date(filterDateEnd).getTime()) return false;
-      return true;
-    });
-
     // Sort by previsto date ascending (oldest/most overdue first). Unscheduled at the end.
-    return dateFiltered.sort((a, b) => {
+    return filtered.sort((a, b) => {
       if (a.previsto && b.previsto) {
-        return new Date(a.previsto).getTime() - new Date(b.previsto).getTime();
+        const dA = new Date(a.previsto);
+        const dB = new Date(b.previsto);
+        return dA.getTime() - dB.getTime();
       }
       if (a.previsto) return -1;
       if (b.previsto) return 1;
@@ -157,7 +147,7 @@ export default function MyActivitiesView({
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return timeB - timeA;
     });
-  }, [workspaces, currentUser.id, userSeqid, searchTerm, filterDateStart, filterDateEnd]);
+  }, [workspaces, currentUser.id, userSeqid, searchTerm]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -323,38 +313,6 @@ export default function MyActivitiesView({
           <span className={styles.resultsCount}>
             {userActivities.length} atividade(s) encontrada(s)
           </span>
-        </div>
-
-        {/* Date Range Filter */}
-        <div className={styles.dateFilterBar}>
-          <div className={styles.dateFilterGroup}>
-            <label className={styles.dateFilterLabel}>Filtrar por Data Prevista:</label>
-            <div className={styles.dateFilterInputs}>
-              <input
-                type="date"
-                value={filterDateStart}
-                onChange={e => setFilterDateStart(e.target.value)}
-                className={styles.dateFilterInput}
-                title="Data inicial"
-              />
-              <span className={styles.dateFilterSeparator}>até</span>
-              <input
-                type="date"
-                value={filterDateEnd}
-                onChange={e => setFilterDateEnd(e.target.value)}
-                className={styles.dateFilterInput}
-                title="Data final"
-              />
-              {(filterDateStart || filterDateEnd) && (
-                <button
-                  className={styles.dateFilterClear}
-                  onClick={() => { setFilterDateStart(''); setFilterDateEnd(''); }}
-                >
-                  ✕ Limpar
-                </button>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Activities List/Grid */}

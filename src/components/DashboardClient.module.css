@@ -971,6 +971,57 @@
   padding: 0.5rem;
 }
 
+/* Date Filter Inline */
+.dateFilterInline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dateFilterInput {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  max-width: 140px;
+}
+
+.dateFilterInput:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.dateFilterSep {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.dateFilterClear {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.dateFilterClear:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
 /* ==========================================================================
    Ultra-Premium Welcome Dashboard Styling
    ========================================================================== */

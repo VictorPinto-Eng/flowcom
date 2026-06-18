@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "abacusai.abacusai-agent"
+        "abacusai.abacusai-agent",
+        "sst-dev.opencode"
     ]
 }
