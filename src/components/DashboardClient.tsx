@@ -2122,30 +2122,6 @@ export default function DashboardClient({
                 <button className={styles.drawerCloseBtn} onClick={() => setSelectedEvent(null)}>✕</button>
               </div>
               <div className={styles.drawerContent}>
-                {isAdminOrOwner && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.25rem' }}>
-                    <button
-                      onClick={() => handleAdminTransferRequest(selectedEvent)}
-                      style={{
-                        background: 'rgba(124, 58, 237, 0.08)',
-                        border: '1px solid rgba(124, 58, 237, 0.2)',
-                        color: '#7c3aed',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '8px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      🔄 Solicitar Transferência
-                    </button>
-                  </div>
-                )}
-
                 {isEventAssignedToMe ? (
                   <div className={styles.drawerAddAction}>
                     <textarea
