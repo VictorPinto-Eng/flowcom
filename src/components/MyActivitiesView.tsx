@@ -82,6 +82,8 @@ export default function MyActivitiesView({
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
+  const [filterDateStart, setFilterDateStart] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Restore layout preference on mount
@@ -133,21 +135,29 @@ export default function MyActivitiesView({
       );
     });
 
-    // Sort by previsto date descending (most recent first). Unscheduled at the end.
-    return filtered.sort((a, b) => {
-      // 1. Sort by previsto date
+    // Filter by date range
+    const dateFiltered = filtered.filter(b => {
+      if (!filterDateStart && !filterDateEnd) return true;
+      if (!b.previsto) return false;
+      const d = new Date(b.previsto).getTime();
+      if (filterDateStart && d < new Date(filterDateStart).getTime()) return false;
+      if (filterDateEnd && d > new Date(filterDateEnd).getTime()) return false;
+      return true;
+    });
+
+    // Sort by previsto date ascending (oldest/most overdue first). Unscheduled at the end.
+    return dateFiltered.sort((a, b) => {
       if (a.previsto && b.previsto) {
-        return new Date(b.previsto).getTime() - new Date(a.previsto).getTime();
+        return new Date(a.previsto).getTime() - new Date(b.previsto).getTime();
       }
       if (a.previsto) return -1;
       if (b.previsto) return 1;
 
-      // 2. Fallback to createdAt descending
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return timeB - timeA;
     });
-  }, [workspaces, currentUser.id, userSeqid, searchTerm]);
+  }, [workspaces, currentUser.id, userSeqid, searchTerm, filterDateStart, filterDateEnd]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -224,7 +234,7 @@ export default function MyActivitiesView({
         <div className={styles.headerTitleArea}>
           <h2 className={styles.title}>Minhas Atividades Agendadas</h2>
           <p className={styles.subtitle}>
-            Acompanhamento de todos os seus quadros/fluxos de trabalho ordenados por data de agendamento
+            Acompanhamento de todos os seus quadros/fluxos de trabalho ordenados do mais antigo para o futuro
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -313,6 +323,38 @@ export default function MyActivitiesView({
           <span className={styles.resultsCount}>
             {userActivities.length} atividade(s) encontrada(s)
           </span>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className={styles.dateFilterBar}>
+          <div className={styles.dateFilterGroup}>
+            <label className={styles.dateFilterLabel}>Filtrar por Data Prevista:</label>
+            <div className={styles.dateFilterInputs}>
+              <input
+                type="date"
+                value={filterDateStart}
+                onChange={e => setFilterDateStart(e.target.value)}
+                className={styles.dateFilterInput}
+                title="Data inicial"
+              />
+              <span className={styles.dateFilterSeparator}>até</span>
+              <input
+                type="date"
+                value={filterDateEnd}
+                onChange={e => setFilterDateEnd(e.target.value)}
+                className={styles.dateFilterInput}
+                title="Data final"
+              />
+              {(filterDateStart || filterDateEnd) && (
+                <button
+                  className={styles.dateFilterClear}
+                  onClick={() => { setFilterDateStart(''); setFilterDateEnd(''); }}
+                >
+                  ✕ Limpar
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Activities List/Grid */}
