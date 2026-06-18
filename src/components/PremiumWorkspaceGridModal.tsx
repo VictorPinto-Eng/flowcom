@@ -158,10 +158,7 @@ export default function PremiumWorkspaceGridModal({
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.titleGroup}>
-          <button className={styles.backBtn} onClick={onClose} title="Voltar ao início">
-            ← Voltar
-          </button>
-          <span className={styles.headerIcon}>👑</span>
+          <span className={styles.headerIcon}>🧩</span>
           <h2 className={styles.title}>
             Painel de Controle de <span className={styles.titleGradient}>Áreas de Trabalho</span>
             <span className={styles.badgeCount}>{workspaces.length} total</span>
@@ -174,6 +171,9 @@ export default function PremiumWorkspaceGridModal({
             title="Criar Nova Área de Trabalho"
           >
             <span>+</span> Nova Área
+          </button>
+          <button className={styles.backBtn} onClick={onClose} title="Voltar ao início">
+            ← Voltar
           </button>
         </div>
       </header>
@@ -359,28 +359,6 @@ export default function PremiumWorkspaceGridModal({
                     </button>
                     {((ws as any).currentUserRole === 'OWNER' || (ws as any).currentUserRole === 'ADMIN') && (
                       <>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const name = prompt('Digite o nome do novo painel de atividades (Kanban):');
-                            if (name && name.trim()) {
-                              onCreateBoard(ws.id, name.trim());
-                            }
-                          }}
-                          title="Criar Novo Kanban/Quadro nesta Área"
-                        >
-                          <span className={styles.actionBtnIcon}>➕</span>
-                          Novo Fluxo
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnGhost}`}
-                          onClick={() => onManageColumns(ws)}
-                          title="Configurar Colunas Kanban"
-                        >
-                          <span className={styles.actionBtnIcon}>⚙️</span>
-                          Colunas
-                        </button>
                         <button
                           className={`${styles.actionBtn} ${styles.actionBtnInvite}`}
                           onClick={() => onInviteMember && onInviteMember(ws)}

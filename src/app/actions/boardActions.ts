@@ -72,8 +72,8 @@ export async function completeBoardAction(boardId: string, localDateStr?: string
   if (!board) throw new Error('Quadro não encontrado');
 
   const role = await workspaceService.getUserRoleInWorkspace(board.workspaceId.toString(), BigInt(user.seqid));
-  if (role !== 'OWNER' && role !== 'ADMIN') {
-    throw new Error('Permissão negada. Apenas Proprietários e Administradores podem concluir este fluxo.');
+  if (role !== 'OWNER') {
+    throw new Error('Permissão negada. Apenas o Proprietário pode encerrar esta atividade.');
   }
 
   await boardService.completeActivity(boardId, user, localDateStr);

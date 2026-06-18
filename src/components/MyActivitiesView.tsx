@@ -97,36 +97,6 @@ export default function MyActivitiesView({
     localStorage.setItem('my-activities-layout', type);
   };
 
-  const scrollToTop = () => {
-    const element = contentRef.current;
-    if (element) {
-      const isScrollable = element.scrollHeight > element.clientHeight;
-      if (isScrollable) {
-        element.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const scrollToBottom = () => {
-    const element = contentRef.current;
-    if (element) {
-      const isScrollable = element.scrollHeight > element.clientHeight;
-      if (isScrollable) {
-        element.scrollTo({
-          top: element.scrollHeight,
-          behavior: 'smooth'
-        });
-        return;
-      }
-    }
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth'
-    });
-  };
-
   // Gather all activities (boards) across all workspaces belonging to this user
   const userActivities = useMemo(() => {
     if (!workspaces) return [];
@@ -163,11 +133,11 @@ export default function MyActivitiesView({
       );
     });
 
-    // Sort by previsto date ascending (closest date first). Unscheduled at the end.
+    // Sort by previsto date descending (most recent first). Unscheduled at the end.
     return filtered.sort((a, b) => {
       // 1. Sort by previsto date
       if (a.previsto && b.previsto) {
-        return new Date(a.previsto).getTime() - new Date(b.previsto).getTime();
+        return new Date(b.previsto).getTime() - new Date(a.previsto).getTime();
       }
       if (a.previsto) return -1;
       if (b.previsto) return 1;
@@ -545,23 +515,6 @@ export default function MyActivitiesView({
         )}
       </div>
 
-      {/* Floating Scroll Controls */}
-      <div className={styles.scrollButtons}>
-        <button 
-          className={styles.scrollBtn} 
-          onClick={scrollToTop} 
-          title="Ir para o topo"
-        >
-          ▲
-        </button>
-        <button 
-          className={styles.scrollBtn} 
-          onClick={scrollToBottom} 
-          title="Ir para o final"
-        >
-          ▼
-        </button>
-      </div>
     </div>
   );
 }

@@ -883,7 +883,19 @@ export default function DashboardClient({
       return false;
     }
 
-    // 2. Search query filter
+    // 2. Role-based filter: MEMBER users only see their own boards
+    const currentUserRole = (activeWorkspace as any)?.currentUserRole;
+    if (currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN') {
+      const isCreator = board.user?.id === user.id;
+      const isAssigned = board.columns?.some((col: any) =>
+        col.cards?.some((card: any) =>
+          card.task_user?.id === user.id || card.user?.id === user.id
+        )
+      );
+      if (!isCreator && !isAssigned) return false;
+    }
+
+    // 3. Search query filter
     if (!searchTerm) return true;
     const lowerSearch = searchTerm.toLowerCase();
 
@@ -1087,6 +1099,7 @@ export default function DashboardClient({
                 onCreateBoard={handleCreateBoard}
                 userId={user.id}
                 userSeqid={userSeqid}
+                currentUserRole={(activeWorkspace as any)?.currentUserRole}
                 onRenameBoard={() => setRenameBoardData({
                   id: currentBoard.id,
                   name: currentBoard.name,
@@ -1122,6 +1135,33 @@ export default function DashboardClient({
                   {activeWorkspace.description && (
                     <p className={styles.workspaceOverviewDescription}>{activeWorkspace.description}</p>
                   )}
+                  {((activeWorkspace as any).currentUserRole === 'OWNER' || (activeWorkspace as any).currentUserRole === 'ADMIN') && (
+                    <div className={styles.workspaceKanbanActions}>
+                      <button
+                        className={styles.kanbanActionBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const name = prompt('Digite o nome do novo painel de atividades (Kanban):');
+                          if (name && name.trim()) {
+                            handleCreateBoard(activeWorkspace.id, name.trim());
+                          }
+                        }}
+                        title="Criar Novo Kanban/Quadro nesta Área"
+                      >
+                        ➕ Novo Fluxo
+                      </button>
+                      <button
+                        className={styles.kanbanActionBtn}
+                        onClick={() => {
+                          setSelectedWorkspaceColumns(activeWorkspace);
+                          setIsWorkspaceColumnsModalOpen(true);
+                        }}
+                        title="Configurar Colunas Kanban"
+                      >
+                        ⚙️ Colunas
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.kanbanBoard}>
@@ -1142,7 +1182,13 @@ export default function DashboardClient({
                               Nenhum card
                             </div>
                           ) : (
-                            colCards.map((card: any) => {
+                            colCards
+                              .filter((card: any) => {
+                                const role = (activeWorkspace as any)?.currentUserRole;
+                                if (role === 'OWNER' || role === 'ADMIN') return true;
+                                return card.user?.id === user.id || card.task_user?.id === user.id;
+                              })
+                              .map((card: any) => {
                               let statusType = 'normal'; // 'danger', 'warning', 'success', 'normal'
                               if (card.previsto) {
                                 const dateStr = new Date(card.previsto).toISOString().split('T')[0];
@@ -1492,13 +1538,15 @@ export default function DashboardClient({
                                     >
                                       ✅
                                     </Link>
-                                    <button
-                                      className={styles.tableCompleteBoardBtn}
-                                      onClick={() => handleCompleteBoard(board.id, board.name)}
-                                      title="Finalizar e Encerrar Atividade"
-                                    >
-                                      🔒
-                                    </button>
+                                    {(activeWorkspace as any)?.currentUserRole === 'OWNER' && (
+                                      <button
+                                        className={styles.tableCompleteBoardBtn}
+                                        onClick={() => handleCompleteBoard(board.id, board.name)}
+                                        title="Finalizar e Encerrar Atividade"
+                                      >
+                                        🔒
+                                      </button>
+                                    )}
                                   </div>
                                 </td>
                               </tr>

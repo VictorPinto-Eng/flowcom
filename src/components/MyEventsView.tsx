@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   updateCardPrevistoAction,
@@ -43,6 +43,19 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
 
     return `${days} dias`;
   };
+
+  // Sort events by previsto descending (most recent first)
+  const sortedEvents = useMemo(() => {
+    if (!events) return [];
+    return [...events].sort((a, b) => {
+      if (a.previsto && b.previsto) {
+        return new Date(b.previsto).getTime() - new Date(a.previsto).getTime();
+      }
+      if (a.previsto) return -1;
+      if (b.previsto) return 1;
+      return 0;
+    });
+  }, [events]);
 
   // Estados de Edição de Andamentos
   const [editingActionSeqid, setEditingActionSeqid] = useState<bigint | null>(null);
@@ -309,7 +322,7 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
                 </tr>
               </thead>
               <tbody>
-                {events.map(ev => {
+                {sortedEvents.map(ev => {
                   let statusType = 'normal'; // 'danger', 'warning', 'success', 'normal'
                   if (ev.previsto) {
                     const dateStr = new Date(ev.previsto).toISOString().split('T')[0];

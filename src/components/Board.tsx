@@ -26,6 +26,7 @@ interface BoardProps {
   boardId: string;
   userId: string;
   userSeqid?: string;
+  currentUserRole?: string;
   onRenameBoard?: (boardId: string, name: string) => void;
   viewMode?: string;
   boardDtatv?: string | Date | null;
@@ -46,6 +47,7 @@ export default function Board({
   boardId,
   userId,
   userSeqid = '',
+  currentUserRole = '',
   onRenameBoard,
   viewMode = 'ongoing',
   boardDtatv,
@@ -108,6 +110,13 @@ export default function Board({
   const displayEvents: (CardType & { columnName: string; columnId: string; seqid?: string; card_act?: any[] })[] = [];
   columns.forEach(col => {
     col.cards.forEach(card => {
+      // MEMBER users only see their own cards
+      if (currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN' && currentUserRole !== '') {
+        const isCreator = card.user?.id === userId;
+        const isAssigned = card.task_user?.id === userId;
+        if (!isCreator && !isAssigned) return;
+      }
+
       const isDoneCol = col.title.toLowerCase().includes('concluído') || col.title.toLowerCase().includes('concluido');
       if (viewMode === 'completed') {
         if (isDoneCol || card.dtcon) {

@@ -15,6 +15,7 @@ interface KanbanClientProps {
   onCreateBoard: (workspaceId: string, name: string) => Promise<void>;
   userId: string;
   userSeqid?: string;
+  currentUserRole?: string;
   onRenameBoard?: (boardId: string, name: string) => void;
   viewMode?: string;
   boardDtatv?: string | Date | null;
@@ -33,6 +34,7 @@ export default function KanbanClient({
   onCreateBoard,
   userId,
   userSeqid = '',
+  currentUserRole = '',
   onRenameBoard,
   viewMode = 'ongoing',
   boardDtatv,
@@ -59,6 +61,7 @@ export default function KanbanClient({
       onDeleteColumn={deleteColumn}
       userId={userId}
       userSeqid={userSeqid}
+      currentUserRole={currentUserRole}
       onRenameBoard={onRenameBoard}
       viewMode={viewMode}
       boardDtatv={boardDtatv}

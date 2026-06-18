@@ -7,7 +7,8 @@
   flex-direction: column;
   overflow: hidden;
   animation: fadeIn 0.3s ease;
-  min-height: 500px;
+  min-height: 0;
+  flex: 1;
   position: relative;
 }
 
@@ -25,6 +26,9 @@
   background: #ffffff;
   flex-wrap: wrap;
   gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .headerTitleArea {
@@ -37,12 +41,13 @@
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.5px;
+  margin: 0;
 }
 
 .subtitle {
   font-size: 0.9rem;
   color: #64748b;
-  margin-top: 0.25rem;
+  margin: 0;
 }
 
 .headerActions {
@@ -94,12 +99,26 @@
 }
 
 .content {
-  padding: 2rem;
+  padding: 0.75rem 2rem 2rem;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
+}
+
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 /* KPI Panel */
@@ -531,8 +550,6 @@
 .tableWrapper {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow-y: auto;
-  max-height: 60vh;
 }
 
 .tableWrapper::-webkit-scrollbar {
@@ -563,9 +580,6 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 1;
 }
 
 .table td {
@@ -737,45 +751,4 @@
   border-color: #94a3b8;
 }
 
-/* Floating Scroll Buttons */
-.scrollButtons {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  z-index: 1000;
-  pointer-events: none;
-}
-
-.scrollBtn {
-  pointer-events: auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  font-size: 0.8rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(8px);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.scrollBtn:hover {
-  background: #ffffff;
-  color: #10b981;
-  border-color: #10b981;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.15), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
-}
-
-.scrollBtn:active {
-  transform: translateY(0);
-}
 
