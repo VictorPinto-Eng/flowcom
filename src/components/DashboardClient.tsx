@@ -1075,7 +1075,7 @@ export default function DashboardClient({
             }}
             title="Visualizar Painel de Atividades por Área de Trabalho"
           >
-            🏠 Painel
+            🧩 Painel
           </button>
           <button
             className={styles.myActivitiesTrigger}
