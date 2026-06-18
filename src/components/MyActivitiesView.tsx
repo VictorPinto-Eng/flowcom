@@ -133,20 +133,20 @@ export default function MyActivitiesView({
       );
     });
 
-    // Sort by previsto date descending (newest first). Unscheduled at the end.
-    return filtered.sort((a, b) => {
-      if (a.previsto && b.previsto) {
-        const dA = new Date(a.previsto);
-        const dB = new Date(b.previsto);
-        return dB.getTime() - dA.getTime();
-      }
-      if (a.previsto) return -1;
-      if (b.previsto) return 1;
-
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return timeB - timeA;
-    });
+// Sort by previsto date ascending (oldest first). Unscheduled at the end.
+return filtered.sort((a, b) => {
+  if (a.previsto && b.previsto) {
+    const dA = new Date(a.previsto);
+    const dB = new Date(b.previsto);
+    return dA.getTime() - dB.getTime(); // Oldest first
+  }
+  if (a.previsto) return -1;
+  if (b.previsto) return 1;
+  
+  const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  return timeB - timeA;
+});
   }, [workspaces, currentUser.id, userSeqid, searchTerm]);
 
   // Calculate statistics
