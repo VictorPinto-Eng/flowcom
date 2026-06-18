@@ -54,35 +54,15 @@ export class UserRepository {
     return members.map(m => this.mapUser(m.user));
   }
 
-  // Temporary mock function for local development
-  async getMockUser() {
-    // Busca o usuário oficial Victor Pinto (ID 2)
-    const user = await this.findByEmail('vlpinto.eng@gmail.com');
-    if (!user) {
-      // Caso não exista (segurança), cria com seqid 2
-      const newUser = await prisma.user.create({
-        data: {
-          seqid: 2,
-          name: 'Victor Pinto',
-          email: 'vlpinto.eng@gmail.com',
-          image: 'https://github.com/victorpinto.png'
-        }
-      });
-      return this.mapUser(newUser);
-    }
-    return user;
-  }
-
-  // Secure production session resolver
   async getLoggedUser() {
     const session = await getSession();
     if (session) {
       const user = await this.findBySeqId(BigInt(session.userSeqId));
       if (user) return user;
     }
-    // Fallback only allowed in development/local environments
-    if (process.env.NODE_ENV !== 'production') {
-      return await this.getMockUser();
+    if (process.env.MOCK_USER_ENABLED === 'true') {
+      const user = await this.findByEmail('vlpinto.eng@gmail.com');
+      if (user) return user;
     }
     throw new Error('Não autorizado. Por favor, faça login.');
   }
