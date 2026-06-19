@@ -67,9 +67,9 @@ const getLocalDateString = (dateInput: any) => {
   if (!dateInput) return null;
   const d = new Date(dateInput);
   if (isNaN(d.getTime())) return null;
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
@@ -83,7 +83,7 @@ const safeFormatDate = (dateInput: any): string => {
   if (!dateInput) return '—';
   const d = new Date(dateInput);
   if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('pt-BR');
+  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
 const validateDateFilter = (dateStr: string): boolean => {
