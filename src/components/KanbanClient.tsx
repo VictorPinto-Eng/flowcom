@@ -21,6 +21,7 @@ interface KanbanClientProps {
   boardDtatv?: string | Date | null;
   boardCreatedAt?: string | Date;
   boardPrevisto?: string | Date | null;
+  boardDtcon?: string | Date | null;
 }
 
 export default function KanbanClient({ 
@@ -39,7 +40,8 @@ export default function KanbanClient({
   viewMode = 'ongoing',
   boardDtatv,
   boardCreatedAt,
-  boardPrevisto
+  boardPrevisto,
+  boardDtcon
 }: KanbanClientProps) {
   const { columns, addColumn, addCard, moveCard, copyColumn, deleteColumn, completeCard } = useKanban(initialColumns, boardId);
 
@@ -67,6 +69,7 @@ export default function KanbanClient({
       boardDtatv={boardDtatv}
       boardCreatedAt={boardCreatedAt}
       boardPrevisto={boardPrevisto}
+      boardDtcon={boardDtcon}
     />
   );
 }

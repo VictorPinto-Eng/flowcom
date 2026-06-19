@@ -911,7 +911,8 @@ export default function DashboardClient({
   };
 
   const handleCompleteBoard = async (boardId: string, boardName: string) => {
-    const role = (activeWorkspace as any)?.currentUserRole;
+    const boardWorkspace = workspaces.find(ws => ws.boards?.some(b => b.id === boardId));
+    const role = boardWorkspace ? (boardWorkspace as any).currentUserRole : (activeWorkspace as any)?.currentUserRole;
     const isOwner = role === 'OWNER';
 
     if (!isOwner) {
@@ -1369,6 +1370,7 @@ export default function DashboardClient({
                 boardDtatv={currentBoard.dtatv}
                 boardCreatedAt={currentBoard.createdAt}
                 boardPrevisto={currentBoard.previsto}
+                boardDtcon={currentBoard.dtcon}
               />
             ) : activeWorkspace && clientView === 'kanban' ? (
               <div className={styles.workspaceOverview}>

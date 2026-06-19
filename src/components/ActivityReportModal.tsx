@@ -256,6 +256,10 @@ export default function ActivityReportModal({
                             ? new Date(board.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
                             : '—';
                           
+                          const dtconDateStr = board.dtcon
+                            ? new Date(board.dtcon).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+                            : null;
+                          
                           const days = getWorkingDays(board);
                           const daysText = board.dtcon
                             ? `${days} dias (Concluído)`
@@ -263,7 +267,18 @@ export default function ActivityReportModal({
                             
                           return (
                             <div className={styles.previstoColWrapper}>
-                              <div className={styles.previstoDate}>{previstoDateStr}</div>
+                              {dtconDateStr ? (
+                                <>
+                                  <div className={styles.previstoDate} style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.85em', color: 'var(--text-muted)' }}>
+                                    Prazo: {previstoDateStr}
+                                  </div>
+                                  <div className={styles.dtconDate} style={{ fontWeight: 'bold', color: '#10b981', fontSize: '0.9rem' }}>
+                                    Concluído: {dtconDateStr}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className={styles.previstoDate}>{previstoDateStr}</div>
+                              )}
                               <div className={styles.workingDaysText}>{daysText}</div>
                             </div>
                           );

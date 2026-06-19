@@ -32,6 +32,7 @@ interface BoardProps {
   boardDtatv?: string | Date | null;
   boardCreatedAt?: string | Date;
   boardPrevisto?: string | Date | null;
+  boardDtcon?: string | Date | null;
 }
 
 export default function Board({
@@ -52,7 +53,8 @@ export default function Board({
   viewMode = 'ongoing',
   boardDtatv,
   boardCreatedAt,
-  boardPrevisto
+  boardPrevisto,
+  boardDtcon
 }: BoardProps) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -380,11 +382,15 @@ export default function Board({
                 </button>
               )}
             </div>
-            {boardPrevisto && (
+            {boardDtcon ? (
+              <span className={styles.contextPrevisto} style={{ color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Atividade Concluída">
+                ✅ Concluído em: {new Date(boardDtcon).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+              </span>
+            ) : boardPrevisto ? (
               <span className={styles.contextPrevisto} title="Data Prevista de Conclusão da Atividade">
                 📅 Previsto: {new Date(boardPrevisto).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
               </span>
-            )}
+            ) : null}
             {boardDetalhes && (
               <span className={styles.contextDetails} title={boardDetalhes}>
                 {boardDetalhes}
