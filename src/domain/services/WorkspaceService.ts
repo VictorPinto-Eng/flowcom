@@ -530,4 +530,197 @@ export class WorkspaceService {
 
     return member?.role || null;
   }
+
+  async getMovements(userId: string, userSeqid?: string) {
+    const workspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined);
+
+    const workspaceMap = new Map<bigint, { id: string; name: string }>();
+    const workspaceSeqids: bigint[] = [];
+    for (const ws of workspaces) {
+      workspaceMap.set(ws.seqid, { id: ws.id, name: ws.name });
+      workspaceSeqids.push(ws.seqid);
+    }
+
+    if (workspaceSeqids.length === 0) {
+      return [];
+    }
+
+    const boards = await prisma.board.findMany({
+      where: {
+        workspaceId: { in: workspaceSeqids }
+      }
+    });
+
+    const boardMap = new Map<bigint, { seqId: bigint; name: string; createdAt: Date; workspaceSeqid: bigint }>();
+    const boardSeqids: bigint[] = [];
+    const boardSeqidStrings: string[] = [];
+    for (const board of boards) {
+      boardMap.set(board.seqId, {
+        seqId: board.seqId,
+        name: board.name,
+        createdAt: board.createdAt,
+        workspaceSeqid: board.workspaceId
+      });
+      boardSeqids.push(board.seqId);
+      boardSeqidStrings.push(board.seqId.toString());
+    }
+
+    if (boardSeqids.length === 0) {
+      return [];
+    }
+
+    const logs = await prisma.activityLog.findMany({
+      where: {
+        boardId: { in: boardSeqidStrings }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const userIds = [...new Set(logs.map(log => log.userId).filter(Boolean))];
+    const userSeqIds = userIds
+      .map(id => {
+        try {
+          return BigInt(id);
+        } catch {
+          return null;
+        }
+      })
+      .filter((id): id is bigint => id !== null);
+
+    const logUsers = await prisma.user.findMany({
+      where: {
+        OR: [
+          { email: { in: userIds } },
+          { seqid: { in: userSeqIds } }
+        ]
+      }
+    });
+
+    const cards = await prisma.card.findMany({
+      where: {
+        board_seqid: { in: boardSeqids }
+      },
+      select: {
+        seqid: true,
+        title: true
+      }
+    });
+
+    const cardSeqids: bigint[] = cards.map(c => c.seqid);
+
+    const cardActs = cardSeqids.length > 0 ? await prisma.card_act.findMany({
+      where: {
+        card_seqid: { in: cardSeqids }
+      },
+      include: {
+        users: {
+          select: {
+            name: true,
+            image: true
+          }
+        },
+        card: {
+          select: {
+            title: true,
+            board_seqid: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    }) : [];
+
+    const unifiedMovements: any[] = [];
+
+    for (const log of logs) {
+      const board = boardMap.get(BigInt(log.boardId));
+      if (!board) continue;
+      const ws = workspaceMap.get(board.workspaceSeqid);
+      if (!ws) continue;
+
+      const matchedUser = logUsers.find(u =>
+        u.email === log.userId ||
+        u.seqid.toString() === log.userId ||
+        `user-${u.seqid}` === log.userId
+      );
+      const userName = matchedUser ? matchedUser.name : (log.userId || 'Usuário');
+      const userImage = matchedUser ? matchedUser.image : null;
+
+      if (log.action === 'BOARD_CREATED') {
+        unifiedMovements.push({
+          id: `log-${log.seqid.toString()}`,
+          date: log.createdAt.toISOString(),
+          type: 'BOARD_CREATED',
+          actionName: 'Abertura de Atividade',
+          description: log.description || `criou a atividade "${board.name}"`,
+          userName,
+          userImage,
+          workspaceName: ws.name,
+          workspaceSeqid: board.workspaceSeqid.toString(),
+          boardName: board.name,
+          boardSeqId: board.seqId.toString()
+        });
+      } else if (log.action === 'CARD_CREATED') {
+        const boardCreated = new Date(board.createdAt);
+        const cardCreated = new Date(log.createdAt);
+
+        const boardYear = boardCreated.getUTCFullYear();
+        const boardMonth = boardCreated.getUTCMonth();
+        const cardYear = cardCreated.getUTCFullYear();
+        const cardMonth = cardCreated.getUTCMonth();
+
+        const isPrevMonthBoard = (boardYear < cardYear) || (boardYear === cardYear && boardMonth < cardMonth);
+
+        if (isPrevMonthBoard) {
+          unifiedMovements.push({
+            id: `log-${log.seqid.toString()}`,
+            date: log.createdAt.toISOString(),
+            type: 'CARD_CREATED',
+            actionName: 'Cadastro de Evento (Atividade de Mês Anterior)',
+            description: log.description || `criou um card na atividade "${board.name}"`,
+            userName,
+            userImage,
+            workspaceName: ws.name,
+            workspaceSeqid: board.workspaceSeqid.toString(),
+            boardName: board.name,
+            boardSeqId: board.seqId.toString()
+          });
+        }
+      }
+    }
+
+    for (const act of cardActs) {
+      if (!act.card_seqid || !act.card) continue;
+      const boardSeqid = act.card.board_seqid;
+      if (!boardSeqid) continue;
+      const board = boardMap.get(boardSeqid);
+      if (!board) continue;
+      const ws = workspaceMap.get(board.workspaceSeqid);
+      if (!ws) continue;
+
+      const userName = act.users ? act.users.name : 'Usuário';
+      const userImage = act.users ? act.users.image : null;
+
+      unifiedMovements.push({
+        id: `act-${act.seqid.toString()}`,
+        date: act.created_at.toISOString(),
+        type: 'CARD_ACTIVITY',
+        actionName: 'Andamento de Evento',
+        description: `adicionou o andamento "${act.description}" no evento "${act.card.title}"`,
+        userName,
+        userImage,
+        workspaceName: ws.name,
+        workspaceSeqid: board.workspaceSeqid.toString(),
+        boardName: board.name,
+        boardSeqId: board.seqId.toString(),
+        cardTitle: act.card.title
+      });
+    }
+
+    unifiedMovements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return unifiedMovements;
+  }
 }

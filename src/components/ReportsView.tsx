@@ -325,72 +325,29 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       alert('Por favor, primeiro carregue os dados clicando no botão "Carregar Relatório".');
       return;
     }
+    if (sortedGroupedCards.length === 0) {
+      alert('Nenhum dado para gerar o PDF. Verifique os filtros.');
+      return;
+    }
 
-    // Open window immediately to prevent popup blocker
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
       alert('Por favor, ative a exibição de pop-ups para gerar o relatório.');
       return;
     }
-
-    // Write a loader state to the new window so the user knows it's working
-    pdfWindow.document.write(`
-      <html>
-      <head>
-        <title>Gerando PDF...</title>
-        <style>
-          body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: sans-serif;
-            color: #475569;
-            background: #f8fafc;
-          }
-          .spinner {
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="spinner"></div>
-        <div>Gerando documento PDF...</div>
-      </body>
-      </html>
-    `);
+    pdfWindow.document.write('<html><head><title>Gerando PDF...</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#475569;background:#f8fafc}.spinner{border:4px solid #e2e8f0;border-top:4px solid #6366f1;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:15px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></head><body><div class="spinner"></div><div>Gerando documento PDF...</div></body></html>');
     pdfWindow.document.close();
 
     setIsGeneratingPdf(true);
 
     try {
       const now = new Date();
-      const ano = now.getFullYear();
-      const mes = String(now.getMonth() + 1).padStart(2, '0');
-      const dia = String(now.getDate()).padStart(2, '0');
-      const anoMesDia = `${ano}${mes}${dia}`;
-
+      const anoMesDia = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       const nrControle = String(Math.floor(1000 + Math.random() * 9000));
       const filename = `${anoMesDia}_${nrControle}.pdf`;
 
-      // Load html2pdf library if not already loaded
       await new Promise<void>((resolve, reject) => {
-        if ((window as any).html2pdf) {
-          resolve();
-          return;
-        }
+        if ((window as any).html2pdf) { resolve(); return; }
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
         script.onload = () => resolve();
@@ -401,74 +358,15 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       const title = isGlobal ? 'Dashboard Geral de Atividades' : `Dashboard da Área de Trabalho: ${workspaceName || 'Área de Trabalho'}`;
       const subtitle = isGlobal ? 'Visão estratégica de todo o sistema' : 'Acompanhamento detalhado desta área de trabalho';
 
-      // ─── Inline page-header block (injected at every page break) ─────────
-      const pageHeaderHtml = `
-        <div style="position: relative; border-bottom: 2px solid #cbd5e1; padding-bottom: 12px; margin-bottom: 0;">
-          <div style="position: absolute; right: 0; top: 0;">
-            <span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000000; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Controle: ${nrControle}</span>
-          </div>
-          
-          <!-- Título empurrado para a direita via padding-left -->
-          <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; padding-left: 150px; font-family: Arial, Helvetica, sans-serif;">
-            ${title}
-          </div>
-          
-          <!-- Subtítulo empurrado para a direita via padding-left -->
-          <div style="font-size: 12px; color: #64748b; padding-left: 150px; font-family: Arial, Helvetica, sans-serif;">
-            ${subtitle}
-          </div>
-        </div>
-      `;
-
-
-
-      // ─── Column header row (reused at every page break) ──────────────────
-      const colHeaderHtml = `
-         <table style="width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #cbd5e1; margin-top:12px;">
-           <colgroup>
-             <col style="width:80px">
-             <col style="width:280px">
-             <col style="width:90px">
-             <col style="width:80px">
-             <col style="width:80px">
-             <col style="width:50px">
-           </colgroup>
-          <thead>
-            <tr>
-              <th style="text-align:left; vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">
-                <div>STATUS</div><div style="margin-top:1px;">A.TRAB.</div>
-              </th>
-              <th style="vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">ATIVIDADE</th>
-              <th style="vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">RESPONSÁVEL</th>
-              <th style="vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">PREVISTO</th>
-              <th style="vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">
-                <div>INÍCIO /</div><div style="margin-top:1px;">CONCLUSÃO</div>
-              </th>
-              <th style="text-align:right; vertical-align:top; padding:8px 10px; background:#f1f5f9; border-bottom:1px solid #cbd5e1; font-size:11px; font-weight:700; color:#000; text-transform:uppercase; font-family:Arial,Helvetica,sans-serif;">TE</th>
-            </tr>
-          </thead>
-        </table>
-      `;
-
-      // ─── Page-break separator with repeated header ────────────────────────
-      const pageBreakWithHeader = `
-        <div style="page-break-before: always; padding-top: 10px;">
-          ${pageHeaderHtml}
-          ${colHeaderHtml}
-        </div>
-      `;
-
-      const buildRowHtml = (group: GroupedCard) => {
-        const statusBadge = group.dtcon
-          ? '<span style="font-size:10px;font-weight:400;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;color:#000;">CONCLU&#205;DA</span>'
-          : '<span style="font-size:10px;font-weight:400;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;color:#000;">EM ABERTO</span>';
-
-
-
-        const previstoStr = group.previsto ? formatDate(group.previsto) : 'Sem data';
+      // Build table rows from data
+      const tableRows = sortedGroupedCards.map(([, group]: [string, GroupedCard]) => {
+        const statusText = group.dtcon ? 'CONCLUÍDA' : 'EM ABERTO';
         const ownerStr = group.boardOwnerName || '—';
+        const previstoStr = group.previsto ? formatDate(group.previsto) : 'Sem data';
+        const solicitadoStr = group.dtatv ? formatDate(group.dtatv) : '—';
+        const conclusaoStr = group.dtcon ? formatDate(group.dtcon) : '—';
 
-        let nestedHtml = '';
+        let eventRows = '';
         if (showEvents && group.cards && group.cards.length > 0) {
           const sortedCards = [...group.cards].sort((a: ReportCard, b: ReportCard) => {
             const timeA = a.previsto ? new Date(a.previsto).getTime() : Infinity;
@@ -482,296 +380,49 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
             const cFim = formatDate(card.dtcon);
             const andamentos = card.card_act && card.card_act.length > 0
               ? `<div style="margin-top:4px;padding-left:10px;border-left:2px dashed #cbd5e1;">${card.card_act.map((act: CardAction) =>
-                `<div style="font-size:10px;color:#475569;font-family:Arial,Helvetica,sans-serif;">• ${act.description} <span style="color:#94a3b8;font-size:9px;">(${act.users?.name || 'Sistema'} - ${new Date(act.created_at).toLocaleString('pt-BR')})</span></div>`
-              ).join('')
-              }</div>` : '';
-            return `
-              <tr>
-                <td style="padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">
-                  <div style="font-weight:500;">${card.title}</div>${andamentos}
-                </td>
-                <td style="width:90px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${card.creatorName}</td>
-                <td style="width:90px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${card.assignedName}</td>
-                <td style="width:70px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${cPrevisto}</td>
-                <td style="width:60px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${cInicio}</td>
-                <td style="width:60px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${cFim}</td>
-                <td style="width:55px;padding:5px 6px;border-bottom:1px solid #e2e8f0;font-size:11px;font-family:Arial,Helvetica,sans-serif;color:#000;">${card.duration}</td>
-              </tr>`;
+                `<div style="font-size:9px;color:#475569;">• ${act.description} <span style="color:#94a3b8;font-size:8px;">(${act.users?.name || 'Sistema'} - ${new Date(act.created_at).toLocaleString('pt-BR')})</span></div>`
+              ).join('')}</div>` : '';
+            return `<tr><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;"><div>${card.title}</div>${andamentos}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${card.creatorName}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${card.assignedName}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${cPrevisto}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${cInicio}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${cFim}</td><td style="padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;">${card.duration}</td></tr>`;
           }).join('');
 
-          nestedHtml = `
-            <div style="padding:10px 12px 12px 12px;background:#f8fafc;border-top:1px solid #e2e8f0;border-left:1px solid #cbd5e1;border-right:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;">
-              <table style="width:100%;border-collapse:collapse;">
-                <thead>
-                  <tr>
-                    <th style="border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;background:transparent;font-family:Arial,Helvetica,sans-serif;color:#475569;">Evento</th>
-                    <th style="width:90px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Criador</th>
-                    <th style="width:90px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Atribuído</th>
-                    <th style="width:70px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Previsto</th>
-                    <th style="width:70px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Início</th>
-                    <th style="width:70px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Fim</th>
-                    <th style="width:55px;border-bottom:1.5px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 6px;text-align:left;font-family:Arial,Helvetica,sans-serif;color:#475569;">Duração</th>
-                  </tr>
-                </thead>
-                <tbody>${cardRows}</tbody>
-              </table>
-            </div>`;
+          eventRows = `<tr><td colspan="7" style="padding:6px 10px;background:#f8fafc;border-bottom:1px solid #cbd5e1;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f1f5f9;"><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;">Evento</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:70px;">Criador</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:70px;">Atribuído</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:60px;">Previsto</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:60px;">Início</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:60px;">Fim</th><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:9px;font-weight:700;width:50px;">Duração</th></tr></thead><tbody>${cardRows}</tbody></table></td></tr>`;
         }
 
-        return {
-          statusBadge,
-          previstoStr,
-          ownerStr,
-          nestedHtml
-        };
-      };
+        return `<tr style="page-break-inside:avoid;"><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;width:80px;"><div>${statusText}</div><div style="font-size:8px;color:#64748b;margin-top:2px;">${group.workspaceName || '—'}</div></td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;">${group.name}</td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;width:80px;">${ownerStr}</td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;width:70px;">${previstoStr}</td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;width:70px;">${solicitadoStr}</td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;vertical-align:top;width:70px;">${conclusaoStr}</td><td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:10px;text-align:right;vertical-align:top;width:35px;">${group.cards.length}</td></tr>${eventRows}`;
+      }).join('');
 
-      const rowsHtml: string[] = [];
-
-      sortedGroupedCards.forEach(([boardKey, group]: [string, GroupedCard]) => {
-        const { statusBadge, previstoStr, ownerStr, nestedHtml } = buildRowHtml(group);
-
-        rowsHtml.push(`
-           <tr>
-             <td style="width:80px; vertical-align:top; padding:9px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-size:11px; line-height:1.3; font-family:Arial,Helvetica,sans-serif;">
-                 <div>${statusBadge}</div>
-                 <div style="font-size:8px; color:#000; margin-top:3px; font-weight:normal;">${group.workspaceName || '—'}</div>
-               </div>
-             </td>
-             <td style="width:280px; vertical-align:top; padding:9px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-weight:normal; font-size:11px; line-height:1.4; overflow-wrap:break-word; word-break:break-word; white-space:normal; font-family:Arial,Helvetica,sans-serif;">${group.name}</div>
-             </td>
-             <td style="width:90px; vertical-align:top; padding:9px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-size:11px; line-height:1.4; font-family:Arial,Helvetica,sans-serif;">${ownerStr}</div>
-             </td>
-             <td style="width:80px; vertical-align:top; padding:9px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-size:11px; font-family:Arial,Helvetica,sans-serif;">${previstoStr}</div>
-             </td>
-             <td style="width:80px; margin-left:auto; text-align:right; vertical-align:top; padding:8px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-size:11px; line-height:1.6; font-family:Arial,Helvetica,sans-serif;">
-                 <div>${group.dtatv ? formatDate(group.dtatv) : '—'}</div>
-                 <div>${group.dtcon ? formatDate(group.dtcon) : '—'}</div>
-               </div>
-             </td>
-             <td style="width:50px; text-align:right; vertical-align:top; padding:9px 10px; border-bottom:1px solid #e2e8f0;">
-               <div style="font-size:11px; font-family:Arial,Helvetica,sans-serif; text-align:right; color:#000;">${group.cards.length}</div>
-             </td>
-           </tr>
-           ${nestedHtml ? `</tbody></table><div style="margin:0;">${nestedHtml}</div><table style="width:100%;border-collapse:collapse;border-left:1px solid #cbd5e1;border-right:1px solid #cbd5e1;"><tbody>` : ''}
-         `);
-
-      });
-
-      // ─── Medição Real das Alturas via DOM Temporário ──────────────────────────
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '740px';
-      tempDiv.style.visibility = 'hidden';
-      document.body.appendChild(tempDiv);
-
-      // Medir cabeçalho
-      const headerContainer = document.createElement('div');
-      headerContainer.style.width = '740px';
-      headerContainer.innerHTML = `
-        ${pageHeaderHtml}
-        ${colHeaderHtml}
-      `;
-      tempDiv.appendChild(headerContainer);
-      const measuredHeaderHeight = headerContainer.getBoundingClientRect().height;
-      tempDiv.removeChild(headerContainer);
-
-      // Medir cada linha
-      const measuredRowHeights = rowsHtml.map((rowHtml) => {
-        const rowContainer = document.createElement('div');
-        rowContainer.style.width = '740px';
-        rowContainer.innerHTML = `
-          <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-            <colgroup>
-              <col style="width:80px">
-              <col style="width:280px">
-              <col style="width:90px">
-              <col style="width:80px">
-              <col style="width:80px">
-              <col style="width:50px">
-            </colgroup>
-            <tbody>
-              ${rowHtml}
-            </tbody>
-          </table>
-        `;
-        tempDiv.appendChild(rowContainer);
-        const height = rowContainer.getBoundingClientRect().height;
-        tempDiv.removeChild(rowContainer);
-        return height;
-      });
-
-      // Medir bloco de estatísticas
-      const statsContainer = document.createElement('div');
-      statsContainer.style.width = '740px';
-      statsContainer.innerHTML = `
-        <div style="margin-top: 28px; border-top: 2px solid #cbd5e1; padding-top: 20px;">
-          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0.05em;">Resumo do Relatório</div>
-          <table style="width:100%; border-collapse:separate; border-spacing:8px 0; margin-left:-8px;">
+      const htmlContent = `<div style="width:710px;padding:15px;background:white;font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;">
+        <div style="border-bottom:2px solid #cbd5e1;padding-bottom:12px;margin-bottom:16px;position:relative;">
+          <div style="position:absolute;right:0;top:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Controle: ${nrControle}</div>
+          <div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:4px;">${title}</div>
+          <div style="font-size:11px;color:#64748b;">${subtitle}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;">
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:80px;"><div>STATUS</div><div>A.TRAB.</div></th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;">ATIVIDADE</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:80px;">RESPONSÁVEL</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:70px;">PREVISTO</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:70px;">SOLICITADO</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:70px;">CONCLUSÃO</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:35px;">TE</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        <div style="margin-top:24px;border-top:2px solid #cbd5e1;padding-top:16px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:10px;letter-spacing:0.05em;">Resumo do Relatório</div>
+          <table style="width:100%;border-collapse:separate;border-spacing:6px 0;">
             <tr>
-              <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Atividades</span>
-                <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalActivities}</span>
-                <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Quadros</span>
-              </td>
-              <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Eventos</span>
-                <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalEvents}</span>
-                <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Tarefas</span>
-              </td>
-              <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Ações</span>
-                <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalActions}</span>
-                <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Logs</span>
-              </td>
-              <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Lead Time</span>
-                <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.avgLeadTime}d</span>
-                <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Média</span>
-              </td>
-              <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Entrega</span>
-                <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.completionRate}%</span>
-                <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">${stats.totalCompleted} OK</span>
-              </td>
+              <td style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;text-align:center;"><div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;">Atividades</div><div style="font-size:16px;font-weight:700;color:#1e293b;">${stats.totalActivities}</div><div style="font-size:9px;color:#94a3b8;">Quadros</div></td>
+              <td style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;text-align:center;"><div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;">Eventos</div><div style="font-size:16px;font-weight:700;color:#1e293b;">${stats.totalEvents}</div><div style="font-size:9px;color:#94a3b8;">Tarefas</div></td>
+              <td style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;text-align:center;"><div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;">Ações</div><div style="font-size:16px;font-weight:700;color:#1e293b;">${stats.totalActions}</div><div style="font-size:9px;color:#94a3b8;">Logs</div></td>
+              <td style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;text-align:center;"><div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;">Lead Time</div><div style="font-size:16px;font-weight:700;color:#1e293b;">${stats.avgLeadTime}d</div><div style="font-size:9px;color:#94a3b8;">Média</div></td>
+              <td style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;text-align:center;"><div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;">Entrega</div><div style="font-size:16px;font-weight:700;color:#1e293b;">${stats.completionRate}%</div><div style="font-size:9px;color:#94a3b8;">${stats.totalCompleted} OK</div></td>
             </tr>
           </table>
-          <div style="font-size:9px; color:#64748b; margin-top:20px; font-family:Arial,Helvetica,sans-serif;">
-            * Legenda: <strong>TE</strong> — Total de eventos
-          </div>
+          <div style="font-size:8px;color:#64748b;margin-top:14px;">* Legenda: <strong>TE</strong> — Total de eventos</div>
         </div>
-      `;
-      tempDiv.appendChild(statsContainer);
-      const statsHeight = statsContainer.getBoundingClientRect().height;
-      tempDiv.removeChild(statsContainer);
-
-      // Limpar o container temporário do body
-      document.body.removeChild(tempDiv);
-
-      const MAX_TOTAL_HEIGHT_PER_PAGE = 1020 // Limite vertical total da página (980px)
-      const MAX_ROW_HEIGHT_PER_PAGE = MAX_TOTAL_HEIGHT_PER_PAGE - measuredHeaderHeight; // Altura disponível apenas para as linhas
-
-      let bodyHtml = '';
-
-      // First page header (no page-break-before)
-      bodyHtml += `
-        ${pageHeaderHtml}
-        ${colHeaderHtml}
-         <table style="width:100%;border-collapse:collapse;table-layout:fixed;border-left:1px solid #cbd5e1;border-right:1px solid #cbd5e1;">
-           <colgroup>
-             <col style="width:80px">
-             <col style="width:280px">
-             <col style="width:90px">
-             <col style="width:80px">
-             <col style="width:80px">
-             <col style="width:50px">
-           </colgroup>
-         <tbody>
-      `;
-
-      let currentPageHeight = 0;
-
-      rowsHtml.forEach((row, idx) => {
-        const rowHeight = measuredRowHeights[idx];
-
-        // Se esta linha estourar a página atual (e não for a primeira linha da página)
-        if (currentPageHeight + rowHeight > MAX_ROW_HEIGHT_PER_PAGE && currentPageHeight > 0) {
-          bodyHtml += `
-             </tbody></table>
-             ${pageBreakWithHeader}
-              <table style="width:100%;border-collapse:collapse;table-layout:fixed;border-left:1px solid #cbd5e1;border-right:1px solid #cbd5e1;">
-                <colgroup>
-                  <col style="width:80px">
-                  <col style="width:280px">
-                  <col style="width:90px">
-                  <col style="width:80px">
-                  <col style="width:80px">
-                  <col style="width:50px">
-                </colgroup>
-              <tbody>
-          `;
-          currentPageHeight = rowHeight;
-        } else {
-          currentPageHeight += rowHeight;
-        }
-        bodyHtml += row;
-      });
-
-      bodyHtml += `</tbody></table>`;
-
-      // Se o resumo couber na página atual, coloca sem page break. Senão, quebra de página antes do resumo.
-      const shouldBreakForStats = (currentPageHeight + statsHeight > MAX_ROW_HEIGHT_PER_PAGE);
-
-      const statsPageBreak = shouldBreakForStats
-        ? `page-break-before: always; padding-top: 10px;`
-        : `margin-top: 28px; border-top: 2px solid #cbd5e1; padding-top: 0;`;
-
-      const statsTitleHeader = shouldBreakForStats
-        ? `${pageHeaderHtml} <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-top: 20px; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0.05em;">Resumo do Relatório</div>`
-        : `<div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0.05em;">Resumo do Relatório</div>`;
-
-      bodyHtml += `
-        <div style="${statsPageBreak}">
-          <div style="padding-top: 20px;">
-            ${statsTitleHeader}
-            <table style="width:100%; border-collapse:separate; border-spacing:8px 0; margin-left:-8px;">
-              <tr>
-                <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                  <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Atividades</span>
-                  <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalActivities}</span>
-                  <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Quadros</span>
-                </td>
-                <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                  <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Eventos</span>
-                  <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalEvents}</span>
-                  <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Tarefas</span>
-                </td>
-                <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                  <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Ações</span>
-                  <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.totalActions}</span>
-                  <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Logs</span>
-                </td>
-                <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                  <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Lead Time</span>
-                  <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.avgLeadTime}d</span>
-                  <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">Média</span>
-                </td>
-                <td style="border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; width:20%; vertical-align:top;">
-                  <span style="font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:3px; font-family:Arial,Helvetica,sans-serif;">Entrega</span>
-                  <span style="font-size:18px; font-weight:700; color:#1e293b; display:block; font-family:Arial,Helvetica,sans-serif;">${stats.completionRate}%</span>
-                  <span style="font-size:10px; color:#94a3b8; font-family:Arial,Helvetica,sans-serif;">${stats.totalCompleted} OK</span>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div style="font-size:9px; color:#64748b; margin-top:20px; font-family:Arial,Helvetica,sans-serif;">
-            * Legenda: <strong>TE</strong> — Total de eventos
-          </div>
-        </div>
-      `;
-
-      // ─── Full HTML document with styles ───────────────────────────────────
-      const htmlString = `
-        <div style="width: 740px; padding: 10px 15px; background: white; box-sizing: border-box;">
-          <style>
-            * { box-sizing: border-box; }
-            body, table, th, td, div, p, span {
-              font-family: Arial, Helvetica, sans-serif !important;
-              letter-spacing: normal !important;
-              word-spacing: normal !important;
-              line-height: 1.4 !important;
-            }
-          </style>
-          ${bodyHtml}
-        </div>
-      `;
+      </div>`;
 
       const opt = {
         margin: [6, 6, 6, 6],
@@ -779,12 +430,12 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
         image: { type: 'jpeg', quality: 0.92 },
         html2canvas: { scale: 1.5, useCORS: true, logging: false, allowTaint: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr'] }
       };
 
       const html2pdf = (window as any).html2pdf;
       const pdfBlob = await html2pdf()
-        .from(htmlString)
+        .from(htmlContent)
         .set(opt)
         .toPdf()
         .get('pdf')
@@ -794,10 +445,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
         })
         .output('blob');
 
-
       const blobUrl = URL.createObjectURL(pdfBlob);
-
-      // Redirect the already opened tab to the PDF blob
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
@@ -817,18 +465,18 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           <p>{isGlobal ? 'Visão estratégica de todo o sistema' : 'Acompanhamento detalhado desta área de trabalho'}</p>
         </div>
         <div className={styles.actions}>
+          <button
+            className={`${styles.printBtn} ${!isLoaded ? styles.printBtnDisabled : ''}`}
+            onClick={handlePrint}
+          >
+            🖨️ PDF
+          </button>
           <Link
             href={workspaceId ? `/dashboard?workspaceId=${workspaceId}` : '/dashboard'}
             className={styles.backBtn}
           >
             ← Voltar ao Início
           </Link>
-          <button
-            className={`${styles.printBtn} ${!isLoaded ? styles.printBtnDisabled : ''}`}
-            onClick={handlePrint}
-          >
-            🖨️ Gerar Relatório PDF
-          </button>
         </div>
       </header>
 

@@ -131,3 +131,9 @@ export async function getUserRoleInWorkspaceAction(workspaceId: string) {
   if (!user) return null;
   return await workspaceService.getUserRoleInWorkspace(workspaceId, BigInt(user.seqid));
 }
+
+export async function getMovementsAction() {
+  const user = await userRepo.getLoggedUser();
+  if (!user) throw new Error('Usuário não autenticado');
+  return await workspaceService.getMovements(user.id, user.seqid.toString());
+}

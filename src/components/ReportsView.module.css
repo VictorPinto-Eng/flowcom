@@ -118,7 +118,7 @@
 
 .reportListHeader {
   display: grid;
-  grid-template-columns: 100px 1fr 100px 85px 100px 55px;
+  grid-template-columns: 100px 1fr 100px 85px 85px 85px 55px;
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 0.5rem;
@@ -147,7 +147,7 @@
 
 .groupHeader {
   display: grid;
-  grid-template-columns: 100px 1fr 100px 85px 100px 55px;
+  grid-template-columns: 100px 1fr 100px 85px 85px 85px 55px;
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 0.5rem;
@@ -178,8 +178,14 @@
   min-width: 0;
 }
 
-.listHeaderDates {
-  width: 100px;
+.listHeaderSolicitado {
+  width: 85px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.listHeaderConclusao {
+  width: 85px;
   text-align: left;
   flex-shrink: 0;
 }
@@ -260,8 +266,17 @@
   text-overflow: ellipsis;
 }
 
-.groupDatesCol {
-  width: 100px;
+.groupSolicitadoCol {
+  width: 85px;
+  font-size: 0.72rem;
+  color: #000000;
+  font-weight: 400;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.groupConclusaoCol {
+  width: 85px;
   font-size: 0.72rem;
   color: #000000;
   font-weight: 400;
@@ -699,7 +714,8 @@
     font-size: 0.72rem !important;
   }
 
-  .groupDatesCol {
+  .groupSolicitadoCol,
+  .groupConclusaoCol {
     font-size: 0.65rem !important;
   }
 

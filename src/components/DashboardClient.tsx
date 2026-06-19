@@ -13,6 +13,7 @@ import RenameActivityModal from '@/components/RenameActivityModal';
 import ActivityHistorySidebar from '@/components/ActivityHistorySidebar';
 import MyEventsView from '@/components/MyEventsView';
 import MyActivitiesView from '@/components/MyActivitiesView';
+import MovementsView from '@/components/MovementsView';
 import PremiumWorkspaceGridModal from '@/components/PremiumWorkspaceGridModal';
 
 import WorkspaceColumnsModal from '@/components/WorkspaceColumnsModal';
@@ -1108,6 +1109,16 @@ export default function DashboardClient({
           >
             📋 Meus Eventos
           </button>
+          <button
+            className={styles.movementsTrigger}
+            onClick={() => {
+              router.push('/dashboard?view=movements');
+              setClientView('movements');
+            }}
+            title="Relatório Geral de Movimentações Operacionais (Auditoria/Histórico)"
+          >
+            📊 Movimentações
+          </button>
           <Link
             href="/reports"
             className={styles.globalReportBtn}
@@ -1875,6 +1886,12 @@ export default function DashboardClient({
                   onBack={handleBack}
                 />
               )
+            ) : clientView === 'movements' ? (
+              <MovementsView
+                currentUser={user}
+                workspaces={workspaces}
+                onBack={handleBack}
+              />
             ) : isPremiumGridOpen ? (
               <PremiumWorkspaceGridModal
                 workspaces={workspaces}
