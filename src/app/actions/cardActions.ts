@@ -3,6 +3,7 @@
 import { CardService } from '@/domain/services/CardService';
 import { WorkspaceService } from '@/domain/services/WorkspaceService';
 import { UserRepository } from '@/domain/repositories/UserRepository';
+import { isRateLimited } from '@/lib/rate-limit';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 
@@ -211,7 +212,11 @@ export async function getAllCardsReportAction(workspaceId?: string) {
 
 export async function requestTransferAction(cardId: string, targetUserSeqid: string) {
   const user = await userRepo.getLoggedUser();
-  const { userRole } = await checkCardPermission(cardId, user, true); // Requer admin/proprietário
+  if (!user) throw new Error('Usuário não autenticado');
+  if (await isRateLimited('127.0.0.1', user.seqid.toString(), 'REQUEST_TRANSFER')) {
+    throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
+  }
+  const { userRole } = await checkCardPermission(cardId, user, true);
 
   const targetUser = await prisma.user.findUnique({
     where: { seqid: BigInt(targetUserSeqid) }
@@ -235,6 +240,10 @@ export async function requestTransferAction(cardId: string, targetUserSeqid: str
 
 export async function respondTransferRequestAction(cardId: string, actionSeqid: string, accept: boolean) {
   const user = await userRepo.getLoggedUser();
+  if (!user) throw new Error('Usuário não autenticado');
+  if (await isRateLimited('127.0.0.1', user.seqid.toString(), 'RESPOND_TRANSFER')) {
+    throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
+  }
 
   const log = await prisma.card_act.findUnique({
     where: { seqid: BigInt(actionSeqid) }

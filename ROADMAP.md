@@ -32,12 +32,7 @@ pendente, priorizado e por quê.
 
 ### P0 — Crítico
 
-| ID | Item | Justificativa | Status |
-|----|------|---------------|--------|
-| S-001 | **Rate limiting em endpoints de auth** (login, register, forgot-password, reset-password) | Sem proteção contra brute-force, enumeration e DoS. Atacante pode testar senhas indefinidamente ou disparar milhares de e-mails. | Pendente |
-| S-002 | **Proteger rota de reset-password contra token enumeration** | `resetPasswordAction` expõe "Token inválido ou expirado" — permite atacante enumerar tokens válidos. | Pendente |
-| S-003 | **Sanitizar HTML em e-mails transacionais** | `name` e `inviterName` são interpolados diretamente no HTML sem escape. Permite XSS no cliente de e-mail. | Pendente |
-| S-004 | **Remover dependência de MOCK_USER_ENABLED em produção** | Se `MOCK_USER_ENABLED=true` for definido em produção, toda autenticação é ignorada. Adicionar validação que impede isso ou remover o fallback. | Pendente |
+Todos os itens P0 foram resolvidos. ✓
 
 ### P1 — Alta
 
@@ -163,6 +158,13 @@ pendente, priorizado e por quê.
 | ID | Item | Data | Referência |
 |----|------|------|------------|
 | S-017 | `.env` adicionado ao `.gitignore` | Anterior | `.gitignore` linha 34 |
+| S-001 | Rate limiting implementado em AuthService + getClientIp() em authActions.ts | 19/06/2026 | `AuthService.ts` + `schema.prisma` + `authActions.ts` |
+| S-002 | Rate limiting por IP antes do DB lookup em resetPassword (anti-enumeration) | 19/06/2026 | `AuthService.ts` |
+| S-003 | escapeHtml() aplicado a name, inviterName, workspaceName em templates de e-mail | 19/06/2026 | `resend.ts` |
+| S-004 | MOCK_USER_ENABLED bypass removido de UserRepository.getLoggedUser() + proxy.ts + .env.example | 19/06/2026 | `UserRepository.ts`, `proxy.ts`, `.env.example` |
+| S-021 | Rate limiting adicionado em verifyEmail, acceptInvite, requestTransfer, respondTransfer via `rate-limit.ts` | 19/06/2026 | `rate-limit.ts`, `authActions.ts`, `workspaceActions.ts`, `cardActions.ts` |
+| S-022 | Validação de membro do workspace adicionada em BoardService.createBoard | 19/06/2026 | `BoardService.ts` |
+| S-020 | error.message substituído por mensagens hardcoded em 16 catch blocks (3 arquivos) | 19/06/2026 | `Board.tsx`, `DashboardClient.tsx`, `EditWorkspaceModal.tsx` |
 | U-008 | Scrollbar fina padronizada em MyActivities e MyEvents | 18/06/2026 | `393d88f` |
 | U-009 | Ordenação por data mais recente em MyActivities e MyEvents | 18/06/2026 | `393d88f` |
 | U-010 | Botão Voltar padronizado à direita no painel de controle | 18/06/2026 | `393d88f` |

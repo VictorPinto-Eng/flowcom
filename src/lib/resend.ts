@@ -1,5 +1,14 @@
 import { Resend } from 'resend';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -20,7 +29,7 @@ export async function sendActivationEmail(email: string, name: string, token: st
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px; background-color: #0a0a0c; color: #fff;">
           <h1 style="color: #7c3aed; text-align: center;">Bem-vindo ao Flow!</h1>
-          <p style="color: #ccc; font-size: 16px;">Olá, <strong>${name}</strong>!</p>
+          <p style="color: #ccc; font-size: 16px;">Olá, <strong>${escapeHtml(name)}</strong>!</p>
           <p style="color: #ccc; font-size: 16px;">Sua conta foi criada com sucesso. Para começar a organizar suas atividades, clique no botão abaixo para ativar seu acesso:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${activationLink}" style="background-color: #7c3aed; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Ativar Minha Conta</a>
@@ -52,7 +61,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px; background-color: #0a0a0c; color: #fff;">
           <h1 style="color: #7c3aed; text-align: center;">Recuperação de Senha</h1>
-          <p style="color: #ccc; font-size: 16px;">Olá, <strong>${name}</strong>!</p>
+          <p style="color: #ccc; font-size: 16px;">Olá, <strong>${escapeHtml(name)}</strong>!</p>
           <p style="color: #ccc; font-size: 16px;">Recebemos uma solicitação para redefinir a senha da sua conta Flow.</p>
           <p style="color: #ccc; font-size: 16px;">Clique no botão abaixo para criar uma nova senha. Este link expira em 1 hora.</p>
           <div style="text-align: center; margin: 30px 0;">
@@ -78,14 +87,14 @@ export async function sendWorkspaceInviteEmail(email: string, inviterName: strin
   const loginLink = `${appUrl}/login`;
 
   const subject = isRegistered
-    ? `Você foi convidado para a Área de Trabalho ${workspaceName} - Flow`
-    : `Convite para colaborar no Flow - ${workspaceName}`;
+    ? `Você foi convidado para a Área de Trabalho ${escapeHtml(workspaceName)} - Flow`
+    : `Convite para colaborar no Flow - ${escapeHtml(workspaceName)}`;
 
   const buttonLink = isRegistered ? loginLink : registerLink;
   const buttonText = isRegistered ? 'Acessar Meu Painel' : 'Criar Minha Conta e Aceitar';
   const instructionText = isRegistered
-    ? `convidou você para participar da área de trabalho <strong>${workspaceName}</strong> no Flow. Como você já possui cadastro, basta fazer login no seu painel para aceitar ou recusar o convite.`
-    : `convidou você para colaborar na área de trabalho <strong>${workspaceName}</strong> no Flow. Como você ainda não tem uma conta, clique no botão abaixo para criar seu cadastro (o e-mail será preenchido automaticamente) e aceitar o convite diretamente no seu painel pós-login.`;
+    ? `convidou você para participar da área de trabalho <strong>${escapeHtml(workspaceName)}</strong> no Flow. Como você já possui cadastro, basta fazer login no seu painel para aceitar ou recusar o convite.`
+    : `convidou você para colaborar na área de trabalho <strong>${escapeHtml(workspaceName)}</strong> no Flow. Como você ainda não tem uma conta, clique no botão abaixo para criar seu cadastro (o e-mail será preenchido automaticamente) e aceitar o convite diretamente no seu painel pós-login.`;
 
   try {
     const data = await getResend().emails.send({
@@ -96,7 +105,7 @@ export async function sendWorkspaceInviteEmail(email: string, inviterName: strin
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px; background-color: #0a0a0c; color: #fff;">
           <h1 style="color: #7c3aed; text-align: center;">Convite de Colaboração</h1>
           <p style="color: #ccc; font-size: 16px;">Olá!</p>
-          <p style="color: #ccc; font-size: 16px;"><strong>${inviterName}</strong> ${instructionText}</p>
+          <p style="color: #ccc; font-size: 16px;"><strong>${escapeHtml(inviterName)}</strong> ${instructionText}</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${buttonLink}" style="background-color: #7c3aed; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">${buttonText}</a>
           </div>

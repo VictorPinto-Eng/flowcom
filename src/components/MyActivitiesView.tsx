@@ -224,7 +224,7 @@ return filtered.sort((a, b) => {
         <div className={styles.headerTitleArea}>
           <h2 className={styles.title}>Minhas Atividades Agendadas</h2>
           <p className={styles.subtitle}>
-            Acompanhamento de todos os seus quadros/fluxos de trabalho ordenados do mais antigo para o futuro
+            Acompanhamento das suas atividades ativas e respectivos prazos de entrega.
           </p>
         </div>
         <div className={styles.headerActions}>

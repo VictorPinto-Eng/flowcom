@@ -98,7 +98,7 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
       console.error('Erro ao enviar convite:', err);
       Swal.fire({
         title: 'Erro!',
-        text: err.message || 'Erro ao enviar convite.',
+        text: 'Erro ao enviar convite.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -134,7 +134,7 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
       console.error('Erro ao cancelar convite:', err);
       Swal.fire({
         title: 'Erro!',
-        text: err.message || 'Erro ao cancelar convite.',
+        text: 'Erro ao cancelar convite.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -168,7 +168,7 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
       console.error('Erro ao remover membro:', err);
       Swal.fire({
         title: 'Erro!',
-        text: err.message || 'Erro ao remover colaborador.',
+        text: 'Erro ao remover colaborador.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -191,7 +191,7 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
       console.error('Erro ao atualizar cargo:', err);
       Swal.fire({
         title: 'Erro!',
-        text: err.message || 'Erro ao atualizar função.',
+        text: 'Erro ao atualizar função.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });

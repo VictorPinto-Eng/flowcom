@@ -60,10 +60,6 @@ export class UserRepository {
       const user = await this.findBySeqId(BigInt(session.userSeqId));
       if (user) return user;
     }
-    if (process.env.MOCK_USER_ENABLED === 'true') {
-      const user = await this.findByEmail('vlpinto.eng@gmail.com');
-      if (user) return user;
-    }
     throw new Error('Não autorizado. Por favor, faça login.');
   }
 }

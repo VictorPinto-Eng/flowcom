@@ -584,7 +584,7 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao responder transferência:', err);
-      Swal.fire('Erro', err.message || 'Erro ao responder transferência', 'error');
+      Swal.fire('Erro', 'Erro ao responder transferência', 'error');
     }
   };
 
@@ -601,7 +601,7 @@ export default function DashboardClient({
       router.refresh();
     } catch (err: any) {
       console.error('Erro ao responder finalização:', err);
-      Swal.fire('Erro', err.message || 'Erro ao processar solicitação', 'error');
+      Swal.fire('Erro', 'Erro ao processar solicitação', 'error');
     }
   };
 
@@ -646,7 +646,7 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao solicitar transferência:', err);
-      Swal.fire('Erro', err.message || 'Erro ao solicitar transferência', 'error');
+      Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
     }
   };
 
@@ -772,7 +772,7 @@ export default function DashboardClient({
       console.error('Falha ao atualizar área de trabalho:', error);
       Swal.fire({
         title: 'Erro!',
-        text: error.message || 'Erro ao atualizar área de trabalho.',
+        text: 'Erro ao atualizar área de trabalho.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -794,7 +794,7 @@ export default function DashboardClient({
       console.error('Erro ao aceitar convite:', err);
       Swal.fire({
         title: 'Erro!',
-        text: err.message || 'Não foi possível aceitar o convite.',
+        text: 'Não foi possível aceitar o convite.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -903,7 +903,7 @@ export default function DashboardClient({
       console.error('Falha ao renomear quadro:', error);
       Swal.fire({
         title: 'Erro!',
-        text: error.message || 'Não foi possível atualizar a atividade.',
+        text: 'Não foi possível atualizar a atividade.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -937,7 +937,7 @@ export default function DashboardClient({
           });
           router.refresh();
         } catch (error: any) {
-          Swal.fire('Erro', error.message || 'Erro ao solicitar finalização', 'error');
+          Swal.fire('Erro', 'Erro ao solicitar finalização', 'error');
         }
       }
       return;
@@ -995,7 +995,7 @@ export default function DashboardClient({
         console.error('Falha ao encerrar quadro:', error);
         Swal.fire({
           title: 'Erro!',
-          text: error.message || 'Erro ao encerrar atividade.',
+          text: 'Erro ao encerrar atividade.',
           icon: 'error',
           confirmButtonColor: '#ef4444'
         });
@@ -1286,7 +1286,7 @@ export default function DashboardClient({
                           window.location.reload();
                         });
                       } catch (err: any) {
-                        Swal.fire('Erro', err.message || 'Erro ao aceitar convite', 'error');
+                        Swal.fire('Erro', 'Erro ao aceitar convite', 'error');
                       }
                     }}
                     style={{
@@ -1321,7 +1321,7 @@ export default function DashboardClient({
                           setPendingInvites(prev => prev.filter(x => x.token !== invite.token));
                           Swal.fire('Recusado', 'O convite foi recusado com sucesso.', 'success');
                         } catch (err: any) {
-                          Swal.fire('Erro', err.message || 'Erro ao recusar convite', 'error');
+                          Swal.fire('Erro', 'Erro ao recusar convite', 'error');
                         }
                       }
                     }}

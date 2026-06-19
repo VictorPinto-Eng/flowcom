@@ -337,7 +337,7 @@ export default function Board({
       }
     } catch (err: any) {
       console.error('Erro ao solicitar transferência:', err);
-      Swal.fire('Erro', err.message || 'Erro ao solicitar transferência', 'error');
+      Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
     }
   };
 
@@ -356,7 +356,7 @@ export default function Board({
       }
     } catch (err: any) {
       console.error('Erro ao responder transferência:', err);
-      Swal.fire('Erro', err.message || 'Erro ao responder transferência', 'error');
+      Swal.fire('Erro', 'Erro ao responder transferência', 'error');
     }
   };
 

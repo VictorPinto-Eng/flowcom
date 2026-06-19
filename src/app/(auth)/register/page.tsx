@@ -14,7 +14,9 @@ function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
@@ -37,6 +39,18 @@ function RegisterPage() {
     setLoading(true);
     setError(null);
     setResendSuccess(false);
+
+    if (email !== confirmEmail) {
+      setError('Os e-mails informados não coincidem.');
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('As senhas informadas não coincidem.');
+      setLoading(false);
+      return;
+    }
 
     const isAllMet = requirements.every(r => r.met);
     if (!isAllMet) {
@@ -141,6 +155,20 @@ function RegisterPage() {
           </div>
 
           <div className={styles.inputGroup}>
+            <label htmlFor="confirmEmail">Confirmar E-mail</label>
+            <input 
+              type="email" 
+              id="confirmEmail" 
+              name="confirmEmail" 
+              className={styles.input} 
+              placeholder="seu@email.com" 
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              required 
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
             <label htmlFor="password">Senha</label>
             <input 
               type="password" 
@@ -150,6 +178,20 @@ function RegisterPage() {
               placeholder="••••••••" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="confirmPassword">Confirmar Senha</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              name="confirmPassword" 
+              className={styles.input} 
+              placeholder="••••••••" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required 
             />
             

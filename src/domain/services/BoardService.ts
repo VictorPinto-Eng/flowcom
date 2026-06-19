@@ -20,6 +20,16 @@ export class BoardService {
       throw new Error('Workspace não encontrado.');
     }
 
+    const member = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceSeqid: workspace.seqid,
+        userSeqid: user.seqid ? BigInt(user.seqid) : undefined
+      }
+    });
+    if (!member) {
+      throw new Error('Você não é membro desta área de trabalho.');
+    }
+
     const board = await this.boardRepo.createBoard({
       id: crypto.randomUUID(),
       name,

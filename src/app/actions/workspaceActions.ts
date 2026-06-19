@@ -2,6 +2,7 @@
 
 import { WorkspaceService } from '@/domain/services/WorkspaceService';
 import { UserRepository } from '@/domain/repositories/UserRepository';
+import { isRateLimited } from '@/lib/rate-limit';
 import { revalidatePath } from 'next/cache';
 
 const workspaceService = new WorkspaceService();
@@ -78,6 +79,10 @@ export async function updateWorkspaceMemberRoleAction(workspaceId: string, userS
 
 export async function acceptWorkspaceInviteAction(token: string) {
   const user = await userRepo.getLoggedUser();
+  if (!user) throw new Error('Usuário não autenticado');
+  if (await isRateLimited('127.0.0.1', user.seqid.toString(), 'ACCEPT_INVITE')) {
+    throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
+  }
   const member = await workspaceService.acceptWorkspaceInvite(token, user);
   revalidatePath('/dashboard');
   revalidatePath('/');

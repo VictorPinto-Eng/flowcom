@@ -206,17 +206,31 @@ model WorkspaceMember {
 }
 
 model WorkspaceInvite {
-  seqid          BigInt    @id @default(autoincrement())
-  workspaceSeqid BigInt    @map("workspace_seqid")
-  email          String
-  role           String    @default("MEMBER")
-  token          String    @unique
-  invitedBySeqid BigInt    @map("invited_by_seqid")
-  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  seqid BigInt @id @default(autoincrement())
+  workspaceSeqid BigInt @map("workspace_seqid")
+  email String
+  role String @default("MEMBER")
+  token String @unique
+  invitedBySeqid BigInt @map("invited_by_seqid")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  workspace      Workspace @relation(fields: [workspaceSeqid], references: [seqid], onDelete: Cascade)
-  invitedBy      User      @relation(fields: [invitedBySeqid], references: [seqid], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceSeqid], references: [seqid], onDelete: Cascade)
+  invitedBy User @relation(fields: [invitedBySeqid], references: [seqid], onDelete: Cascade)
 
   @@map("workspace_invite")
+}
+
+model AuthAttempt {
+  id String @id @default(cuid())
+  ip String
+  email String?
+  type String // LOGIN, REGISTER, FORGOT_PASSWORD, RESET_PASSWORD
+  count Int @default(0)
+  lastAttempt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([ip, type])
+  @@index([email, type])
+  @@map("auth_attempts")
 }
