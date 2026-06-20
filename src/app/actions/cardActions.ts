@@ -4,6 +4,8 @@ import { CardService } from '@/domain/services/CardService';
 import { WorkspaceService } from '@/domain/services/WorkspaceService';
 import { UserRepository } from '@/domain/repositories/UserRepository';
 import { isRateLimited } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-client-ip';
+import { validateTitle, validateDescription } from '@/lib/validation';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 
@@ -47,7 +49,7 @@ export async function getMyEventsAction() {
 
 export async function addCardAction(columnId: string, title: string, boardId: string, description?: string, dtatvStr?: string | null, previstoStr?: string | null) {
   const user = await userRepo.getLoggedUser();
-  
+
   const column = await prisma.column.findUnique({
     where: { seqid: BigInt(columnId) },
     include: { workspace: true }
@@ -59,7 +61,10 @@ export async function addCardAction(columnId: string, title: string, boardId: st
     throw new Error('Permissão negada. Apenas Proprietários e Administradores podem criar novos eventos neste painel.');
   }
 
-  const card = await cardService.addCard(columnId, title, boardId, user, description, dtatvStr, previstoStr);
+  const validTitle = validateTitle(title, 'Título');
+  const validDescription = validateDescription(description, 'Descrição');
+
+  const card = await cardService.addCard(columnId, validTitle, boardId, user, validDescription ?? undefined, dtatvStr, previstoStr);
   revalidatePath('/');
   return card;
 }
@@ -89,13 +94,11 @@ export async function updateCardPrevistoAction(cardId: string, previstoStr: stri
 export async function updateCardAction(cardId: string, title: string, description: string | null, previstoStr: string | null, dtconStr: string | null = null, dtatvStr: string | null = null) {
   const user = await userRepo.getLoggedUser();
   await checkCardPermission(cardId, user, false);
-  const card = await cardService.updateCard(cardId, title, description, previstoStr, dtconStr, dtatvStr, user);
+  const validTitle = validateTitle(title, 'Título');
+  const validDescription = validateDescription(description, 'Descrição');
+  const card = await cardService.updateCard(cardId, validTitle, validDescription, previstoStr, dtconStr, dtatvStr, user);
   revalidatePath('/');
   return card;
-}
-
-export async function getAllUsersAction() {
-  return await userRepo.getAllUsers();
 }
 
 export async function getWorkspaceMembersAction(workspaceSeqid: string) {
@@ -147,7 +150,8 @@ export async function transferCardAction(cardId: string, taskuserSeqid: string |
 export async function addCardActionLogAction(cardSeqid: string, description: string) {
   const user = await userRepo.getLoggedUser();
   await checkCardPermission(cardSeqid, user, false);
-  const action = await cardService.addCardActionLog(BigInt(cardSeqid), description, user);
+  const validDescription = validateDescription(description, 'Descrição', true);
+  const action = await cardService.addCardActionLog(BigInt(cardSeqid), validDescription!, user);
   revalidatePath('/');
   return {
     ...action,
@@ -160,14 +164,15 @@ export async function addCardActionLogAction(cardSeqid: string, description: str
 
 export async function updateCardActionLogAction(actionSeqid: string, description: string) {
   const user = await userRepo.getLoggedUser();
-  
+
   const log = await prisma.card_act.findUnique({
     where: { seqid: BigInt(actionSeqid) }
   });
   if (!log || !log.card_seqid) throw new Error('Andamento não encontrado');
   await checkCardPermission(log.card_seqid.toString(), user, false);
 
-  const action = await cardService.updateCardActionLog(BigInt(actionSeqid), description, user);
+  const validDescription = validateDescription(description, 'Descrição', true);
+  const action = await cardService.updateCardActionLog(BigInt(actionSeqid), validDescription!, user);
   revalidatePath('/');
   return {
     ...action,
@@ -213,7 +218,7 @@ export async function getAllCardsReportAction(workspaceId?: string) {
 export async function requestTransferAction(cardId: string, targetUserSeqid: string) {
   const user = await userRepo.getLoggedUser();
   if (!user) throw new Error('Usuário não autenticado');
-  if (await isRateLimited('127.0.0.1', user.seqid.toString(), 'REQUEST_TRANSFER')) {
+  if (await isRateLimited(await getClientIp(), user.seqid.toString(), 'REQUEST_TRANSFER')) {
     throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
   }
   const { userRole } = await checkCardPermission(cardId, user, true);
@@ -241,7 +246,7 @@ export async function requestTransferAction(cardId: string, targetUserSeqid: str
 export async function respondTransferRequestAction(cardId: string, actionSeqid: string, accept: boolean) {
   const user = await userRepo.getLoggedUser();
   if (!user) throw new Error('Usuário não autenticado');
-  if (await isRateLimited('127.0.0.1', user.seqid.toString(), 'RESPOND_TRANSFER')) {
+  if (await isRateLimited(await getClientIp(), user.seqid.toString(), 'RESPOND_TRANSFER')) {
     throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
   }
 

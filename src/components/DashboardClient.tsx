@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import UserMenu from '@/components/UserMenu';
@@ -245,6 +245,8 @@ export default function DashboardClient({
 
   const [isWorkspaceColumnsModalOpen, setIsWorkspaceColumnsModalOpen] = useState(false);
   const [isPremiumGridOpen, setIsPremiumGridOpen] = useState(false);
+  const [isReportMenuOpen, setIsReportMenuOpen] = useState(false);
+  const reportMenuRef = useRef<HTMLDivElement>(null);
   const [selectedWorkspaceColumns, setSelectedWorkspaceColumns] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSectorId, setSelectedSectorId] = useState('');
@@ -266,6 +268,18 @@ export default function DashboardClient({
       .then(setPendingCompletionRequests)
       .catch(err => console.error('Erro ao buscar solicitações de finalização pendentes:', err));
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (reportMenuRef.current && !reportMenuRef.current.contains(event.target as Node)) {
+        setIsReportMenuOpen(false);
+      }
+    }
+    if (isReportMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isReportMenuOpen]);
 
   // Controla se o usuário navegou internamente no app (para evitar voltar para outro site)
   useEffect(() => {
@@ -720,7 +734,6 @@ export default function DashboardClient({
         name: data.name,
         typeId: data.typeId,
         description: data.description,
-        userId: user.id,
       });
       setIsWorkspaceModalOpen(false);
       Swal.fire({
@@ -1109,23 +1122,40 @@ export default function DashboardClient({
           >
             📋 Meus Eventos
           </button>
-          <button
-            className={styles.movementsTrigger}
-            onClick={() => {
-              router.push('/dashboard?view=movements');
-              setClientView('movements');
-            }}
-            title="Relatório Geral de Movimentações Operacionais (Auditoria/Histórico)"
-          >
-            📊 Movimentações
-          </button>
-          <Link
-            href="/reports"
-            className={styles.globalReportBtn}
-            title="Visualizar relatório consolidado de todas as áreas"
-          >
-            📊 Relatório Geral
-          </Link>
+          <div className={styles.reportDropdown} ref={reportMenuRef}>
+            <button
+              className={styles.reportDropdownTrigger}
+              onClick={() => setIsReportMenuOpen(!isReportMenuOpen)}
+              title="Relatórios"
+            >
+              📊 Relatório
+            </button>
+            {isReportMenuOpen && (
+              <div className={styles.reportDropdownMenu}>
+                <button
+                  className={styles.reportDropdownItem}
+                  onClick={() => {
+                    router.push('/dashboard?view=movements');
+                    setClientView('movements');
+                    setIsReportMenuOpen(false);
+                  }}
+                >
+                  <span>📊 Movimentações</span>
+                  <span className={styles.reportDropdownHint}>Auditoria e Histórico</span>
+                </button>
+                <button
+                  className={styles.reportDropdownItem}
+                  onClick={() => {
+                    router.push('/reports');
+                    setIsReportMenuOpen(false);
+                  }}
+                >
+                  <span>📋 Relatório Geral</span>
+                  <span className={styles.reportDropdownHint}>Consolidado por área</span>
+                </button>
+              </div>
+            )}
+          </div>
           <UserMenu
             user={{
               name: user.name,

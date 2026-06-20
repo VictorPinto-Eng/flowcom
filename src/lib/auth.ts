@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import prisma from '@/lib/prisma';
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -42,7 +43,18 @@ export async function comparePassword(password: string, hash: string) {
 
 export async function createSession(userId: string, userSeqId: string) {
   const token = jwt.sign({ userId, userSeqId }, getJwtSecret(), { expiresIn: '7d' });
-  
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await prisma.session.create({
+    data: {
+      userSeqid: BigInt(userSeqId),
+      token,
+      expiresAt
+    }
+  });
+
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
@@ -56,11 +68,17 @@ export async function createSession(userId: string, userSeqId: string) {
 export async function getSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  
+
   if (!token) return null;
-  
+
   try {
-    return jwt.verify(token, getJwtSecret()) as { userId: string, userSeqId: string };
+    const payload = jwt.verify(token, getJwtSecret()) as { userId: string, userSeqId: string };
+
+    // Verify session exists in DB (supports revocation)
+    const session = await prisma.session.findUnique({ where: { token } });
+    if (!session) return null;
+
+    return payload;
   } catch {
     return null;
   }
@@ -68,5 +86,25 @@ export async function getSession() {
 
 export async function deleteSession() {
   const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+
+  if (token) {
+    await prisma.session.delete({ where: { token } }).catch(() => {});
+  }
+
   cookieStore.delete(COOKIE_NAME);
+}
+
+/**
+ * Revoke all sessions for a user (e.g., after password reset).
+ */
+export async function revokeAllSessions(userSeqid: bigint) {
+  await prisma.session.deleteMany({ where: { userSeqid } });
+}
+
+/**
+ * Cleanup expired sessions (can be called periodically).
+ */
+export async function cleanupExpiredSessions() {
+  await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 }

@@ -255,7 +255,7 @@ return filtered.sort((a, b) => {
             className={styles.backBtn}
             title="Voltar para a tela anterior"
           >
-            ← Voltar ao Painel
+            ← Voltar
           </button>
         </div>
       </div>

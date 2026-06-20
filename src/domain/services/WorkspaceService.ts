@@ -347,7 +347,6 @@ export class WorkspaceService {
       workspaceSeqid: i.workspaceSeqid.toString(),
       email: i.email,
       role: i.role,
-      token: i.token,
       expiresAt: i.expiresAt,
       createdAt: i.createdAt,
       invitedBy: {
@@ -463,6 +462,11 @@ export class WorkspaceService {
     if (invite.expiresAt < new Date()) {
       await prisma.workspaceInvite.delete({ where: { token } });
       throw new Error('Este convite expirou.');
+    }
+
+    // Verify the invite belongs to the authenticated user's email
+    if (invite.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new Error('Este convite não foi enviado para este usuário.');
     }
 
     // Add user as a member

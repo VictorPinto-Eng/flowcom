@@ -96,11 +96,12 @@
 }
 
 .reportGrid {
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: white;
   overflow-y: auto;
   max-height: 65vh;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
 }
 
 .reportGrid::-webkit-scrollbar {
@@ -118,12 +119,12 @@
 
 .reportListHeader {
   display: grid;
-  grid-template-columns: 100px 1fr 100px 85px 85px 85px 55px;
+  grid-template-columns: 110px minmax(150px, 2fr) 1fr 1fr 1fr 40px;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.45rem 0.5rem;
-  background: #f1f5f9;
-  border-bottom: 1px solid #cbd5e1;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  border-bottom: 2px solid #e2e8f0;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -131,6 +132,10 @@
 
 .activityGroup {
   border-bottom: 1px solid #e2e8f0;
+}
+
+.activityGroup:nth-child(even) .groupHeader {
+  background: #fafbfc;
 }
 
 .activityGroup:last-child {
@@ -147,11 +152,17 @@
 
 .groupHeader {
   display: grid;
-  grid-template-columns: 100px 1fr 100px 85px 85px 85px 55px;
+  grid-template-columns: 110px minmax(150px, 2fr) 1fr 1fr 1fr 40px;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.45rem 0.5rem;
+  padding: 0.7rem 1rem;
   background: white;
+  transition: background 0.15s ease;
+  cursor: default;
+}
+
+.groupHeader:hover {
+  background: rgba(99, 102, 241, 0.03);
 }
 
 .groupHeaderActive {
@@ -160,68 +171,68 @@
 }
 
 .listHeaderCol {
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   font-weight: 700;
-  color: #000000;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.04em;
 }
 
 .listHeaderStatus {
-  width: 100px;
   text-align: left;
-  flex-shrink: 0;
 }
 
 .listHeaderTitle {
-  flex: 1;
   min-width: 0;
 }
 
 .listHeaderSolicitado {
-  width: 85px;
   text-align: left;
-  flex-shrink: 0;
 }
 
 .listHeaderConclusao {
-  width: 85px;
   text-align: left;
-  flex-shrink: 0;
 }
 
 .listHeaderPrevisto {
-  width: 85px;
   text-align: left;
-  flex-shrink: 0;
 }
 
 .listHeaderOwner {
-  width: 100px;
   text-align: left;
-  flex-shrink: 0;
+}
+
+.listHeaderDates {
+  text-align: left;
 }
 
 .listHeaderCount {
-  width: 55px;
   text-align: right;
-  flex-shrink: 0;
 }
 
 .groupStatusCol {
-  width: 100px;
-  text-align: left;
-  flex-shrink: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.groupWorkspaceName {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .groupTitleCol {
   flex: 1;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 400;
   /* RETIRADO O BOLD CONFORME SOLICITADO */
-  color: #000000;
+  color: #1e293b;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -230,11 +241,11 @@
 
 .badgeCompleted,
 .badgePending {
-  font-size: 0.625rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
   letter-spacing: 0.025em;
   display: inline-flex;
   align-items: center;
@@ -246,57 +257,63 @@
   background: #dcfce7;
   color: #15803d;
   border: 1px solid #bbf7d0;
+  box-shadow: 0 1px 3px rgba(21, 128, 61, 0.15);
 }
 
 .badgePending {
   background: #fef3c7;
   color: #d97706;
   border: 1px solid #fde68a;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.15);
 }
 
 .groupOwnerCol {
-  width: 100px;
   font-size: 0.75rem;
-  color: #000000;
+  color: #1e293b;
   font-weight: 500;
   text-align: left;
-  flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .groupSolicitadoCol {
-  width: 85px;
-  font-size: 0.72rem;
-  color: #000000;
+  font-size: 0.7rem;
+  color: #334155;
   font-weight: 400;
   text-align: left;
-  flex-shrink: 0;
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
 }
 
 .groupConclusaoCol {
-  width: 85px;
-  font-size: 0.72rem;
-  color: #000000;
+  font-size: 0.7rem;
+  color: #334155;
   font-weight: 400;
   text-align: left;
-  flex-shrink: 0;
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
 }
 
 .groupPrevistoCol {
-  width: 85px;
-  font-size: 0.72rem;
-  color: #000000;
+  font-size: 0.7rem;
+  color: #334155;
   font-weight: 400;
   text-align: left;
-  flex-shrink: 0;
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+}
+
+.groupDatesCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 0.7rem;
+  color: #334155;
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  line-height: 1.3;
 }
 
 .groupCountCol {
-  width: 55px;
   text-align: right;
-  flex-shrink: 0;
 }
 
 .groupCount {
@@ -321,11 +338,18 @@
 .statCard {
   background: white;
   padding: 0.6rem 0.8rem;
-  border-radius: 4px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.statCard:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
 }
 
 .statInfo {
@@ -358,13 +382,14 @@
 .filtersSection {
   background: white;
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
   margin-bottom: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .filterGroup {
@@ -384,13 +409,14 @@
 .selectInput,
 .dateInput {
   padding: 0.35rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #cbd5e1;
   font-size: 0.75rem;
   color: #1e293b;
   outline: none;
   min-width: 140px;
   height: 28px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .loadReportBtn {
@@ -424,12 +450,13 @@
 
 /* Table */
 .tableWrapper {
-  background: transparent;
+  background: rgba(248, 250, 252, 0.5);
   border-top: none;
   overflow: hidden;
   padding: 0 1rem 0.75rem 1rem;
   margin-left: 1.5rem;
-  border-left: 2px solid #e2e8f0;
+  border-left: 3px solid #6366f1;
+  border-radius: 0 8px 8px 0;
 }
 
 .reportTable {
@@ -528,7 +555,7 @@
 }
 
 .reportTable tr:hover td {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(99, 102, 241, 0.04);
 }
 
 .eventInfo {
@@ -579,6 +606,237 @@
 
 .durationPendingText {
   color: #b45309;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .titleWrapper h1 {
+    font-size: 1.1rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+
+  .statCard {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .statValue {
+    font-size: 0.95rem;
+  }
+
+  .filtersSection {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filterGroup {
+    width: 100%;
+  }
+
+  .selectInput,
+  .dateInput {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .reportGrid {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .reportListHeader {
+    display: none;
+  }
+
+  .groupHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    margin: 0.25rem 0;
+  }
+
+  .groupStatusCol {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .groupTitleCol {
+    font-size: 0.9rem;
+    font-weight: 600;
+    word-break: break-word;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .groupTitleCol::before {
+    content: "Atividade:";
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .groupOwnerCol {
+    width: 100%;
+    word-break: break-word;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .groupOwnerCol::before {
+    content: "Responsável:";
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .groupPrevistoCol {
+    width: 100%;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .groupPrevistoCol::before {
+    content: "Previsto:";
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .groupDatesCol {
+    width: 100%;
+    flex-direction: row !important;
+    gap: 0.4rem;
+    align-items: baseline;
+  }
+
+  .groupDatesCol::before {
+    content: "Início/Conclusão:";
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .groupCountCol {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .groupCountCol::before {
+    content: "Eventos:";
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .tableWrapper {
+    margin-left: 0;
+    border-left: none;
+    padding: 0.5rem;
+  }
+
+  .reportTable thead {
+    display: none;
+  }
+
+  .reportTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mainRow {
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.6rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .mainRow td {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0;
+    border-bottom: none;
+  }
+
+  .mainRow td::before {
+    content: attr(data-label);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  .subRow {
+    display: block !important;
+  }
+
+  .subRow td {
+    display: block;
+  }
+
+  .subRow td::before {
+    display: none;
+  }
+
+  .subCell {
+    padding-left: 0 !important;
+  }
+
+  .emptyState {
+    padding: 1.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .loadReportBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Print Styles */

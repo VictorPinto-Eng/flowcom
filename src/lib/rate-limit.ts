@@ -6,6 +6,7 @@ export const RATE_LIMIT_CONFIG = {
   FORGOT_PASSWORD: { limit: 2, window: 60 * 60 * 1000 },
   RESET_PASSWORD: { limit: 3, window: 60 * 60 * 1000 },
   VERIFY_EMAIL: { limit: 5, window: 15 * 60 * 1000 },
+  RESEND_ACTIVATION: { limit: 3, window: 60 * 60 * 1000 },
   ACCEPT_INVITE: { limit: 10, window: 15 * 60 * 1000 },
   REQUEST_TRANSFER: { limit: 10, window: 15 * 60 * 1000 },
   RESPOND_TRANSFER: { limit: 10, window: 15 * 60 * 1000 },

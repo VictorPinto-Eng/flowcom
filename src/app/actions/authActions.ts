@@ -92,6 +92,10 @@ export async function resetPasswordAction(token: string, formData: FormData) {
 
 export async function resendActivationAction(email: string) {
   try {
+    const ip = await getClientIp();
+    if (await isRateLimited(ip, email, 'RESEND_ACTIVATION')) {
+      return { success: false, error: 'Muitas tentativas. Por favor, tente novamente mais tarde.' };
+    }
     await authService.resendActivationEmail(email);
     return { success: true };
   } catch (error: any) {

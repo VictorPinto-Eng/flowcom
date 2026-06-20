@@ -97,8 +97,23 @@ model User {
   workspaces    Workspace[]
   workspace_members WorkspaceMember[]
   sent_invites      WorkspaceInvite[]
+  sessions          Session[]
 
   @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userSeqid BigInt   @map("user_seqid")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userSeqid], references: [seqid], onDelete: Cascade)
+
+  @@index([userSeqid])
+  @@index([expiresAt])
+  @@map("session")
 }
 
 model VerificationToken {

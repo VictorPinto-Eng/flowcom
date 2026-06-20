@@ -300,7 +300,7 @@ const sortedEvents = useMemo(() => {
           className={styles.cancelBtn}
           title="Voltar para a tela anterior"
         >
-          ← Voltar ao Painel
+          ← Voltar
         </button>
       </div>
 

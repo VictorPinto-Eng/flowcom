@@ -38,13 +38,6 @@ export class UserRepository {
     return this.mapUser(user);
   }
 
-  async getAllUsers() {
-    const users = await prisma.user.findMany({
-      orderBy: { name: 'asc' }
-    });
-    return users.map(u => this.mapUser(u));
-  }
-
   async getWorkspaceMembers(workspaceSeqid: bigint) {
     const members = await prisma.workspaceMember.findMany({
       where: { workspaceSeqid },

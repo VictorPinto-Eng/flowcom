@@ -172,7 +172,7 @@ export default function PremiumWorkspaceGridModal({
           >
             <span>+</span> Nova Área
           </button>
-          <button className={styles.backBtn} onClick={onClose} title="Voltar ao início">
+          <button className={styles.backBtn} onClick={onClose} title="Voltar">
             ← Voltar
           </button>
         </div>

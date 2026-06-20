@@ -18,16 +18,19 @@
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -1px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
   text-decoration: none;
+  text-transform: uppercase;
 }
 
 .logo span {
-  background: var(--accent-gradient);
+  background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5)) drop-shadow(0 0 20px rgba(6, 182, 212, 0.3));
 }
 
 .userSection {
@@ -2204,4 +2207,155 @@
   transform: translateY(-2px);
 }
 
+.reportDropdown {
+  position: relative;
+}
 
+.reportDropdownTrigger {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: var(--accent-primary);
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.reportDropdownTrigger:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.reportDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: rgba(30, 30, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.5rem;
+  z-index: 100;
+  animation: fadeIn 0.15s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.reportDropdownItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.reportDropdownItem:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.reportDropdownHint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Header Responsive */
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    padding: 0.6rem 0.75rem;
+    gap: 0.6rem;
+    position: relative;
+  }
+
+  .logo {
+    font-size: 1.3rem;
+  }
+
+  .userSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+    order: 1;
+  }
+
+  .userSection > :last-child {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    grid-column: unset;
+  }
+
+  .panelTrigger,
+  .myActivitiesTrigger,
+  .myEventsTrigger,
+  .reportDropdown {
+    width: 100%;
+  }
+
+  .panelTrigger,
+  .myActivitiesTrigger,
+  .myEventsTrigger,
+  .reportDropdownTrigger {
+    width: 100%;
+    padding: 1rem 0.75rem;
+    font-size: 0.8rem;
+    justify-content: center;
+    border-radius: 10px;
+    min-height: 54px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.5rem;
+  }
+
+  .userSection {
+    gap: 0.4rem;
+  }
+
+  .userSection > :last-child {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .panelTrigger,
+  .myActivitiesTrigger,
+  .myEventsTrigger,
+  .reportDropdownTrigger {
+    padding: 0.9rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 50px;
+  }
+
+  .reportDropdownMenu {
+    right: 0;
+    left: 0;
+    min-width: unset;
+  }
+}

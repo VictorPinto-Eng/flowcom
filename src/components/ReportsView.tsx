@@ -475,7 +475,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
             href={workspaceId ? `/dashboard?workspaceId=${workspaceId}` : '/dashboard'}
             className={styles.backBtn}
           >
-            ← Voltar ao Início
+            ← Voltar
           </Link>
         </div>
       </header>
@@ -645,30 +645,26 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           <>
             <div className={styles.reportGrid}>
               <div className={styles.reportListHeader}>
-                <div className={`${styles.listHeaderCol} ${styles.listHeaderStatus}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
-                  <span>STATUS</span>
-                  <span>A.TRAB.</span>
+                <div className={`${styles.listHeaderCol} ${styles.listHeaderStatus}`}>
+                  <span>STATUS / A.TRAB.</span>
                 </div>
                 <div className={`${styles.listHeaderCol} ${styles.listHeaderTitle}`}>ATIVIDADE</div>
                 <div className={`${styles.listHeaderCol} ${styles.listHeaderOwner}`}>Responsável</div>
                 <div className={`${styles.listHeaderCol} ${styles.listHeaderPrevisto}`}>Previsto</div>
-                <div className={`${styles.listHeaderCol} ${styles.listHeaderDates}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
-                  <span>INÍCIO /</span>
-                  <span>CONCLUSÃO</span>
-                </div>
+                <div className={`${styles.listHeaderCol} ${styles.listHeaderDates}`}>Início / Conclusão</div>
                 <div className={`${styles.listHeaderCol} ${styles.listHeaderCount}`}>TE</div>
               </div>
 
               {sortedGroupedCards.map(([boardKey, group]: [string, GroupedCard]) => (
                 <div key={boardKey} className={`${styles.activityGroup} ${showEvents ? styles.activityGroupActive : ''}`}>
                   <div className={`${styles.groupHeader} ${showEvents ? styles.groupHeaderActive : ''}`}>
-                    <div className={styles.groupStatusCol} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
+                    <div className={styles.groupStatusCol}>
                       {group.dtcon ? (
                         <span className={styles.badgeCompleted}>Concluída</span>
                       ) : (
                         <span className={styles.badgePending}>Em aberto</span>
                       )}
-                      <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 'normal' }}>{group.workspaceName || '—'}</span>
+                      <span className={styles.groupWorkspaceName}>{group.workspaceName || '—'}</span>
                     </div>
                     <div className={styles.groupTitleCol}>
                       <span>{group.name}</span>
@@ -677,14 +673,13 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
                       {group.boardOwnerName || '—'}
                     </div>
                     <div className={styles.groupPrevistoCol}>
-                      {group.previsto ? formatDate(group.previsto) : 'Sem data'}
+                      {group.previsto ? formatDate(group.previsto) : '—'}
                     </div>
-                    <div className={styles.groupDatesCol} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', fontSize: '0.7rem', lineHeight: '1.2' }}>
-                      <div>{group.dtatv ? formatDate(group.dtatv) : '—'}</div>
-                      <div>{group.dtcon ? formatDate(group.dtcon) : '—'}</div>
+                    <div className={styles.groupDatesCol}>
+                      <span>{group.dtatv ? formatDate(group.dtatv) : '—'} - {group.dtcon ? formatDate(group.dtcon) : '—'}</span>
                     </div>
                     <div className={styles.groupCountCol}>
-                      <span style={{ color: '#000000', fontWeight: 'normal', fontSize: '0.75rem' }}>{group.cards.length}</span>
+                      <span className={styles.groupCount}>{group.cards.length}</span>
                     </div>
                   </div>
 
@@ -715,25 +710,25 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
                             .map((card: ReportCard) => (
                               <React.Fragment key={card.seqid || card.id}>
                                 <tr className={styles.mainRow}>
-                                  <td>
+                                  <td data-label="Evento">
                                     <div className={styles.eventInfo}>
                                       <span className={styles.eventName}>{card.title}</span>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Criador">
                                     <div className={styles.userCell}>
                                       <span>{card.creatorName}</span>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Atribuído">
                                     <div className={styles.userCell}>
                                       <span>{card.assignedName}</span>
                                     </div>
                                   </td>
-                                  <td className={styles.dateCell}>{card.previsto ? formatDate(card.previsto) : '—'}</td>
-                                  <td className={styles.dateCell}>{formatDate(card.dtatv || card.createdAt)}</td>
-                                  <td className={styles.dateCell}>{formatDate(card.dtcon)}</td>
-                                  <td>
+                                  <td data-label="Previsto" className={styles.dateCell}>{card.previsto ? formatDate(card.previsto) : '—'}</td>
+                                  <td data-label="Início" className={styles.dateCell}>{formatDate(card.dtatv || card.createdAt)}</td>
+                                  <td data-label="Fim" className={styles.dateCell}>{formatDate(card.dtcon)}</td>
+                                  <td data-label="Duração">
                                     <span className={`${styles.durationText} ${!card.dtcon ? styles.durationPendingText : ''}`}>
                                       {card.duration}
                                     </span>

@@ -271,8 +271,8 @@ export default function MovementsView({ currentUser, workspaces, onBack }: Movem
           >
             🖨️ PDF
           </button>
-          <button className={styles.backBtn} onClick={onBack} title="Voltar ao Painel">
-            Voltar
+          <button className={styles.backBtn} onClick={onBack} title="Voltar">
+            ← Voltar
           </button>
         </div>
       </header>

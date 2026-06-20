@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { hashPassword, comparePassword, createSession, validatePassword } from '@/lib/auth';
+import { hashPassword, comparePassword, createSession, validatePassword, revokeAllSessions } from '@/lib/auth';
 import { sendActivationEmail, sendPasswordResetEmail } from '@/lib/resend';
 import { isRateLimited } from '@/lib/rate-limit';
 import crypto from 'crypto';
@@ -192,6 +192,12 @@ async resetPassword(token: string, password: string, ip: string = '127.0.0.1') {
       where: { id: verificationToken.id }
     })
   ]);
+
+  // Revoke all active sessions after password reset
+  const user = await prisma.user.findUnique({ where: { email: verificationToken.email } });
+  if (user) {
+    await revokeAllSessions(user.seqid);
+  }
 
   return { success: true };
 }
