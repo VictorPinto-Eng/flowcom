@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { CircleCheckBig } from 'lucide-react';
+import Swal from 'sweetalert2';
 import {
   updateCardPrevistoAction,
   addCardActionLogAction,
@@ -158,7 +160,21 @@ const sortedEvents = useMemo(() => {
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
-    if (!confirm('Deseja realmente excluir este andamento?')) return;
+    const result = await Swal.fire({
+      title: 'Excluir Andamento',
+      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Excluir',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
+    if (!result.isConfirmed) return;
     try {
       await deleteCardActionLogAction(actionSeqid.toString());
       if (selectedEvent) {
@@ -258,7 +274,29 @@ const sortedEvents = useMemo(() => {
   };
 
   const handleCompleteEvent = async (cardId: string, cardTitle: string) => {
-    if (!confirm(`Deseja realmente finalizar o evento "${cardTitle}"?`)) return;
+    const result = await Swal.fire({
+      title: 'Finalizar Evento',
+      html: `<p style="font-size: 0.95rem; color: #fff; margin: 0; font-weight: 600;">${cardTitle}</p>`,
+      icon: undefined,
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Confirmar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)',
+      customClass: {
+        popup: 'swal-premium-popup',
+        title: 'swal-premium-title',
+        confirmButton: 'swal-premium-confirm',
+        cancelButton: 'swal-premium-cancel'
+      }
+    });
+
+    if (!result.isConfirmed) return;
 
     setIsCompletingEvent(cardId);
 
@@ -276,7 +314,14 @@ const sortedEvents = useMemo(() => {
       router.refresh();
     } catch (err) {
       console.error('Erro ao finalizar evento:', err);
-      alert('Erro ao finalizar o evento.');
+      Swal.fire({
+        title: 'Erro',
+        text: 'Erro ao finalizar o evento.',
+        icon: 'error',
+        confirmButtonColor: '#7c3aed',
+        background: '#1a1a1a',
+        color: '#fff'
+      });
     } finally {
       setIsCompletingEvent(null);
     }
@@ -410,7 +455,7 @@ const sortedEvents = useMemo(() => {
                               disabled={isCompletingEvent === ev.id}
                               title="Finalizar Evento"
                             >
-                              {isCompletingEvent === ev.id ? '⏱️' : '✅'}
+                              {isCompletingEvent === ev.id ? '⏱️' : <CircleCheckBig size={18} color="#10b981" strokeWidth={2.5} />}
                             </button>
                           )}
                         </div>

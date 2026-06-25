@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { CircleCheckBig } from 'lucide-react';
 import UserMenu from '@/components/UserMenu';
 import Swal from 'sweetalert2';
 import KanbanClient from '@/components/KanbanClient';
@@ -497,7 +498,21 @@ export default function DashboardClient({
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
-    if (!confirm('Deseja realmente excluir este andamento?')) return;
+    const result = await Swal.fire({
+      title: 'Excluir Andamento',
+      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Excluir',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
+    if (!result.isConfirmed) return;
     try {
       await deleteCardActionLogAction(actionSeqid.toString());
       if (selectedEvent) {
@@ -1437,9 +1452,26 @@ export default function DashboardClient({
                     <div className={styles.workspaceKanbanActions}>
                       <button
                         className={styles.kanbanActionBtn}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          const name = prompt('Digite o nome do novo painel de atividades (Kanban):');
+                          const { value: name } = await Swal.fire({
+                            title: 'Novo Fluxo',
+                            input: 'text',
+                            inputPlaceholder: 'Nome do painel de atividades...',
+                            showCancelButton: true,
+                            confirmButtonColor: '#7c3aed',
+                            cancelButtonColor: 'transparent',
+                            confirmButtonText: '✓ Criar',
+                            cancelButtonText: 'Cancelar',
+                            background: '#1e1e2e',
+                            color: '#fff',
+                            width: '360px',
+                            padding: '1.5rem',
+                            backdrop: 'rgba(0,0,0,0.6)',
+                            inputValidator: (value) => {
+                              if (!value || !value.trim()) return 'Digite um nome para o fluxo';
+                            }
+                          });
                           if (name && name.trim()) {
                             handleCreateBoard(activeWorkspace.id, name.trim());
                           }
@@ -1573,7 +1605,7 @@ export default function DashboardClient({
                                           disabled={isCompletingEvent === card.id}
                                           title="Finalizar Evento"
                                         >
-                                          {isCompletingEvent === card.id ? '⏱️' : '✅'}
+                                          {isCompletingEvent === card.id ? '⏱️' : <CircleCheckBig size={18} color="#10b981" strokeWidth={2.5} />}
                                         </button>
                                       )}
                                     </div>
@@ -1861,7 +1893,7 @@ export default function DashboardClient({
                                       className={styles.tableHistoryBtn}
                                       title={`Histórico de eventos concluídos (${completedCardsCount})`}
                                     >
-                                      ✅
+                                      <CircleCheckBig size={16} color="#10b981" strokeWidth={2.5} />
                                     </Link>
                                     {((activeWorkspace as any)?.currentUserRole === 'OWNER' || (activeWorkspace as any)?.currentUserRole === 'ADMIN') && (
                                       <button
@@ -1993,7 +2025,7 @@ export default function DashboardClient({
                       </div>
 
                       <div className={`${styles.statCard} ${styles.statCardGreen}`}>
-                        <div className={`${styles.statIcon} ${styles.statIconGreen}`}>✅</div>
+                        <div className={`${styles.statIcon} ${styles.statIconGreen}`}><CircleCheckBig size={20} color="#10b981" strokeWidth={2.5} /></div>
                         <div className={styles.statContent}>
                           <span className={styles.statVal}>{completedBoardsCount}</span>
                           <span className={styles.statLabel}>Fluxos Concluídos</span>

@@ -1,6 +1,21 @@
 'use client';
 
+import { useMemo } from 'react';
 import styles from './ActivityReportModal.module.css';
+
+/**
+ * Gera um hash determinístico simples a partir de uma string.
+ * Usado para IDs de documento e códigos de autenticidade do relatório.
+ */
+function hashCode(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).toUpperCase();
+}
 
 interface ActivityReportModalProps {
   workspaceName: string;
@@ -19,6 +34,19 @@ export default function ActivityReportModal({
   const handlePrint = () => {
     window.print();
   };
+
+  // Gerar IDs determinísticos baseados nos dados do relatório
+  const reportDate = new Date().toISOString().split('T')[0];
+  const reportSeed = `${workspaceName}-${reportDate}-${boards.length}`;
+  const docNumber = useMemo(() => {
+    const hash = hashCode(reportSeed);
+    return hash.slice(0, 4).padStart(4, '0');
+  }, [reportSeed]);
+  const authCode = useMemo(() => {
+    const fullHash = hashCode(reportSeed + '-auth');
+    const fullHash2 = hashCode(reportSeed + '-auth2');
+    return (fullHash + fullHash2).slice(0, 16).toUpperCase();
+  }, [reportSeed]);
 
   const totalActivities = boards.length;
   const totalTasks = boards.reduce((acc, board) => {
@@ -74,7 +102,7 @@ export default function ActivityReportModal({
             <div className={styles.docInfoGrid}>
               <div className={styles.infoBlock}>
                 <span className={styles.infoLabel}>DOCUMENTO</span>
-                <span className={styles.infoValueMono}>REL-ATV-{Math.floor(1000 + Math.random() * 9000)}</span>
+                <span className={styles.infoValueMono}>REL-ATV-{docNumber}</span>
               </div>
               <div className={styles.infoBlock}>
                 <span className={styles.infoLabel}>EMISSÃO</span>
@@ -166,7 +194,7 @@ export default function ActivityReportModal({
                     ? new Date(board.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
                     : (board.createdAt ? new Date(board.createdAt).toLocaleDateString('pt-BR') : 'Sem data');
 
-                  const creatorName = board.user?.name || "Victor Pinto";
+                  const creatorName = board.user?.name || "Não informado";
                   
                   // Compute active vs completed events for this board
                   let activeCardsCount = 0;
@@ -297,7 +325,7 @@ export default function ActivityReportModal({
           <div className={styles.docFooter}>
             <div className={styles.footerDisclaimer}>
               <p>Relatório emitido eletronicamente via plataforma de controle operacional FLOW.</p>
-              <p className={styles.footerAudit}>Código de Autenticidade Auditada: SHA256-{(Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10)).toUpperCase()}</p>
+              <p className={styles.footerAudit}>Código de Autenticidade Auditada: SHA256-{authCode}</p>
             </div>
             <div className={styles.footerSignBlock}>
               <div className={styles.signLine} />

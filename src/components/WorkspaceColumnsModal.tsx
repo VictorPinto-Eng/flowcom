@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 import styles from './WorkspaceColumnsModal.module.css';
 import { addColumnAction, deleteColumnAction, updateColumnOrderAction } from '@/app/actions/columnActions';
 
@@ -34,7 +35,24 @@ export default function WorkspaceColumnsModal({ workspace, onClose }: WorkspaceC
   }, [workspace]);
 
   const handleAddColumn = async () => {
-    const title = prompt('Digite o nome da nova lista:');
+    const { value: title } = await Swal.fire({
+      title: 'Nova Lista',
+      input: 'text',
+      inputPlaceholder: 'Nome da lista...',
+      showCancelButton: true,
+      confirmButtonColor: '#7c3aed',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Criar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) return 'Digite um nome para a lista';
+      }
+    });
     if (!title || !title.trim()) return;
 
     try {
@@ -42,18 +60,50 @@ export default function WorkspaceColumnsModal({ workspace, onClose }: WorkspaceC
       router.refresh();
     } catch (err) {
       console.error('Erro ao criar lista:', err);
-      alert('Erro ao criar lista.');
+      Swal.fire({
+        title: 'Erro',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao criar lista.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '320px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
     }
   };
 
   const handleDeleteColumn = async (colId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta lista?')) {
+    const result = await Swal.fire({
+      title: 'Excluir Lista',
+      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Tem certeza que deseja excluir esta lista?</p>',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Excluir',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
+    if (result.isConfirmed) {
       try {
         await deleteColumnAction(colId);
         router.refresh();
       } catch (err) {
         console.error('Erro ao excluir lista:', err);
-        alert('Erro ao excluir lista.');
+        Swal.fire({
+          title: 'Erro',
+          html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao excluir lista.</p>',
+          confirmButtonColor: '#7c3aed',
+          background: '#1e1e2e',
+          color: '#fff',
+          width: '320px',
+          padding: '1.5rem',
+          backdrop: 'rgba(0,0,0,0.6)'
+        });
       }
     }
   };

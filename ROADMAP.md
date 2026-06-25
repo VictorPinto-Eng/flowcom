@@ -57,8 +57,8 @@ pendente, priorizado e por quê.
 |----|------|---------------|--------|
 | S-009 | **Implementar refresh token / sliding session** | JWT com expiração fixa de 7 dias sem refresh — sessão expirada abruptamente sem chance de renovação. | Pendente |
 | S-010 | **Auditar permissões do papel VIEWER** | Papel VIEWER definido no schema mas nunca checado — membros com VIEWER podem ter acesso indevido a ações de escrita. | Pendente |
-| S-011 | **Remover campo `user.role` do schema se não utilizado** | `User.role` (USER) está no schema mas nunca é checado — confunde com `WorkspaceMember.role`. | Pendente |
-| S-012 | **Hardening do cookie de sessão** | `sameSite: 'lax'` permite envio em navegações top-level. Avaliar `strict`. | Pendente |
+| S-011 | **Remover campo `user.role` do schema se não utilizado** | `User.role` (USER) está no schema mas nunca é checado — confunde com `WorkspaceMember.role`. | ✅ Concluído — campo removido do schema Prisma + migration para drop da coluna (2026-06-25) |
+| S-012 | **Hardening do cookie de sessão** | `sameSite: 'lax'` permite envio em navegações top-level. Avaliar `strict`. | ✅ Concluído — cookie alterado para `sameSite: 'strict'` (2026-06-25) |
 | S-013 | **Adicionar limite de tentativas de login por IP** | Mesmo com rate limiting, um ataque distribuído pode contornar. | Pendente |
 | S-036 | **Sessão única por usuário (revogar sessões anteriores no login)** | Múltiplas sessões simultâneas permitem que credenciais comprometidas mantenham acesso mesmo após novo login legítimo. | ✅ Concluído — `createSession` executa `deleteMany` por userSeqid antes de criar nova sessão (2026-06-25) |
 | S-030 | **`resendActivationAction` sem rate limiting** | Permite chamadas ilimitadas para reenviar emails de ativação. Pode ser abusado para spam. | ✅ Concluído — rate limiting adicionado (3 tentativas/hora por IP+email) (2026-06-20) |
@@ -74,7 +74,7 @@ pendente, priorizado e por quê.
 | S-015 | **Adicionar nonce nos tokens de recuperação** | Token criptográfico aleatório é suficiente, mas nonce adiciona camada extra contra replay. | Pendente |
 | S-016 | **Revogar tokens de ativação antigos no reenvio** | Já implementado em `resendActivationEmail`, mas confirmar que `register` também limpa tokens anteriores. | Pendente |
 | S-034 | **Enumeração de email via registro** | Endpoint retorna "Este e-mail já está em uso" — permite descobrir emails cadastrados. | Pendente |
-| S-035 | **API routes podem vazar detalhes internos em erros** | `login/route.ts` retorna `error.message` direto ao cliente. Exceções inesperadas expõem stack traces. | Pendente |
+| S-035 | **API routes podem vazar detalhes internos em erros** | `login/route.ts` retorna `error.message` direto ao cliente. Exceções inesperadas expõem stack traces. | ✅ Concluído — todas as 4 API routes agora usam allowlist de mensagens conhecidas; erros inesperados retornam mensagem genérica (2026-06-25) |
 
 ---
 
@@ -107,11 +107,11 @@ pendente, priorizado e por quê.
 | A-007 | **Remover code duplicado da serialização BigInt (mapUser, mapWorkspace, etc)** | Padrão de `.toString()` repetido em dezenas de lugares. Criar helpers. | Pendente |
 | A-008 | **Adicionar error boundaries no front-end** | Sem error boundaries, um erro não tratado quebra toda a árvore de componentes. | Pendente |
 | A-009 | **Padronizar nomenclatura de arquivos (PascalCase componentes, camelCase utils)** | Mistura de convenções entre arquivos. | Pendente |
-| A-014 | **Remover código morto (`MyEventsModal.tsx`)** | Componente não importado em nenhum lugar — substituído por `MyEventsView.tsx`. | Pendente |
+| A-014 | **Remover código morto (`MyEventsModal.tsx`)** | Componente não importado em nenhum lugar — substituído por `MyEventsView.tsx`. | ✅ Concluído — `MyEventsModal.tsx` e `MyEventsModal.module.css` removidos (2026-06-25) |
 | A-015 | **Remover funcionalidades stub em `Column.tsx`** | `handleFollowList`, `handleMoveList`, `handleAutomationRule` são botões fake que só chamam `alert()`. | Pendente |
 | A-016 | **Remover botões sem handler no `UserMenu.tsx`** | "Alternar Contas", "Gerenciar conta", "Configurações", etc. — 8 itens sem `onClick`. | Pendente |
-| A-017 | **Remover modelo `Department` do Prisma** | Nenhum código referencia este modelo. Legacy/dead code. | Pendente |
-| A-018 | **Adicionar `forceConsistentCasingInFileNames` no tsconfig** | No Windows funciona, mas deploy em Linux pode quebrar por case sensitivity. | Pendente |
+| A-017 | **Remover modelo `Department` do Prisma** | Nenhum código referencia este modelo. Legacy/dead code. | ✅ Concluído — modelo removido do schema + migration para drop da tabela (2026-06-25) |
+| A-018 | **Adicionar `forceConsistentCasingInFileNames` no tsconfig** | No Windows funciona, mas deploy em Linux pode quebrar por case sensitivity. | ✅ Concluído — flag adicionada ao tsconfig.json (2026-06-25) |
 
 ---
 
@@ -124,7 +124,7 @@ pendente, priorizado e por quê.
 | U-001 | **Feedback visual otimista com rollback em caso de erro** | Operações críticas (criar board, mover card) não têm rollback visual se a server action falhar. | Pendente |
 | U-002 | **Loading states para server actions lentas** | Ações que dependem de e-mail (convite, recuperação) não têm feedback de carregamento. | Pendente |
 | U-013 | **Acessibilidade em modais (ARIA, focus trap, Escape)** | Nenhum dos 10+ modais tem `aria-modal`, `role="dialog"`, focus trapping ou dismiss via Escape. Inacessível para screen readers. | Pendente |
-| U-014 | **Substituir `prompt()` nativo por modal estilizado** | `prompt()` usado em 3 locais para criar board/list. Bloqueia thread, sem estilo, UX inconsistente. | Pendente |
+| U-014 | **Substituir `prompt()` nativo por modal estilizado** | `prompt()` usado em 3 locais para criar board/list. Bloqueia thread, sem estilo, UX inconsistente. | ✅ Concluído — todos os 3 `prompt()` substituídos por Swal com input estilizado (2026-06-25) |
 
 ### P2 — Média
 
@@ -133,7 +133,7 @@ pendente, priorizado e por quê.
 | U-003 | **Adicionar confirmação para exclusão de card** | Excluir action log não tem confirmação. | Pendente |
 | U-004 | **Indicar visualmente quando um card foi transferido para o usuário** | Cards repassados (task_user) não têm badge visual destacando que são responsabilidade do usuário. | Pendente |
 | U-005 | **Melhorar empty states em todas as views** | Várias telas mostram "Nenhuma atividade" sem orientação de próximo passo. | Pendente |
-| U-015 | **Padronizar dialogs: substituir `confirm()`/`alert()` por Swal** | Mix de `Swal.fire`, `confirm()` nativo e `alert()` nativo (12 instâncias em 5 arquivos). Experiência inconsistente. | Pendente |
+| U-015 | **Padronizar dialogs: substituir `confirm()`/`alert()` por Swal** | Mix de `Swal.fire`, `confirm()` nativo e `alert()` nativo (12 instâncias em 5 arquivos). Experiência inconsistente. | ✅ Concluído — todas as 17 instâncias (alert/confirm/prompt) substituídas por SweetAlert2 com visual premium dark em 6 arquivos (2026-06-25) |
 | U-016 | **Feedback de erro para ações fire-and-forget** | Múltiplas server actions que falham silenciosamente (apenas `console.error`). Usuário não vê feedback. Board.tsx, DashboardClient.tsx, useKanban.ts. | Pendente |
 | U-017 | **Drag-and-drop sem alternativa de teclado** | Cards arrastáveis não têm mecanismo de reordenação via teclado. Inacessível para usuários sem mouse. | Pendente |
 | U-018 | **UserMenu sem ARIA (`aria-expanded`, `aria-haspopup`)** | Dropdown do menu do usuário não anuncia estado para screen readers. | Pendente |
@@ -144,8 +144,8 @@ pendente, priorizado e por quê.
 |----|------|---------------|--------|
 | U-006 | **Animação de transição entre telas** | Navegação entre Kanban, tabela e painel é abrupta. | Pendente |
 | U-007 | **Modo escuro consistente (verificar contraste em todos os componentes)** | Alguns componentes podem ter problemas de contraste no tema escuro. | Pendente |
-| U-019 | **Relatório: código de autenticidade usa `Math.random()`** | `ActivityReportModal.tsx` gera ID com random — valor muda a cada reload. Não serve para auditoria. | Pendente |
-| U-020 | **Hardcoded "Victor Pinto" como fallback de criador** | `ActivityReportModal.tsx` L169 — artefato de desenvolvimento. | Pendente |
+| U-019 | **Relatório: código de autenticidade usa `Math.random()`** | `ActivityReportModal.tsx` gera ID com random — valor muda a cada reload. Não serve para auditoria. | ✅ Concluído — substituído por hash determinístico baseado em workspace+data+boards (2026-06-25) |
+| U-020 | **Hardcoded "Victor Pinto" como fallback de criador** | `ActivityReportModal.tsx` L169 — artefato de desenvolvimento. | ✅ Concluído — substituído por "Não informado" (2026-06-25) |
 
 ---
 
@@ -174,7 +174,7 @@ pendente, priorizado e por quê.
 
 | ID | Item | Justificativa | Status |
 |----|------|---------------|--------|
-| M-001 | **Remover dependências não utilizadas** | `lucide-react` e `cookie` estão instalados mas nunca importados. | Pendente |
+| M-001 | **Remover dependências não utilizadas** | `cookie` está instalado mas nunca importado. (`lucide-react` agora em uso) | Pendente |
 | M-002 | **Auditar e atualizar dependências com CVEs** | Rodar `npm audit` e corrigir vulnerabilidades conhecidas. | ✅ Parcial — hono (high) corrigido; 5 moderate restantes em deps transitivas do Prisma CLI e Next.js (sem fix disponível sem breaking change) (2026-06-20) |
 | M-005 | **Configurar ESLint e scripts de lint** | Nenhuma ferramenta de linting configurada. Sem `.eslintrc`, sem script `lint` no package.json. | Pendente |
 | M-006 | **`ActivityLog` sem integridade referencial** | `boardId` e `userId` são strings sem `@relation`. Não há FK no banco — dados podem ficar órfãos. | Pendente |

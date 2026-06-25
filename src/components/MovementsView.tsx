@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Swal from 'sweetalert2';
 import styles from './MovementsView.module.css';
 import { getMovementsAction } from '@/app/actions/workspaceActions';
 
@@ -150,7 +151,16 @@ export default function MovementsView({ currentUser, workspaces, onBack }: Movem
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      alert('Por favor, ative a exibição de pop-ups para gerar o PDF.');
+      Swal.fire({
+        title: 'Pop-up bloqueado',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '360px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
       return;
     }
     pdfWindow.document.write('<html><head><title>Gerando PDF...</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#475569;background:#f8fafc}.spinner{border:4px solid #e2e8f0;border-top:4px solid #6366f1;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:15px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></head><body><div class="spinner"></div><div>Gerando documento PDF...</div></body></html>');
@@ -241,7 +251,16 @@ export default function MovementsView({ currentUser, workspaces, onBack }: Movem
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert('Ocorreu um erro ao gerar o PDF.');
+      Swal.fire({
+        title: 'Erro',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '320px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
       pdfWindow.close();
     }
   };

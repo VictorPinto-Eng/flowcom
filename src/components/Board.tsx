@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CircleCheckBig } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { ColumnType, CardType } from '@/types/kanban';
 import { addCardActionLogAction, updateCardActionLogAction, deleteCardActionLogAction, updateCardPrevistoAction, updateCardAction, getWorkspaceMembersAction, transferCardAction, requestTransferAction, respondTransferRequestAction } from '@/app/actions/cardActions';
@@ -61,7 +62,11 @@ export default function Board({
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventDesc, setNewEventDesc] = useState('');
   const [newEventDtatv, setNewEventDtatv] = useState(() => new Date().toISOString().split('T')[0]);
-  const [newEventPrevisto, setNewEventPrevisto] = useState('');
+  const [newEventPrevisto, setNewEventPrevisto] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
   const getCardAgeText = (card: any) => {
     // Para ações concluídas, calculamos os dias decorridos desde o início da atividade (boardDtatv ou boardCreatedAt) até a conclusão real da ação!
     let startDate: Date | null = null;
@@ -172,7 +177,9 @@ export default function Board({
       setNewEventTitle('');
       setNewEventDesc('');
       setNewEventDtatv(new Date().toISOString().split('T')[0]);
-      setNewEventPrevisto('');
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setNewEventPrevisto(tomorrow.toISOString().split('T')[0]);
       setIsAdding(false);
     }
   };
@@ -384,7 +391,7 @@ export default function Board({
             </div>
             {boardDtcon ? (
               <span className={styles.contextPrevisto} style={{ color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Atividade Concluída">
-                ✅ Concluído em: {new Date(boardDtcon).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                <CircleCheckBig size={16} color="#10b981" strokeWidth={2.5} /> Concluído em: {new Date(boardDtcon).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
               </span>
             ) : boardPrevisto ? (
               <span className={styles.contextPrevisto} title="Data Prevista de Conclusão da Atividade">
@@ -402,7 +409,17 @@ export default function Board({
           {viewMode !== 'completed' && (
             <button
               className={`${styles.actionBtn} ${isAdding ? styles.actionBtnCancel : styles.actionBtnPrimary}`}
-              onClick={() => setIsAdding(!isAdding)}
+              onClick={() => {
+                if (isAdding) {
+                  setNewEventTitle('');
+                  setNewEventDesc('');
+                  setNewEventDtatv(new Date().toISOString().split('T')[0]);
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  setNewEventPrevisto(tomorrow.toISOString().split('T')[0]);
+                }
+                setIsAdding(!isAdding);
+              }}
             >
               {isAdding ? '✕ Cancelar' : '+ Cadastrar Evento'}
             </button>
@@ -480,13 +497,24 @@ export default function Board({
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Data do Evento</label>
+                <label>Data Prevista</label>
                 <input
                   type="date"
                   max="9999-12-31"
                   name="eventDtatv"
                   value={newEventDtatv}
-                  onChange={e => setNewEventDtatv(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewEventDtatv(val);
+                    if (val) {
+                      const nextDay = new Date(val + 'T00:00:00');
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      const yyyy = nextDay.getFullYear();
+                      const mm = String(nextDay.getMonth() + 1).padStart(2, '0');
+                      const dd = String(nextDay.getDate()).padStart(2, '0');
+                      setNewEventPrevisto(`${yyyy}-${mm}-${dd}`);
+                    }
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -497,7 +525,7 @@ export default function Board({
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>Data Programada de Conclusão</label>
+                <label>Previsão de Conclusão</label>
                 <input
                   type="date"
                   max="9999-12-31"
@@ -535,6 +563,7 @@ export default function Board({
                     {viewMode === 'completed' ? (
                       <>
                         <th>Nome do Evento</th>
+                        <th>Dt. Inicial</th>
                         <th>Dias de Trabalho</th>
                         <th>Data de Conclusão</th>
                         <th>Status</th>
@@ -576,10 +605,14 @@ export default function Board({
 
                     if (viewMode === 'completed') {
                       const dtconStr = event.dtcon ? new Date(event.dtcon).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem data';
+                      const dtatvStr = event.dtatv ? new Date(event.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem data';
                       return (
                         <tr key={event.id}>
                           <td>
                             <div className={styles.gridEventTitle}>{event.title}</div>
+                          </td>
+                          <td>
+                            <div className={styles.gridEventDesc}>{dtatvStr}</div>
                           </td>
                           <td>
                             <div className={styles.gridEventDesc}>⏱️ {getCardAgeText(event)}</div>
@@ -690,7 +723,7 @@ export default function Board({
                                   }}
                                   title="Mover para Concluído"
                                 >
-                                  ✓ Concluir
+                                  <CircleCheckBig size={15} color="#10b981" strokeWidth={2.5} /> Concluir
                                 </button>
                               )}
                             </>

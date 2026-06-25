@@ -4,6 +4,7 @@ import { ColumnType } from '@/types/kanban';
 import Card from './Card';
 import AddCardForm from './AddCardForm';
 import { useState, useRef, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import styles from './Column.module.css';
 
 interface ColumnProps {
@@ -86,8 +87,22 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
     setIsMenuOpen(false);
   };
 
-  const handleArchiveList = () => {
-    if (confirm(`Deseja realmente arquivar a lista "${column.title}"?`)) {
+  const handleArchiveList = async () => {
+    const result = await Swal.fire({
+      title: 'Arquivar Lista',
+      html: `<p style="font-size: 0.95rem; color: #fff; margin: 0; font-weight: 600;">${column.title}</p>`,
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Confirmar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
+    if (result.isConfirmed) {
       onDelete(column.id);
       setIsMenuOpen(false);
     }
@@ -99,12 +114,32 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
   };
 
   const handleMoveList = () => {
-    alert('Recurso de movimentação sequencial de lista! Em breve.');
+    Swal.fire({
+      title: 'Em breve',
+      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Recurso de movimentação sequencial de lista!</p>',
+      confirmButtonColor: '#7c3aed',
+      confirmButtonText: 'Ok',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '320px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
     setIsMenuOpen(false);
   };
 
   const handleAutomationRule = (ruleType: string) => {
-    alert(`Automação FLOW criada: Regra para ${ruleType} adicionada com sucesso neste quadro!`);
+    Swal.fire({
+      title: 'Automação criada',
+      html: `<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Regra para <strong style="color:#fff">${ruleType}</strong> adicionada com sucesso!</p>`,
+      confirmButtonColor: '#7c3aed',
+      confirmButtonText: 'Ok',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '320px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
     setIsMenuOpen(false);
   };
 

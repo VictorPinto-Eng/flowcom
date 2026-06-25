@@ -6,20 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model Department {
-  seqid        Int       @id(map: "pk_department") @default(autoincrement())
-  id_sector    Int?
-  nmdep        String?   @db.VarChar(15)
-  id_diretoria Int?
-  ativo        Boolean   @default(true)
-  dtinc        DateTime? @default(now()) @db.Timestamptz(6)
-  inclogin     Int?
-  dtmod        DateTime? @db.Timestamptz(6)
-  modlogin     Int?
-
-  @@map("department")
-}
-
 model Sector {
   id      Int     @id @default(autoincrement())
   name    String  @unique
@@ -89,7 +75,6 @@ model User {
   createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   active     Boolean     @default(false)
   password   String?
-  role       String      @default("USER")
   boards     Board[]
   card_task  Card[]      @relation("CardTaskUser")
   card_owner Card[]      @relation("CardOwner")
