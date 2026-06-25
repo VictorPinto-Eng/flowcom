@@ -359,7 +359,7 @@ const sortedEvents = useMemo(() => {
             <table className={styles.eventsTable}>
               <thead>
                 <tr>
-                  <th>Quadro / Área</th>
+                  <th>Atividade</th>
                   <th>Nome do Evento</th>
                   <th>Atribuído</th>
                   <th>Programado</th>
@@ -388,7 +388,8 @@ const sortedEvents = useMemo(() => {
                   }
 
                   const previstoStr = ev.previsto ? new Date(ev.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—';
-                  const boardName = ev.board?.name || ev.column?.board?.name || 'Quadro';
+                  const boardName = ev.board?.name || ev.column?.board?.name || 'Atividade';
+                  const boardSeqId = ev.board?.seqId || ev.board?.seqid || ev.column?.board?.seqId || ev.column?.board?.seqid || '';
                   const workspaceName = ev.board?.workspace?.name || ev.column?.workspace?.name || ev.column?.board?.workspace?.name || 'Área';
 
                   const assignedUserName = ev.task_user?.name || 'Não atribuído';
@@ -399,7 +400,7 @@ const sortedEvents = useMemo(() => {
                       <td>
                         <div className={styles.workspaceStatic}>
                           <div className={styles.metaTitle}>{boardName}</div>
-                          <div className={styles.metaSubtitle}>{workspaceName}</div>
+                          <div className={styles.metaSubtitle}>{boardSeqId ? `#${boardSeqId} · ${workspaceName}` : workspaceName}</div>
                         </div>
                       </td>
                       <td>
@@ -610,7 +611,7 @@ const sortedEvents = useMemo(() => {
         <div className={styles.modalOverlay} onClick={() => setTransferWorkspaceModalData(null)}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>Alterar Quadro / Área</h3>
+              <h3>Alterar Atividade / Área</h3>
               <button className={styles.closeBtn} onClick={() => setTransferWorkspaceModalData(null)}>✕</button>
             </div>
             <form onSubmit={handleTransferWorkspaceSubmit}>
@@ -656,7 +657,7 @@ const sortedEvents = useMemo(() => {
                   return (
                     <>
                       <div className={styles.formGroup} style={{ marginBottom: '1rem' }}>
-                        <label htmlFor="boardSelect">Novo Quadro:</label>
+                        <label htmlFor="boardSelect">Nova Atividade:</label>
                         <select
                           id="boardSelect"
                           className={styles.selectInput}
