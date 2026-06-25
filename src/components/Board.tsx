@@ -68,13 +68,8 @@ export default function Board({
     return tomorrow.toISOString().split('T')[0];
   });
   const getCardAgeText = (card: any) => {
-    // Para ações concluídas, calculamos os dias decorridos desde o início da atividade (boardDtatv ou boardCreatedAt) até a conclusão real da ação!
-    let startDate: Date | null = null;
-    if (card.dtcon && (boardDtatv || boardCreatedAt)) {
-      startDate = boardDtatv ? new Date(boardDtatv) : (boardCreatedAt ? new Date(boardCreatedAt) : null);
-    } else {
-      startDate = card.dtatv ? new Date(card.dtatv) : (card.createdAt ? new Date(card.createdAt) : null);
-    }
+    // Dias de trabalho = Data de Conclusão (dtcon) - Data Inicial do Evento (dtatv)
+    const startDate = card.dtatv ? new Date(card.dtatv) : (card.createdAt ? new Date(card.createdAt) : null);
 
     if (!startDate) return '—';
 
