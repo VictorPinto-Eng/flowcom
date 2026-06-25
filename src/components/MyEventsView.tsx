@@ -327,6 +327,138 @@ const sortedEvents = useMemo(() => {
     }
   };
 
+  const handleGeneratePdf = async () => {
+    if (sortedEvents.length === 0) {
+      Swal.fire({
+        title: 'Sem dados',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum evento para gerar o PDF.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '320px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
+      return;
+    }
+
+    const pdfWindow = window.open('', '_blank');
+    if (!pdfWindow) {
+      Swal.fire({
+        title: 'Pop-up bloqueado',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '360px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
+      return;
+    }
+    pdfWindow.document.write('<html><head><title>Gerando PDF...</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#475569;background:#f8fafc}.spinner{border:4px solid #e2e8f0;border-top:4px solid #6366f1;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:15px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></head><body><div class="spinner"></div><div>Gerando documento PDF...</div></body></html>');
+    pdfWindow.document.close();
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        if ((window as any).html2pdf) { resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load html2pdf'));
+        document.head.appendChild(script);
+      });
+
+      const now = new Date();
+      const anoMesDia = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const filename = `meus_eventos_${anoMesDia}.pdf`;
+
+      const formatDate = (d: any) => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—';
+
+      const tableRows = sortedEvents.map(ev => {
+        const boardName = ev.board?.name || ev.column?.board?.name || 'Atividade';
+        const previstoStr = formatDate(ev.previsto);
+        const assignedName = ev.task_user?.name || 'Não atribuído';
+        let status = 'Pendente';
+        if (ev.previsto) {
+          const dateStr = new Date(ev.previsto).toISOString().split('T')[0];
+          const [y, m, d] = dateStr.split('-').map(Number);
+          const expected = new Date(y, m - 1, d);
+          expected.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (expected < today) status = 'Atrasado';
+          else if (expected.getTime() === today.getTime()) status = 'Hoje';
+        }
+        return `<tr style="page-break-inside:avoid;">
+          <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:10px;">${boardName}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:10px;">${ev.title}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:10px;">${assignedName}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:10px;">${previstoStr}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:${status === 'Atrasado' ? '#ef4444' : status === 'Hoje' ? '#f59e0b' : '#10b981'}">${status}</td>
+        </tr>`;
+      }).join('');
+
+      const userName = currentUser?.name || 'Usuário';
+      const htmlContent = `<div style="width:710px;padding:15px;background:white;font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;">
+        <div style="border-bottom:2px solid #cbd5e1;padding-bottom:12px;margin-bottom:16px;">
+          <div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:4px;">Meus Eventos</div>
+          <div style="font-size:11px;color:#64748b;">Responsável: ${userName} | Emitido em: ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;">
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:140px;">ATIVIDADE</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;">EVENTO</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:100px;">ATRIBUÍDO</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:90px;">PROGRAMADO</th>
+            <th style="padding:8px;text-align:left;border-bottom:1px solid #cbd5e1;font-size:10px;font-weight:700;text-transform:uppercase;width:70px;">STATUS</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        <div style="margin-top:20px;border-top:1px solid #cbd5e1;padding-top:12px;">
+          <div style="font-size:9px;color:#64748b;">Total de eventos: <strong>${sortedEvents.length}</strong></div>
+        </div>
+      </div>`;
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename,
+        image: { type: 'jpeg', quality: 0.92 },
+        html2canvas: { scale: 1.5, useCORS: true, logging: false, allowTaint: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr'] }
+      };
+
+      const html2pdf = (window as any).html2pdf;
+      const pdfBlob = await html2pdf()
+        .from(htmlContent)
+        .set(opt)
+        .toPdf()
+        .get('pdf')
+        .then((pdfObj: any) => {
+          pdfObj.setProperties({ title: 'Meus Eventos - Flow' });
+          return pdfObj;
+        })
+        .output('blob');
+
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      pdfWindow.location.replace(blobUrl);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      Swal.fire({
+        title: 'Erro',
+        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff',
+        width: '320px',
+        padding: '1.5rem',
+        backdrop: 'rgba(0,0,0,0.6)'
+      });
+      pdfWindow.close();
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -334,19 +466,29 @@ const sortedEvents = useMemo(() => {
           <h2 className={styles.title}>Meus Eventos</h2>
           <p className={styles.subtitle}>Listagem de todos eventos em andamento sob responsabilidade direta do seu usuário</p>
         </div>
-        <button
-          onClick={() => {
-            if (onBack) {
-              onBack();
-            } else {
-              router.push('/dashboard');
-            }
-          }}
-          className={styles.cancelBtn}
-          title="Voltar para a tela anterior"
-        >
-          ← Voltar
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            onClick={handleGeneratePdf}
+            className={styles.cancelBtn}
+            title="Gerar PDF dos eventos"
+            style={{ background: '#7c3aed', color: '#fff', border: '1px solid #6d28d9' }}
+          >
+            📄 PDF
+          </button>
+          <button
+            onClick={() => {
+              if (onBack) {
+                onBack();
+              } else {
+                router.push('/dashboard');
+              }
+            }}
+            className={styles.cancelBtn}
+            title="Voltar para a tela anterior"
+          >
+            ← Voltar
+          </button>
+        </div>
       </div>
 
       <div className={styles.content}>

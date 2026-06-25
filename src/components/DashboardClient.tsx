@@ -293,7 +293,11 @@ export default function DashboardClient({
   }, [searchParams]);
 
   const handleBack = () => {
-    if (typeof window !== 'undefined' && (window as any).__hasInternalNavigation) {
+    const viewParam = searchParams.get('view');
+    // Views acessadas pelo header sempre voltam para o dashboard principal
+    if (viewParam === 'my-events' || viewParam === 'my-activities' || viewParam === 'movements') {
+      router.push('/dashboard');
+    } else if (typeof window !== 'undefined' && (window as any).__hasInternalNavigation) {
       router.back();
     } else {
       router.push('/dashboard');
