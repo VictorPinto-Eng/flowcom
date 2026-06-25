@@ -20,7 +20,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   const user = await getCurrentUserAction();
   if (!user) {
-    redirect('/login');
+    redirect('/api/auth/clear-session');
   }
 
   const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString()) as any;

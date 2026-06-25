@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rotas que não precisam de autenticação
-  const publicRoutes = ['/login', '/register', '/verify', '/api/auth', '/forgot-password', '/reset-password'];
+  const publicRoutes = ['/login', '/register', '/verify', '/api/auth', '/forgot-password', '/reset-password', '/invite'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
   const hasValidSession = token ? isValidSession(token) : false;
@@ -35,8 +35,8 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  // Com sessão válida em rota pública → redireciona para dashboard
-  if (hasValidSession && isPublicRoute) {
+  // Com sessão válida em rota pública (exceto APIs) → redireciona para dashboard
+  if (hasValidSession && isPublicRoute && !pathname.startsWith('/api/')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

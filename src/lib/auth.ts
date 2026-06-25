@@ -47,6 +47,9 @@ export async function createSession(userId: string, userSeqId: string) {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
+  // Revogar sessões anteriores do usuário (sessão única por usuário)
+  await prisma.session.deleteMany({ where: { userSeqid: BigInt(userSeqId) } });
+
   await prisma.session.create({
     data: {
       userSeqid: BigInt(userSeqId),
