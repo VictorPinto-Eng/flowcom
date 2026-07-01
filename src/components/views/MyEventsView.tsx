@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { CircleCheckBig } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Swal from 'sweetalert2';
 import {
   updateCardPrevistoAction,
@@ -11,8 +11,7 @@ import {
   deleteCardActionLogAction,
   getWorkspaceMembersAction,
   transferCardAction,
-  transferCardWorkspaceAction,
-  completeCardDirectlyAction
+  transferCardWorkspaceAction
 } from '@/app/actions/cardActions';
 import styles from './MyEventsView.module.css';
 
@@ -82,7 +81,6 @@ const sortedEvents = useMemo(() => {
   const [selectedBoardSeqid, setSelectedBoardSeqid] = useState<string>('');
   const [selectedColumnId, setSelectedColumnId] = useState<string>('');
   const [isTransferringWorkspace, setIsTransferringWorkspace] = useState(false);
-  const [isCompletingEvent, setIsCompletingEvent] = useState<string | null>(null);
 
   const handlePrevistoChange = async (cardId: string, val: string) => {
     try {
@@ -273,59 +271,6 @@ const sortedEvents = useMemo(() => {
     }
   };
 
-  const handleCompleteEvent = async (cardId: string, cardTitle: string) => {
-    const result = await Swal.fire({
-      title: 'Finalizar Evento',
-      html: `<p style="font-size: 0.95rem; color: #fff; margin: 0; font-weight: 600;">${cardTitle}</p>`,
-      icon: undefined,
-      showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: '✓ Confirmar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)',
-      customClass: {
-        popup: 'swal-premium-popup',
-        title: 'swal-premium-title',
-        confirmButton: 'swal-premium-confirm',
-        cancelButton: 'swal-premium-cancel'
-      }
-    });
-
-    if (!result.isConfirmed) return;
-
-    setIsCompletingEvent(cardId);
-
-    const localDate = new Date();
-    const year = localDate.getFullYear();
-    const month = String(localDate.getMonth() + 1).padStart(2, '0');
-    const day = String(localDate.getDate()).padStart(2, '0');
-    const localDateStr = `${year}-${month}-${day}`;
-
-    try {
-      await completeCardDirectlyAction(cardId, localDateStr);
-      if (onEventsChange) {
-        onEventsChange((prev: any[]) => prev.filter(ev => ev.id !== cardId));
-      }
-      router.refresh();
-    } catch (err) {
-      console.error('Erro ao finalizar evento:', err);
-      Swal.fire({
-        title: 'Erro',
-        text: 'Erro ao finalizar o evento.',
-        icon: 'error',
-        confirmButtonColor: '#7c3aed',
-        background: '#1a1a1a',
-        color: '#fff'
-      });
-    } finally {
-      setIsCompletingEvent(null);
-    }
-  };
 
   const handleGeneratePdf = async () => {
     if (sortedEvents.length === 0) {
@@ -591,14 +536,13 @@ const sortedEvents = useMemo(() => {
                           >
                             💬 {ev.card_act ? ev.card_act.length : 0}
                           </button>
-                          {isAssignedToMe && (
+                          {ev.board?.id && (
                             <button
-                              className={styles.completeBtn}
-                              onClick={() => handleCompleteEvent(ev.id, ev.title)}
-                              disabled={isCompletingEvent === ev.id}
-                              title="Finalizar Evento"
+                              className={styles.openBoardBtn}
+                              onClick={() => router.push(`/dashboard?boardId=${ev.board.id}`)}
+                              title="Abrir todos os eventos desta atividade"
                             >
-                              {isCompletingEvent === ev.id ? '⏱️' : <CircleCheckBig size={18} color="#10b981" strokeWidth={2.5} />}
+                              <ExternalLink size={16} strokeWidth={2} />
                             </button>
                           )}
                         </div>

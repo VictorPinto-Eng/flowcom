@@ -19,6 +19,28 @@ export class CardService {
       board_seqid: c.board_seqid?.toString(),
       user_seqid: c.user_seqid?.toString(),
       taskuser_seqid: c.taskuser_seqid?.toString(),
+      board: c.board ? {
+        ...c.board,
+        id: c.board.seqId.toString(),
+        seqId: c.board.seqId.toString(),
+        workspaceId: c.board.workspaceId?.toString(),
+        user_seqid: c.board.user_seqid?.toString(),
+        created_by: c.board.created_by?.toString(),
+        workspace: c.board.workspace ? {
+          ...c.board.workspace,
+          id: c.board.workspace.seqid.toString(),
+          seqid: c.board.workspace.seqid.toString(),
+        } : undefined
+      } : undefined,
+      column: c.column ? {
+        ...c.column,
+        seqid: c.column.seqid.toString(),
+        workspace: c.column.workspace ? {
+          ...c.column.workspace,
+          id: c.column.workspace.seqid.toString(),
+          seqid: c.column.workspace.seqid.toString(),
+        } : undefined
+      } : undefined,
       card_act: c.card_act?.map(act => ({
         ...act,
         seqid: act.seqid.toString(),

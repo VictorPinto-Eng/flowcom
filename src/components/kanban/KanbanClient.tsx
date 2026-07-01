@@ -1,7 +1,7 @@
 'use client';
 
 import { useKanban } from '@/hooks/useKanban';
-import Board from '@/components/Board';
+import Board from './Board';
 import { ColumnType } from '@/types/kanban';
 
 interface KanbanClientProps {

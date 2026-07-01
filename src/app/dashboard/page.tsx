@@ -1,7 +1,8 @@
 import { getCurrentUserAction, getUserWorkspaces, getWorkspaceTypes } from '@/app/actions/workspaceActions';
 import { getBoardData, getSectorsAction } from '@/app/actions/boardActions';
 import { getMyEventsAction } from '@/app/actions/cardActions';
-import DashboardClient from '@/components/DashboardClient';
+import { getDashboardStatsAction } from '@/app/actions/dashboardActions';
+import DashboardClient from '@/components/shell/DashboardClient';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString()) as any;
   const workspaceTypes = await getWorkspaceTypes();
   const sectors = await getSectorsAction();
+  const dashboardStats = await getDashboardStatsAction();
 
   let activeBoard: any = null;
   let activeWorkspace: any = null;
@@ -62,6 +64,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       initialMyEvents={myAssignedEvents}
       successParam={successParam}
       errorParam={errorParam}
+      dashboardStats={dashboardStats}
     />
   );
 }

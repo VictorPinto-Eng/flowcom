@@ -1,0 +1,117 @@
+/* RenameActivityModal — composição de estilos compartilhados */
+
+.overlay {
+  composes: overlay from '../../styles/_modal.module.css';
+}
+
+.modal {
+  composes: modal from '../../styles/_modal.module.css';
+}
+
+.closeBtn {
+  composes: closeBtn from '../../styles/_modal.module.css';
+}
+
+.content {
+  display: block;
+}
+
+.formSection {
+  padding: 2.5rem;
+}
+
+.formSection h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(to right, var(--text-primary), var(--accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.form {
+  composes: form from '../../styles/_form.module.css';
+  gap: 1.5rem;
+}
+
+.field {
+  composes: field from '../../styles/_form.module.css';
+}
+
+.field label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.field input,
+.field textarea,
+.field select {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.1);
+}
+
+.hint {
+  composes: hint from '../../styles/_form.module.css';
+}
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancelBtn {
+  composes: btnCancel from '../../styles/_buttons.module.css';
+  flex: 1;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.submitBtn {
+  composes: btnPrimary from '../../styles/_buttons.module.css';
+  flex: 1.5;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}

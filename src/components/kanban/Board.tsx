@@ -6,8 +6,9 @@ import { CircleCheckBig } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { ColumnType, CardType } from '@/types/kanban';
 import { addCardActionLogAction, updateCardActionLogAction, deleteCardActionLogAction, updateCardPrevistoAction, updateCardAction, getWorkspaceMembersAction, transferCardAction, requestTransferAction, respondTransferRequestAction } from '@/app/actions/cardActions';
-import ActivityHistorySidebar from './ActivityHistorySidebar';
-import EditEventModal from './EditEventModal';
+import { completeBoardAction, requestBoardCompletionAction } from '@/app/actions/boardActions';
+import ActivityHistorySidebar from '../shell/ActivityHistorySidebar';
+import EditEventModal from '../modals/EditEventModal';
 import styles from './Board.module.css';
 
 interface BoardProps {
@@ -364,6 +365,90 @@ export default function Board({
     }
   };
 
+  const handleEncerrarAtividade = async () => {
+    const pendingEvents = displayEvents.filter(ev => !ev.dtcon);
+    const isOwner = currentUserRole === 'OWNER';
+
+    const eventListHtml = pendingEvents.length > 0
+      ? `<div style="text-align:left;margin:0.75rem 0;padding:0.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.85rem;">
+          ${pendingEvents.map(ev => `<div style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem;"><span style="color:#f59e0b;">⚡</span> <strong style="color:#fff;">${ev.title}</strong> <span style="color:#94a3b8;font-size:0.8rem;">${ev.task_user?.name || 'Sem responsável'}</span></div>`).join('')}
+        </div>`
+      : '<p style="color:#94a3b8;font-size:0.85rem;margin:0.75rem 0;">Nenhum evento pendente.</p>';
+
+    const result = await Swal.fire({
+      title: isOwner ? 'Encerrar Atividade' : 'Solicitar Encerramento',
+      html: `
+        <p style="font-size:0.9rem;color:#94a3b8;margin-bottom:0;">
+          ${isOwner
+            ? `Todos os <strong style="color:#fff;">${pendingEvents.length}</strong> evento(s) pendente(s) serão marcados como concluídos.`
+            : 'Uma solicitação será enviada ao proprietário para aprovação.'
+          }
+        </p>
+        ${eventListHtml}
+        <textarea id="swal-descricao" placeholder="Descrição / Observação (opcional)" style="display:block;width:100%;box-sizing:border-box;min-height:70px;padding:0.75rem;margin-top:0.5rem;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+      `,
+      icon: undefined,
+      iconHtml: '🔒',
+      showCancelButton: true,
+      confirmButtonColor: isOwner ? '#ef4444' : '#7c3aed',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: isOwner ? 'Confirmar Encerramento' : '📨 Enviar Solicitação',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '520px',
+      padding: '2rem',
+      preConfirm: () => {
+        return (document.getElementById('swal-descricao') as HTMLTextAreaElement)?.value || '';
+      }
+    });
+
+    if (!result.isConfirmed) return;
+
+    const descricao = result.value || '';
+
+    try {
+      if (isOwner) {
+        const localDate = new Date();
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, '0');
+        const day = String(localDate.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+
+        await completeBoardAction(boardId, localDateStr);
+        Swal.fire({
+          title: 'Atividade Encerrada!',
+          text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
+          icon: 'success',
+          confirmButtonColor: '#10b981',
+          background: '#1e1e2e',
+          color: '#fff'
+        });
+      } else {
+        await requestBoardCompletionAction(boardId);
+        Swal.fire({
+          title: 'Solicitação Enviada!',
+          text: 'O proprietário será notificado para aprovar o encerramento.',
+          icon: 'success',
+          confirmButtonColor: '#7c3aed',
+          background: '#1e1e2e',
+          color: '#fff'
+        });
+      }
+      router.refresh();
+    } catch (err: any) {
+      console.error('Erro ao encerrar atividade:', err);
+      Swal.fire({
+        title: 'Erro',
+        text: err?.message || 'Erro ao processar encerramento.',
+        icon: 'error',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff'
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
 
@@ -401,7 +486,7 @@ export default function Board({
           </div>
         </div>
         <div className={styles.topBarRight}>
-          {viewMode !== 'completed' && (
+          {viewMode !== 'completed' && !boardDtcon && (
             <button
               className={`${styles.actionBtn} ${isAdding ? styles.actionBtnCancel : styles.actionBtnPrimary}`}
               onClick={() => {
@@ -417,6 +502,15 @@ export default function Board({
               }}
             >
               {isAdding ? '✕ Cancelar' : '+ Cadastrar Evento'}
+            </button>
+          )}
+          {viewMode !== 'completed' && !boardDtcon && (currentUserRole === 'OWNER' || currentUserRole === 'ADMIN') && (
+            <button
+              className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+              onClick={handleEncerrarAtividade}
+              title={currentUserRole === 'OWNER' ? 'Encerrar Atividade — todos os eventos pendentes serão concluídos' : 'Solicitar Encerramento ao proprietário'}
+            >
+              🔒 {currentUserRole === 'OWNER' ? 'Encerrar' : 'Solicitar Encerramento'}
             </button>
           )}
           <button

@@ -4,21 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CircleCheckBig } from 'lucide-react';
-import UserMenu from '@/components/UserMenu';
+import UserMenu from './UserMenu';
 import Swal from 'sweetalert2';
-import KanbanClient from '@/components/KanbanClient';
-import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
-import CreateActivityModal from '@/components/CreateActivityModal';
-import ActivityReportModal from '@/components/ActivityReportModal';
-import RenameActivityModal from '@/components/RenameActivityModal';
-import ActivityHistorySidebar from '@/components/ActivityHistorySidebar';
-import MyEventsView from '@/components/MyEventsView';
-import MyActivitiesView from '@/components/MyActivitiesView';
-import MovementsView from '@/components/MovementsView';
-import PremiumWorkspaceGridModal from '@/components/PremiumWorkspaceGridModal';
-
-import WorkspaceColumnsModal from '@/components/WorkspaceColumnsModal';
-import EditWorkspaceModal from '@/components/EditWorkspaceModal';
+import { KanbanClient } from '../kanban';
+import { CreateWorkspaceModal, CreateActivityModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
+import ActivityHistorySidebar from './ActivityHistorySidebar';
+import WelcomeDashboard from './WelcomeDashboard';
+import { MyEventsView, MyActivitiesView, MovementsView } from '../views';
 import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction, getPendingInvitesAction, rejectWorkspaceInviteAction } from '@/app/actions/workspaceActions';
 import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs, requestBoardCompletionAction, respondBoardCompletionAction, getPendingBoardCompletionRequestsAction } from '@/app/actions/boardActions';
 import {
@@ -182,6 +174,7 @@ interface DashboardClientProps {
   initialMyEvents?: any[];
   successParam?: string;
   errorParam?: string;
+  dashboardStats?: any;
 }
 
 export default function DashboardClient({
@@ -195,7 +188,8 @@ export default function DashboardClient({
   viewMode = 'ongoing',
   initialMyEvents = [],
   successParam,
-  errorParam
+  errorParam,
+  dashboardStats
 }: DashboardClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -716,12 +710,6 @@ export default function DashboardClient({
     }
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
 
   // Restore search term and sector filter from sessionStorage keyed by workspace ID to ensure smooth back-button transitions
   useEffect(() => {
@@ -1990,158 +1978,13 @@ export default function DashboardClient({
                 onAcceptInvite={handleAcceptInvite}
               />
             ) : (
-              (() => {
-                const totalWorkspaces = workspaces.length;
-                const allBoards = workspaces.flatMap(w => w.boards || []);
-                const totalBoards = allBoards.length;
-                const activeBoardsCount = allBoards.filter(b => !b.dtcon).length;
-                const completedBoardsCount = allBoards.filter(b => !!b.dtcon).length;
-                const globalCompletionRate = totalBoards > 0 ? Math.round((completedBoardsCount / totalBoards) * 100) : 0;
-
-                return (
-                  <div className={styles.welcomeContainer}>
-                    {/* Header Banner */}
-                    <div className={styles.welcomeHeader}>
-                      <div className={styles.welcomeGreeting}>
-                        <h2>{getGreeting()}, {user.name.split(' ')[0]}! 👋</h2>
-                        <p className={styles.welcomeSubtitle}>
-                          Visualize o andamento das suas atividades e gerencie seus fluxos de trabalho.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* KPIs Grid */}
-                    <div className={styles.statsGrid}>
-                      <div className={`${styles.statCard} ${styles.statCardPurple}`}>
-                        <div className={`${styles.statIcon} ${styles.statIconPurple}`}>📂</div>
-                        <div className={styles.statContent}>
-                          <span className={styles.statVal}>{totalWorkspaces}</span>
-                          <span className={styles.statLabel}>Áreas de Trabalho</span>
-                        </div>
-                      </div>
-
-                      <div className={`${styles.statCard} ${styles.statCardBlue}`}>
-                        <div className={`${styles.statIcon} ${styles.statIconBlue}`}>⚡</div>
-                        <div className={styles.statContent}>
-                          <span className={styles.statVal}>{activeBoardsCount}</span>
-                          <span className={styles.statLabel}>Atividades em Execução</span>
-                        </div>
-                      </div>
-
-                      <div className={`${styles.statCard} ${styles.statCardGreen}`}>
-                        <div className={`${styles.statIcon} ${styles.statIconGreen}`}><CircleCheckBig size={20} color="#10b981" strokeWidth={2.5} /></div>
-                        <div className={styles.statContent}>
-                          <span className={styles.statVal}>{completedBoardsCount}</span>
-                          <span className={styles.statLabel}>Fluxos Concluídos</span>
-                        </div>
-                      </div>
-
-                      <div className={`${styles.statCard} ${styles.statCardAmber}`}>
-                        <div className={`${styles.statIcon} ${styles.statIconAmber}`}>📈</div>
-                        <div className={styles.statContent}>
-                          <span className={styles.statVal}>{globalCompletionRate}%</span>
-                          <span className={styles.statLabel}>Taxa de Conclusão</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Charts and Activity Feed */}
-                    <div className={styles.dashboardVisuals}>
-                      {/* Left Column: Workspaces Progress Bar Chart */}
-                      <div className={styles.chartCard}>
-                        <div className={styles.chartHeader}>
-                          <h4 className={styles.chartTitle}>📊 Atividades por Área de Trabalho</h4>
-                          <button
-                            className={styles.premiumPanelBtn}
-                            onClick={() => setIsPremiumGridOpen(true)}
-                            title="Visualização Premium"
-                          >
-                            🧩 Painel
-                          </button>
-                        </div>
-                        {workspaces.length === 0 ? (
-                          <div className={styles.emptyStateChart}>
-                            Nenhuma área de trabalho cadastrada ainda.
-                          </div>
-                        ) : (
-                          <div className={styles.barChartContainer}>
-                            {workspaces.map(ws => {
-                              const wsBoards = ws.boards || [];
-                              const wsActive = wsBoards.filter((b: any) => !b.dtcon).length;
-                              const wsCompleted = wsBoards.filter((b: any) => !!b.dtcon).length;
-                              const total = wsBoards.length;
-                              const pct = total > 0 ? Math.round((wsCompleted / total) * 100) : 0;
-
-                              return (
-                                <div key={ws.id} className={styles.barChartItem}>
-                                  <div className={styles.barMeta}>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                      <span className={styles.barName}>{ws.name}</span>
-                                      <Link
-                                        href={`/dashboard?workspaceId=${ws.id}&view=kanban`}
-                                        className={styles.miniKanbanLink}
-                                      >
-                                        📊
-                                      </Link>
-                                    </div>
-                                    <span className={styles.barValText}>
-                                      {wsActive} ativas • {wsCompleted} concluídas ({pct}%)
-                                    </span>
-                                  </div>
-                                  <div className={styles.progressBarTrack}>
-                                    <div
-                                      className={styles.progressBarFill}
-                                      style={{ width: `${total > 0 ? (wsActive / total) * 100 : 0}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Column: Live Audit Feed */}
-                      <div className={styles.chartCard}>
-                        <div className={styles.chartHeader}>
-                          <h4 className={styles.chartTitle}>🔔 Feed de Atividades Recentes</h4>
-                        </div>
-                        {recentLogs.length === 0 ? (
-                          <div className={styles.emptyStateChart}>
-                            Nenhuma atividade recente registrada.
-                          </div>
-                        ) : (
-                          <div className={styles.feedContainer}>
-                            {recentLogs.map((log: any) => {
-                              let dotClass = styles.feedDot;
-                              if (log.action.includes('CREATED')) dotClass = `${styles.feedDot} ${styles.feedDotBlue}`;
-                              if (log.action.includes('COMPLETED') || log.action.includes('CONCLUIR') || log.action.includes('BOARD_COMPLETED')) dotClass = `${styles.feedDot} ${styles.feedDotGreen}`;
-                              if (log.action.includes('RENAMED')) dotClass = `${styles.feedDot} ${styles.feedDotAmber}`;
-
-                              const timeStr = log.createdAt ? new Date(log.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-                              const dateStr = log.createdAt ? new Date(log.createdAt).toLocaleDateString('pt-BR') : '';
-
-                              return (
-                                <div key={log.seqid} className={styles.feedItem}>
-                                  <div className={dotClass} />
-                                  <div className={styles.feedContent}>
-                                    <div className={styles.feedText}>
-                                      <strong>{log.user?.name || 'Sistema'}</strong> {log.description}
-                                    </div>
-                                    <div className={styles.feedTime}>
-                                      {dateStr} às {timeStr}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()
+              <WelcomeDashboard
+                user={user}
+                workspaces={workspaces}
+                recentLogs={recentLogs}
+                dashboardStats={dashboardStats}
+                onOpenPremiumGrid={() => setIsPremiumGridOpen(true)}
+              />
             )}
           </div>
         </main>

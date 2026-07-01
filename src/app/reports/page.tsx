@@ -1,5 +1,5 @@
 import { getAllCardsReportAction } from '../actions/cardActions';
-import ReportsView from '@/components/ReportsView';
+import ReportsView from '@/components/views/ReportsView';
 import { Metadata } from 'next';
 import { getCurrentUserAction } from '../actions/workspaceActions';
 import { redirect } from 'next/navigation';
