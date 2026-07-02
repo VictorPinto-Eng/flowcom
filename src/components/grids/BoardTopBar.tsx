@@ -118,7 +118,10 @@ export default function BoardTopBar({
           onClick={() => {
             const params = new URLSearchParams(window.location.search);
             const from = params.get('from');
-            if (from === 'my-activities') {
+            if (viewMode === 'completed') {
+              // Na view de concluídos, voltar para a view ativa do board
+              router.push(`/dashboard?boardId=${boardId}&from=${from || 'workspace'}`);
+            } else if (from === 'my-activities') {
               router.push('/dashboard?view=my-activities');
             } else if (from === 'workspace') {
               router.push(`/dashboard?workspaceId=${workspaceId}`);
