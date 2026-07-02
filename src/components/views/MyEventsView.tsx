@@ -9,6 +9,7 @@ import {
   addCardActionLogAction,
   updateCardActionLogAction,
   deleteCardActionLogAction,
+  getCardActionsAction,
   getWorkspaceMembersAction,
   transferCardAction,
   transferCardWorkspaceAction
@@ -531,10 +532,13 @@ const sortedEvents = useMemo(() => {
                         <div className={styles.actionsGroup}>
                           <button
                             className={styles.actionBtn}
-                            onClick={() => setSelectedEvent(ev)}
+                            onClick={async () => {
+                              const actions = await getCardActionsAction(ev.seqid);
+                              setSelectedEvent({ ...ev, card_act: actions });
+                            }}
                             title="Anotações"
                           >
-                            💬 {ev.card_act ? ev.card_act.length : 0}
+                            💬
                           </button>
                           {ev.board?.id && (
                             <button

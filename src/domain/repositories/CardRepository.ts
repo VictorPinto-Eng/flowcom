@@ -37,10 +37,6 @@ export class CardRepository {
           include: {
             workspace: true
           }
-        },
-        card_act: {
-          orderBy: { created_at: 'desc' },
-          include: { users: true }
         }
       },
       orderBy: [

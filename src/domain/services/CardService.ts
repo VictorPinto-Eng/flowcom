@@ -40,14 +40,7 @@ export class CardService {
           id: c.column.workspace.seqid.toString(),
           seqid: c.column.workspace.seqid.toString(),
         } : undefined
-      } : undefined,
-      card_act: c.card_act?.map(act => ({
-        ...act,
-        seqid: act.seqid.toString(),
-        card_seqid: act.card_seqid?.toString(),
-        user_seqid: act.user_seqid?.toString(),
-        created_by: act.created_by?.toString()
-      }))
+      } : undefined
     }));
   }
 

@@ -47,6 +47,25 @@ export async function getMyEventsAction() {
   return await cardService.getMyEvents(user);
 }
 
+export async function getCardActionsAction(cardSeqid: string) {
+  const user = await userRepo.getLoggedUser();
+  if (!user) throw new Error('Não autenticado');
+
+  const actions = await prisma.card_act.findMany({
+    where: { card_seqid: BigInt(cardSeqid) },
+    orderBy: { created_at: 'desc' },
+    include: { users: true }
+  });
+
+  return actions.map(act => ({
+    ...act,
+    seqid: act.seqid.toString(),
+    card_seqid: act.card_seqid?.toString(),
+    user_seqid: act.user_seqid?.toString(),
+    created_by: act.created_by?.toString()
+  }));
+}
+
 export async function addCardAction(columnId: string, title: string, boardId: string, description?: string, dtatvStr?: string | null, previstoStr?: string | null) {
   const user = await userRepo.getLoggedUser();
 
