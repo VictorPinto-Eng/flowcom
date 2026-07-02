@@ -89,6 +89,31 @@ export default function BoardTopBar({
             🔒 {currentUserRole === 'OWNER' ? 'Encerrar' : 'Solicitar Encerramento'}
           </button>
         )}
+        {viewMode === 'completed' ? (
+          <button
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const from = params.get('from');
+              router.push(`/dashboard?boardId=${boardId}&from=${from || 'workspace'}`);
+            }}
+            title="Ver eventos em andamento"
+          >
+            ⚡ Em Andamento
+          </button>
+        ) : (
+          <button
+            className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const from = params.get('from');
+              router.push(`/dashboard?boardId=${boardId}&view=completed&from=${from || 'workspace'}`);
+            }}
+            title="Ver eventos concluídos"
+          >
+            ✅ Concluídos
+          </button>
+        )}
         <button
           onClick={() => {
             const params = new URLSearchParams(window.location.search);
