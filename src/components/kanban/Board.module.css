@@ -108,6 +108,7 @@
 .actionBtnPrimary {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
+  border: 1px solid transparent;
   box-shadow: 0 2px 8px rgba(16,185,129,0.3);
 }
 
@@ -143,12 +144,6 @@
   background: rgba(124, 58, 237, 0.08);
   color: #7c3aed;
   border: 1px solid rgba(124, 58, 237, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .actionBtnSecondary:hover {
