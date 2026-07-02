@@ -77,7 +77,7 @@ export default function BoardTopBar({
             className={`${styles.actionBtn} ${isAdding ? styles.actionBtnCancel : styles.actionBtnPrimary}`}
             onClick={onToggleAdding}
           >
-            {isAdding ? '✕ Cancelar' : '+ Cadastrar Evento'}
+            {isAdding ? '✕ Cancelar' : '+ Evento'}
           </button>
         )}
         {viewMode !== 'completed' && !boardDtcon && (currentUserRole === 'OWNER' || currentUserRole === 'ADMIN') && (
@@ -132,10 +132,10 @@ export default function BoardTopBar({
               }
             }
           }}
-          className={styles.backBtn}
+          className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
           title="Voltar para a tela anterior"
         >
-          ‹ Voltar
+          ← Voltar
         </button>
       </div>
     </div>
