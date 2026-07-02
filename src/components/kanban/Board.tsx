@@ -699,6 +699,12 @@ export default function Board({
                         <tr key={event.id}>
                           <td>
                             <div className={styles.gridEventTitle}>{event.title}</div>
+                            <button
+                              className={styles.actionsPillBtn}
+                              onClick={() => setActiveActionModal(event as any)}
+                            >
+                              💬 Andamentos ({event.card_act ? event.card_act.length : 0})
+                            </button>
                           </td>
                           <td>
                             <div className={styles.gridEventDesc}>{dtatvStr}</div>
