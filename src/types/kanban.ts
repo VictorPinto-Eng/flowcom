@@ -1,5 +1,6 @@
 export interface CardType {
   id: string;
+  seqid?: string;
   title: string;
   description: string;
   dtatv?: Date | string | null;

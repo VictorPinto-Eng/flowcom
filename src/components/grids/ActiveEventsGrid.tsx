@@ -26,7 +26,7 @@ interface ActiveEventsGridProps {
   onMoveCard: (cardId: string, sourceColId: string, targetColId: string) => void;
   onCompleteCard?: (cardId: string, sourceColId: string, targetColId: string) => void;
   onEditEvent: (event: any) => void;
-  onRespondTransfer: (cardId: string, actionSeqid: string, accept: boolean) => void;
+  onRespondTransfer: (cardId: string, actionSeqid: string, accept: boolean) => Promise<void> | void;
   onAdminTransferRequest: (event: any) => void;
 }
 

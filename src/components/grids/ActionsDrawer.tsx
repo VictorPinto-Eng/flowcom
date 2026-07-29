@@ -11,7 +11,7 @@ interface ActionsDrawerProps {
   currentUserRole: string;
   onClose: () => void;
   onUpdate: (updatedEvent: any) => void;
-  onRespondTransfer?: (cardId: string, actionSeqid: string, accept: boolean) => void;
+  onRespondTransfer?: (cardId: string, actionSeqid: string, accept: boolean) => Promise<void> | void;
 }
 
 export default function ActionsDrawer({
@@ -25,6 +25,7 @@ export default function ActionsDrawer({
   const [newActionText, setNewActionText] = useState('');
   const [editingActionSeqid, setEditingActionSeqid] = useState<string | null>(null);
   const [editingActionText, setEditingActionText] = useState('');
+  const [respondingTransferSeqid, setRespondingTransferSeqid] = useState<string | null>(null);
 
   const isEventAssignedToMe = !!(userSeqid && event.taskuser_seqid && event.taskuser_seqid.toString() === userSeqid);
 
@@ -56,6 +57,20 @@ export default function ActionsDrawer({
       });
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleRespondTransfer = async (actionSeqid: string, accept: boolean) => {
+    if (!onRespondTransfer) return;
+
+    const cardId = event.seqid ? event.seqid.toString() : event.id;
+    setRespondingTransferSeqid(actionSeqid);
+    try {
+      await onRespondTransfer(cardId, actionSeqid, accept);
+      onClose();
+    } catch (err) {
+      console.error('Erro ao responder transferência:', err);
+      setRespondingTransferSeqid(null);
     }
   };
 
@@ -226,7 +241,9 @@ export default function ActionsDrawer({
                         {isTransferPendente && onRespondTransfer && (
                           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                             <button
-                              onClick={() => onRespondTransfer(event.seqid ? event.seqid.toString() : event.id, act.seqid.toString(), true)}
+                              onClick={() => handleRespondTransfer(act.seqid.toString(), true)}
+                              disabled={respondingTransferSeqid === act.seqid.toString()}
+                              aria-busy={respondingTransferSeqid === act.seqid.toString()}
                               style={{
                                 background: '#10b981',
                                 color: 'white',
@@ -235,13 +252,15 @@ export default function ActionsDrawer({
                                 padding: '0.35rem 0.75rem',
                                 fontSize: '0.8rem',
                                 fontWeight: 600,
-                                cursor: 'pointer'
+                                cursor: respondingTransferSeqid === act.seqid.toString() ? 'not-allowed' : 'pointer'
                               }}
                             >
-                              Aceitar
+                              {respondingTransferSeqid === act.seqid.toString() ? 'Aceitando...' : 'Aceitar'}
                             </button>
                             <button
-                              onClick={() => onRespondTransfer(event.seqid ? event.seqid.toString() : event.id, act.seqid.toString(), false)}
+                              onClick={() => handleRespondTransfer(act.seqid.toString(), false)}
+                              disabled={respondingTransferSeqid === act.seqid.toString()}
+                              aria-busy={respondingTransferSeqid === act.seqid.toString()}
                               style={{
                                 background: 'rgba(239, 68, 68, 0.1)',
                                 color: '#ef4444',
@@ -250,10 +269,10 @@ export default function ActionsDrawer({
                                 padding: '0.35rem 0.75rem',
                                 fontSize: '0.8rem',
                                 fontWeight: 600,
-                                cursor: 'pointer'
+                                cursor: respondingTransferSeqid === act.seqid.toString() ? 'not-allowed' : 'pointer'
                               }}
                             >
-                              Recusar
+                              {respondingTransferSeqid === act.seqid.toString() ? 'Recusando...' : 'Recusar'}
                             </button>
                           </div>
                         )}

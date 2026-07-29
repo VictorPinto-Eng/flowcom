@@ -94,11 +94,11 @@ export default function Board({
       const isDoneCol = col.title.toLowerCase().includes('concluído') || col.title.toLowerCase().includes('concluido');
       if (viewMode === 'completed') {
         if (isDoneCol || card.dtcon) {
-          displayEvents.push({ ...card, columnName: col.title, columnId: col.id });
+          displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
         }
       } else {
         if (!isDoneCol && !card.dtcon) {
-          displayEvents.push({ ...card, columnName: col.title, columnId: col.id });
+          displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
         }
       }
     });

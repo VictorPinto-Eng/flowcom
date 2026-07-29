@@ -16,7 +16,7 @@ interface CompletedEventsGridProps {
   events: CompletedEvent[];
   userSeqid: string;
   currentUserRole: string;
-  onRespondTransfer?: (cardId: string, actionSeqid: string, accept: boolean) => void;
+  onRespondTransfer?: (cardId: string, actionSeqid: string, accept: boolean) => Promise<void> | void;
 }
 
 export default function CompletedEventsGrid({
