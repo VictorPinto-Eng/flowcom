@@ -4,6 +4,13 @@ import { sendActivationEmail, sendPasswordResetEmail } from '@/lib/resend';
 import { isRateLimited } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
+export class AuthRateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthRateLimitError';
+  }
+}
+
 export class AuthService {
 async register(data: { name: string, email: string, password: string }, ip: string = '127.0.0.1') {
   // Verifica rate limiting
@@ -142,14 +149,18 @@ async login(data: { email: string, password: string }, ip: string = '127.0.0.1')
 async forgotPassword(email: string, ip: string = '127.0.0.1') {
   // Verifica rate limiting
   if (await isRateLimited(ip, email, 'FORGOT_PASSWORD')) {
-    throw new Error('Muitas tentativas. Por favor, tente novamente mais tarde.');
+    throw new AuthRateLimitError('Muitas tentativas. Por favor, tente novamente mais tarde.');
   }
-  
+
   const user = await prisma.user.findUnique({
     where: { email }
   });
 
   if (!user) return { success: true };
+
+  await prisma.verificationToken.deleteMany({
+    where: { email, type: 'PASSWORD_RESET' }
+  });
 
   const token = crypto.randomBytes(32).toString('hex');
   const expires = new Date(Date.now() + 60 * 60 * 1000); // 1h
@@ -158,7 +169,16 @@ async forgotPassword(email: string, ip: string = '127.0.0.1') {
     data: { email, token, expires, type: 'PASSWORD_RESET' }
   });
 
-  await sendPasswordResetEmail(email, user.name, token);
+  try {
+    await sendPasswordResetEmail(email, user.name, token);
+  } catch (error) {
+    console.error('Password reset email delivery failed:', {
+      operation: 'forgot_password',
+      userSeqid: user.seqid.toString(),
+      error,
+    });
+  }
+
   return { success: true };
 }
 

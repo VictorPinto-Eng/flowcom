@@ -1,6 +1,6 @@
 'use server';
 
-import { AuthService } from '@/domain/services/AuthService';
+import { AuthRateLimitError, AuthService } from '@/domain/services/AuthService';
 import { isRateLimited } from '@/lib/rate-limit';
 import { deleteSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
@@ -70,12 +70,22 @@ export async function verifyEmailAction(token: string) {
 
 export async function forgotPasswordAction(formData: FormData) {
   const email = formData.get('email') as string;
+  const ip = await getClientIp();
+
   try {
-    const ip = await getClientIp();
     await authService.forgotPassword(email, ip);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    if (error instanceof AuthRateLimitError) {
+      return { success: false, error: error.message };
+    }
+
+    console.error('Forgot password action failed:', {
+      operation: 'forgot_password_action',
+      ip,
+      error,
+    });
+    return { success: true };
   }
 }
 

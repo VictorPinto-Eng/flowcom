@@ -15,15 +15,20 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-    const result = await forgotPasswordAction(formData);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const result = await forgotPasswordAction(formData);
 
-    if (result.success) {
-      setSuccess(true);
-    } else {
-      setError(result.error || 'Erro ao processar solicitação.');
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        setError(result.error || 'Erro ao processar solicitação.');
+      }
+    } catch {
+      setError('Erro ao processar solicitação.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   if (success) {

@@ -54,7 +54,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
   const resetLink = `${appUrl}/reset-password?token=${token}`;
 
   try {
-    const data = await getResend().emails.send({
+    const result = await getResend().emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Flow <security@resend.dev>',
       to: email,
       subject: 'Recuperação de Senha - Flow',
@@ -74,10 +74,20 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
       `,
     });
 
-    return { success: true, data };
+    if (result.error) {
+      throw result.error;
+    }
+
+    return { success: true, data: result.data };
   } catch (error) {
-    console.error('Error sending reset email:', error);
-    return { success: false, error };
+    console.error('Error sending reset email:', {
+      operation: 'password_reset_email',
+      hasResendApiKey: Boolean(process.env.RESEND_API_KEY),
+      hasResendFromEmail: Boolean(process.env.RESEND_FROM_EMAIL),
+      hasAppUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
+      error,
+    });
+    throw error;
   }
 }
 
