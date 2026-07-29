@@ -155,8 +155,9 @@ cp .env.example .env
 # Editar .env com suas credenciais:
 #   DATABASE_URL=postgresql://user:pass@localhost:5432/flow
 #   RESEND_API_KEY=re_xxx
+#   RESEND_FROM_EMAIL=no-reply@seudominio-verificado.com
 #   JWT_SECRET=seu-segredo-aqui
-#   BASE_URL=http://localhost:3000
+#   NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Executar migrations
 npx prisma migrate dev
@@ -174,8 +175,11 @@ npm run dev
 |----------|-----------|
 | `DATABASE_URL` | URL de conexão PostgreSQL |
 | `RESEND_API_KEY` | Chave da API Resend |
+| `RESEND_FROM_EMAIL` | Remetente verificado no Resend para envio de emails |
 | `JWT_SECRET` | Segredo para assinar tokens JWT |
-| `BASE_URL` | URL base da aplicação |
+| `NEXT_PUBLIC_APP_URL` | URL pública da aplicação usada nos links de ativação e recuperação de senha |
+
+> Em produção, `RESEND_FROM_EMAIL` deve usar um domínio/remetente verificado no Resend. Se `NEXT_PUBLIC_APP_URL` estiver ausente ou incorreto, os links de recuperação podem apontar para `localhost` ou para o host errado.
 
 ## Permissões
 

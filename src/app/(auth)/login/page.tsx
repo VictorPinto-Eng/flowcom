@@ -5,6 +5,7 @@ import { loginAction, resendActivationAction } from '@/app/actions/authActions';
 import styles from '../auth.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [email, setEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -111,15 +113,26 @@ export default function LoginPage() {
                 Esqueceu a senha?
               </Link>
             </div>
-            <input 
-              type="password" 
-              id="password" 
-              name="password" 
-              ref={passwordRef}
-              className={styles.input} 
-              placeholder="••••••••" 
-              required 
-            />
+            <div className={styles.passwordInputWrapper}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                ref={passwordRef}
+                className={`${styles.input} ${styles.passwordInput}`}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>

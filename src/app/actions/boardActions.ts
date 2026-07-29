@@ -11,6 +11,32 @@ const boardService = new BoardService();
 const workspaceService = new WorkspaceService();
 const userRepo = new UserRepository();
 
+function getTodayLocalDateString() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function validateCompletionDate(value?: string) {
+  const date = value || getTodayLocalDateString();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error('Data de conclusão inválida.');
+  }
+
+  const [year, month, day] = date.split('-').map(Number);
+  const parsed = new Date(year, month - 1, day);
+  const normalized = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+
+  if (normalized !== date) {
+    throw new Error('Data de conclusão inválida.');
+  }
+
+  if (date > getTodayLocalDateString()) {
+    throw new Error('A data de conclusão não pode ser no futuro.');
+  }
+
+  return date;
+}
+
 export async function getSectorsAction() {
   return await boardService.getSectors();
 }
@@ -79,7 +105,9 @@ export async function completeBoardAction(boardId: string, localDateStr?: string
     throw new Error('Permissão negada. Apenas o Proprietário pode encerrar esta atividade.');
   }
 
-  await boardService.completeActivity(boardId, user, localDateStr);
+  const validCompletionDate = validateCompletionDate(localDateStr);
+
+  await boardService.completeActivity(boardId, user, validCompletionDate);
   revalidatePath('/dashboard');
   revalidatePath('/');
 }

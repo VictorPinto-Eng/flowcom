@@ -11,6 +11,20 @@ import ActivityHistorySidebar from '../shell/ActivityHistorySidebar';
 import EditEventModal from '../modals/EditEventModal';
 import styles from './Board.module.css';
 
+type CompletionFormValue = {
+  descricao: string;
+  dtcon: string;
+};
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 interface BoardProps {
   boardName: string;
   boardDetalhes?: string | null;
@@ -58,7 +72,7 @@ export default function Board({
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<{ id: string; title: string; description: string; previsto?: any; dtcon?: any; dtatv?: any } | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ id: string; title: string; description: string; columnId: string; previsto?: any; dtcon?: any; dtatv?: any } | null>(null);
 
   // Find columns
   const todoCol = columns.find(c => c.title.toLowerCase().includes('fazer')) || columns[0];
@@ -157,13 +171,25 @@ export default function Board({
     const pendingEvents = displayEvents.filter(ev => !ev.dtcon);
     const isOwner = currentUserRole === 'OWNER';
 
+    // Data de hoje em formato YYYY-MM-DD (local) para pré-preencher o input date
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
     const eventListHtml = pendingEvents.length > 0
       ? `<div style="text-align:left;margin:0.75rem 0;padding:0.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.85rem;">
-          ${pendingEvents.map(ev => `<div style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem;"><span style="color:#f59e0b;">⚡</span> <strong style="color:#fff;">${ev.title}</strong> <span style="color:#94a3b8;font-size:0.8rem;">${ev.task_user?.name || 'Sem responsável'}</span></div>`).join('')}
+          ${pendingEvents.map(ev => `<div style="padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem;"><span style="color:#f59e0b;">⚡</span> <strong style="color:#fff;">${escapeHtml(ev.title)}</strong> <span style="color:#94a3b8;font-size:0.8rem;">${escapeHtml(ev.task_user?.name || 'Sem responsável')}</span></div>`).join('')}
         </div>`
       : '<p style="color:#94a3b8;font-size:0.85rem;margin:0.75rem 0;">Nenhum evento pendente.</p>';
 
-    const result = await Swal.fire({
+    // Campo de data só aparece para OWNER; pré-preenchido com hoje e sem permitir futuro
+    const dtconFieldHtml = isOwner
+      ? `<div style="text-align:left;margin-top:0.75rem;">
+          <label for="swal-dtcon" style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:0.35rem;">Data de Conclusão</label>
+          <input id="swal-dtcon" type="date" max="${todayStr}" value="${todayStr}" style="display:block;width:100%;box-sizing:border-box;padding:0.6rem 0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.85rem;font-family:inherit;color-scheme:dark;" />
+        </div>`
+      : '';
+
+    const result = await Swal.fire<CompletionFormValue>({
       title: isOwner ? 'Encerrar Atividade' : 'Solicitar Encerramento',
       html: `
         <p style="font-size:0.9rem;color:#94a3b8;margin-bottom:0;">
@@ -173,7 +199,11 @@ export default function Board({
           }
         </p>
         ${eventListHtml}
-        <textarea id="swal-descricao" placeholder="Descrição / Observação (opcional)" style="display:block;width:100%;box-sizing:border-box;min-height:70px;padding:0.75rem;margin-top:0.5rem;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div style="text-align:left;margin-top:0.5rem;">
+          <label for="swal-descricao" style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:0.35rem;">Descrição / Observação (opcional)</label>
+          <textarea id="swal-descricao" placeholder="Descreva uma observação, se necessário" style="display:block;width:100%;box-sizing:border-box;min-height:70px;padding:0.75rem;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+        ${dtconFieldHtml}
       `,
       icon: undefined,
       iconHtml: '🔒',
@@ -187,7 +217,20 @@ export default function Board({
       width: '520px',
       padding: '2rem',
       preConfirm: () => {
-        return (document.getElementById('swal-descricao') as HTMLTextAreaElement)?.value || '';
+        const descricao = (document.getElementById('swal-descricao') as HTMLTextAreaElement)?.value || '';
+        const dtconInput = document.getElementById('swal-dtcon') as HTMLInputElement | null;
+        const dtconValue = dtconInput?.value || '';
+        if (isOwner) {
+          if (!dtconValue) {
+            Swal.showValidationMessage('Selecione a data de conclusão.');
+            return false;
+          }
+          if (dtconValue > todayStr) {
+            Swal.showValidationMessage('A data de conclusão não pode ser no futuro.');
+            return false;
+          }
+        }
+        return { descricao, dtcon: dtconValue || todayStr };
       }
     });
 
@@ -195,13 +238,9 @@ export default function Board({
 
     try {
       if (isOwner) {
-        const localDate = new Date();
-        const year = localDate.getFullYear();
-        const month = String(localDate.getMonth() + 1).padStart(2, '0');
-        const day = String(localDate.getDate()).padStart(2, '0');
-        const localDateStr = `${year}-${month}-${day}`;
+        const dtconSelected = result.value?.dtcon || todayStr;
 
-        await completeBoardAction(boardId, localDateStr);
+        await completeBoardAction(boardId, dtconSelected);
         Swal.fire({
           title: 'Atividade Encerrada!',
           text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
@@ -298,8 +337,8 @@ export default function Board({
           columns={columns}
           onSave={async (id, title, desc, previsto, dtcon, dtatv, newColumnId) => {
             await updateCardAction(id, title, desc, previsto, dtcon, dtatv);
-            if ((editingEvent as any).columnId !== newColumnId) {
-              onMoveCard(id, (editingEvent as any).columnId, newColumnId);
+            if (editingEvent.columnId !== newColumnId) {
+              onMoveCard(id, editingEvent.columnId, newColumnId);
             }
           }}
           onClose={() => setEditingEvent(null)}
