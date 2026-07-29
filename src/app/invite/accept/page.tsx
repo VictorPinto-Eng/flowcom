@@ -24,9 +24,10 @@ export default async function AcceptInvitePage({ searchParams }: PageProps) {
 
   try {
     await acceptWorkspaceInviteAction(token);
-    redirect('/dashboard?success=invite-accepted');
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro ao aceitar convite pelo link:', error);
     redirect('/dashboard?error=invite-failed');
   }
+
+  redirect('/dashboard?success=invite-accepted');
 }

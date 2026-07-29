@@ -450,7 +450,7 @@ export class WorkspaceService {
     };
   }
 
-  async acceptWorkspaceInvite(token: string, user: any) {
+  async acceptWorkspaceInvite(token: string, user: { seqid: bigint | number | string; email: string }) {
     const invite = await prisma.workspaceInvite.findUnique({
       where: { token }
     });
@@ -469,25 +469,41 @@ export class WorkspaceService {
       throw new Error('Este convite não foi enviado para este usuário.');
     }
 
-    // Add user as a member
-    const newMember = await prisma.workspaceMember.create({
-      data: {
-        workspaceSeqid: invite.workspaceSeqid,
-        userSeqid: BigInt(user.seqid),
-        role: invite.role
-      }
-    });
+    if (!['ADMIN', 'MEMBER'].includes(invite.role)) {
+      throw new Error('Papel do convite inválido.');
+    }
 
-    // Delete the invite
-    await prisma.workspaceInvite.delete({
-      where: { token }
+    const role = invite.role;
+    const userSeqid = BigInt(user.seqid);
+
+    const member = await prisma.$transaction(async (tx) => {
+      const workspaceMember = await tx.workspaceMember.upsert({
+        where: {
+          workspaceSeqid_userSeqid: {
+            workspaceSeqid: invite.workspaceSeqid,
+            userSeqid
+          }
+        },
+        create: {
+          workspaceSeqid: invite.workspaceSeqid,
+          userSeqid,
+          role
+        },
+        update: {}
+      });
+
+      await tx.workspaceInvite.deleteMany({
+        where: { token }
+      });
+
+      return workspaceMember;
     });
 
     return {
-      ...newMember,
-      seqid: newMember.seqid.toString(),
-      workspaceSeqid: newMember.workspaceSeqid.toString(),
-      userSeqid: newMember.userSeqid.toString()
+      ...member,
+      seqid: member.seqid.toString(),
+      workspaceSeqid: member.workspaceSeqid.toString(),
+      userSeqid: member.userSeqid.toString()
     };
   }
 
