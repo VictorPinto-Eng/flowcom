@@ -90,13 +90,28 @@ export async function forgotPasswordAction(formData: FormData) {
 }
 
 export async function resetPasswordAction(token: string, formData: FormData) {
-  const password = formData.get('password') as string;
+  const passwordValue = formData.get('password');
+  const confirmValue = formData.get('confirm');
+  const password = typeof passwordValue === 'string' ? passwordValue : '';
+  const confirm = typeof confirmValue === 'string' ? confirmValue : '';
+  const ip = await getClientIp();
+
   try {
-    const ip = await getClientIp();
+    if (confirm && password !== confirm) {
+      return { success: false, error: 'As senhas não coincidem.' };
+    }
+
     await authService.resetPassword(token, password, ip);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro ao redefinir senha.';
+    console.error('Reset password action failed:', {
+      operation: 'reset_password_action',
+      ip,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+      errorMessage,
+    });
+    return { success: false, error: errorMessage };
   }
 }
 

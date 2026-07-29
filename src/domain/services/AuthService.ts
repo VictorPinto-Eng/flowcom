@@ -202,22 +202,51 @@ async resetPassword(token: string, password: string, ip: string = '127.0.0.1') {
   }
 
   const hashedPassword = await hashPassword(password);
+  const generatedHashMatchesPassword = await comparePassword(password, hashedPassword);
+  if (!generatedHashMatchesPassword) {
+    console.error('Password reset generated hash verification failed:', {
+      operation: 'reset_password',
+    });
+    throw new Error('Não foi possível confirmar a alteração da senha. Solicite um novo link e tente novamente.');
+  }
 
-  await prisma.$transaction([
-    prisma.user.update({
+  const user = await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({
+      where: { email: verificationToken.email },
+      select: { seqid: true }
+    });
+
+    if (!existingUser) {
+      throw new Error('Token inválido ou expirado.');
+    }
+
+    const updatedUser = await tx.user.update({
       where: { email: verificationToken.email },
       data: { password: hashedPassword }
-    }),
-    prisma.verificationToken.delete({
-      where: { id: verificationToken.id }
-    })
-  ]);
+    });
+
+    const savedUser = await tx.user.findUnique({
+      where: { email: verificationToken.email },
+      select: { password: true }
+    });
+
+    if (savedUser?.password !== hashedPassword) {
+      console.error('Password reset saved hash verification failed:', {
+        operation: 'reset_password',
+        userSeqid: existingUser.seqid.toString(),
+      });
+      throw new Error('Não foi possível confirmar a alteração da senha. Solicite um novo link e tente novamente.');
+    }
+
+    await tx.verificationToken.deleteMany({
+      where: { email: verificationToken.email, type: 'PASSWORD_RESET' }
+    });
+
+    return updatedUser;
+  });
 
   // Revoke all active sessions after password reset
-  const user = await prisma.user.findUnique({ where: { email: verificationToken.email } });
-  if (user) {
-    await revokeAllSessions(user.seqid);
-  }
+  await revokeAllSessions(user.seqid);
 
   return { success: true };
 }
