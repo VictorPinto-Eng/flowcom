@@ -86,6 +86,17 @@ export default function DiagnosticsPage() {
       </p>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <button onClick={() => window.location.href = '/dashboard'} style={{
+          background: '#334155',
+          color: '#e2e8f0',
+          border: '1px solid #475569',
+          borderRadius: '8px',
+          padding: '0.75rem 1.5rem',
+          cursor: 'pointer',
+          fontWeight: 600
+        }}>
+          ← Voltar
+        </button>
         <button onClick={copyToClipboard} style={{
           background: state.copied ? '#10b981' : '#7c3aed',
           color: 'white',
