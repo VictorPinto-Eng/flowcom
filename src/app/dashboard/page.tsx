@@ -24,7 +24,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     redirect('/api/auth/clear-session');
   }
 
-  const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString()) as any;
+  // Lightweight mode when no specific board is open (skip cards/card_act, limit boards)
+  const needsFullData = !!boardId;
+  const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString(), { lightweight: !needsFullData }) as any;
   const workspaceTypes = await getWorkspaceTypes();
   const sectors = await getSectorsAction();
   const dashboardStats = await getDashboardStatsAction();

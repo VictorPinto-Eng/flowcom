@@ -26,9 +26,9 @@ export async function createWorkspaceAction(data: { name: string; typeId: string
   return workspace;
 }
 
-export async function getUserWorkspaces(userId: string, userSeqid?: string) {
+export async function getUserWorkspaces(userId: string, userSeqid?: string, options?: { lightweight?: boolean }) {
   await userRepo.getLoggedUser();
-  return await workspaceService.getUserWorkspaces(userId, userSeqid);
+  return await workspaceService.getUserWorkspaces(userId, userSeqid, options);
 }
 
 export async function getCurrentUserAction() {

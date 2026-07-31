@@ -36,7 +36,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async findByUserId(userId: string, users_seqid?: bigint) {
+  async findByUserId(userId: string, users_seqid?: bigint, options?: { lightweight?: boolean }) {
     const conditions: any[] = [{ userId }];
     if (users_seqid) {
       conditions.push({ users_seqid });
@@ -49,10 +49,44 @@ export class WorkspaceRepository {
       });
     }
 
+    const where = { OR: conditions };
+
+    // Lightweight mode: skip cards/card_act, limit boards to 50
+    if (options?.lightweight) {
+      return await prisma.workspace.findMany({
+        where,
+        include: {
+          type: true,
+          columns: {
+            orderBy: { order: 'asc' },
+            select: {
+              seqid: true,
+              title: true,
+              order: true,
+              visible: true,
+              workspaceSeqid: true
+            }
+          },
+          boards: {
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+            include: {
+              user: { select: { seqid: true, name: true, image: true } },
+              sector: true,
+              _count: {
+                select: {
+                  card: true
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Full mode: includes cards with card_act (original behavior)
     return await prisma.workspace.findMany({
-      where: {
-        OR: conditions
-      },
+      where,
       include: {
         type: true,
         columns: {

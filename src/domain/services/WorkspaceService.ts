@@ -87,8 +87,8 @@ export class WorkspaceService {
     }
   }
 
-  async getUserWorkspaces(userId: string, userSeqid?: string) {
-    const workspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined);
+  async getUserWorkspaces(userId: string, userSeqid?: string, options?: { lightweight?: boolean }) {
+    const workspaces = await this.repo.findByUserId(userId, userSeqid ? BigInt(userSeqid) : undefined, options);
 
     // Check in-memory if there are any duplicate columns in any workspace
     let hasDuplicates = false;
