@@ -525,8 +525,8 @@
   }
 
   /* Completely remove the dashboard header and workspace layout from the printable flow to avoid blank pages */
-  :global(header),
-  :global([class*="workspaceLayout"]) {
+  .container:global(header),
+  .container:global([class*="workspaceLayout"]) {
     display: none !important;
   }
   
