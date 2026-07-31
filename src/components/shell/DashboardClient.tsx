@@ -3,14 +3,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { CircleCheckBig } from 'lucide-react';
 import UserMenu from './UserMenu';
-import Swal from 'sweetalert2';
 import { KanbanClient } from '../kanban';
 import { CreateWorkspaceModal, CreateActivityModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
 import ActivityHistorySidebar from './ActivityHistorySidebar';
 import WelcomeDashboard from './WelcomeDashboard';
-import { MyEventsView, MyActivitiesView, MovementsView } from '../views';
+import { MyEventsView, MovementsView } from '../views';
+
+// Dynamic import for MyActivitiesView (lazy load on route)
+const MyActivitiesView = dynamic(() => import('../views/MyActivitiesView'), {
+  loading: () => (
+    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+      <p>Carregando suas atividades...</p>
+    </div>
+  ),
+  ssr: false
+});
 import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction, getPendingInvitesAction, rejectWorkspaceInviteAction } from '@/app/actions/workspaceActions';
 import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs, requestBoardCompletionAction, respondBoardCompletionAction, getPendingBoardCompletionRequestsAction } from '@/app/actions/boardActions';
 import {
@@ -29,6 +39,12 @@ import {
   getPendingTransferRequestsAction
 } from '@/app/actions/cardActions';
 import styles from './DashboardClient.module.css';
+
+// Dynamic import for SweetAlert2 (lazy load on demand)
+const getSwal = async () => {
+  const module = await import('sweetalert2');
+  return module.default;
+};
 
 // Sector pastel coloring map for next-gen premium aesthetic
 const getSectorColors = (acronym?: string | null) => {
@@ -344,22 +360,26 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (successParam === 'invite-accepted') {
-      Swal.fire({
-        title: 'Convite Aceito!',
-        text: 'Você agora faz parte desta área de trabalho.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      }).then(() => {
-        router.replace('/dashboard');
+      getSwal().then(Swal => {
+        Swal.fire({
+          title: 'Convite Aceito!',
+          text: 'Você agora faz parte desta área de trabalho.',
+          icon: 'success',
+          confirmButtonColor: '#7c3aed'
+        }).then(() => {
+          router.replace('/dashboard');
+        });
       });
     } else if (errorParam === 'invite-failed') {
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível aceitar o convite. O convite pode ter expirado ou já ter sido utilizado.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      }).then(() => {
-        router.replace('/dashboard');
+      getSwal().then(Swal => {
+        Swal.fire({
+          title: 'Erro!',
+          text: 'Não foi possível aceitar o convite. O convite pode ter expirado ou já ter sido utilizado.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        }).then(() => {
+          router.replace('/dashboard');
+        });
       });
     }
   }, [successParam, errorParam, router]);
@@ -496,6 +516,7 @@ export default function DashboardClient({
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
+    const Swal = await getSwal();
     const result = await Swal.fire({
       title: 'Excluir Andamento',
       html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
@@ -597,9 +618,10 @@ export default function DashboardClient({
   };
 
   const handleRespondTransfer = async (cardId: string, actionSeqid: string, accept: boolean) => {
+    const Swal = await getSwal();
     try {
       await respondTransferRequestAction(cardId, actionSeqid, accept);
-      Swal.fire({
+      await Swal.fire({
         title: 'Sucesso!',
         text: accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.',
         icon: 'success',
@@ -612,14 +634,15 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao responder transferência:', err);
-      Swal.fire('Erro', 'Erro ao responder transferência', 'error');
+      await Swal.fire('Erro', 'Erro ao responder transferência', 'error');
     }
   };
 
   const handleRespondBoardCompletion = async (boardId: string, logSeqid: string, accept: boolean) => {
+    const Swal = await getSwal();
     try {
       await respondBoardCompletionAction(boardId, logSeqid, accept);
-      Swal.fire({
+      await Swal.fire({
         title: 'Sucesso!',
         text: accept ? 'Atividade finalizada e encerrada.' : 'Solicitação recusada.',
         icon: 'success',
@@ -629,15 +652,16 @@ export default function DashboardClient({
       router.refresh();
     } catch (err: any) {
       console.error('Erro ao responder finalização:', err);
-      Swal.fire('Erro', 'Erro ao processar solicitação', 'error');
+      await Swal.fire('Erro', 'Erro ao processar solicitação', 'error');
     }
   };
 
   const handleAdminTransferRequest = async (event: any) => {
+    const Swal = await getSwal();
     try {
       const workspaceSeqid = activeWorkspace?.seqid?.toString() || '';
       const members = await getWorkspaceMembersAction(workspaceSeqid);
-      
+
       const inputOptions: { [key: string]: string } = {};
       members.forEach((m: any) => {
         if (m.seqid.toString() !== event.taskuser_seqid?.toString()) {
@@ -661,7 +685,7 @@ export default function DashboardClient({
 
       if (targetUserSeqid) {
         await requestTransferAction(event.id || event.seqid.toString(), targetUserSeqid);
-        Swal.fire({
+        await Swal.fire({
           title: 'Solicitado!',
           text: 'Solicitação de transferência registrada no histórico do evento.',
           icon: 'success',
@@ -674,13 +698,14 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao solicitar transferência:', err);
-      Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
+      await Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
     }
   };
 
   const handleCompleteEvent = async (card: any) => {
     if (isCompletingEvent) return;
     setIsCompletingEvent(card.id);
+    const Swal = await getSwal();
 
     const localDate = new Date();
     const year = localDate.getFullYear();
@@ -690,7 +715,7 @@ export default function DashboardClient({
 
     try {
       await completeCardDirectlyAction(card.id, localDateStr);
-      Swal.fire({
+      await Swal.fire({
         title: 'Sucesso!',
         text: 'Evento finalizado com sucesso.',
         icon: 'success',
@@ -699,7 +724,7 @@ export default function DashboardClient({
       router.refresh();
     } catch (err) {
       console.error('Erro ao finalizar evento:', err);
-      Swal.fire({
+      await Swal.fire({
         title: 'Erro!',
         text: 'Não foi possível finalizar o evento.',
         icon: 'error',
@@ -736,6 +761,7 @@ export default function DashboardClient({
   };
 
   const handleCreateWorkspace = async (data: { name: string; typeId: string; description: string }) => {
+    const Swal = await getSwal();
     try {
       const workspace = await createWorkspaceAction({
         name: data.name,
@@ -743,17 +769,16 @@ export default function DashboardClient({
         description: data.description,
       });
       setIsWorkspaceModalOpen(false);
-      Swal.fire({
+      await Swal.fire({
         title: 'Sucesso!',
         text: 'Área de trabalho criada com sucesso.',
         icon: 'success',
         confirmButtonColor: '#7c3aed'
-      }).then(() => {
-        window.location.href = `/dashboard?workspaceId=${workspace.id}`;
       });
+      window.location.href = `/dashboard?workspaceId=${workspace.id}`;
     } catch (error) {
       console.error('Falha ao criar área de trabalho:', error);
-      Swal.fire({
+      await Swal.fire({
         title: 'Erro!',
         text: 'Não foi possível criar a área de trabalho.',
         icon: 'error',
@@ -764,9 +789,10 @@ export default function DashboardClient({
 
   const handleUpdateWorkspace = async (data: { name: string, typeId: string, description: string }) => {
     if (!editWorkspaceData) return;
+    const Swal = await getSwal();
     try {
       await updateWorkspaceAction(editWorkspaceData.id, data);
-      
+
       setWorkspaces(prevWorkspaces => {
         return prevWorkspaces.map(ws => {
           if (ws.id === editWorkspaceData.id) {
@@ -781,17 +807,16 @@ export default function DashboardClient({
       });
 
       setEditWorkspaceData(null);
-      Swal.fire({
+      await Swal.fire({
         title: 'Atualizada!',
         text: 'A Área de Trabalho foi atualizada com sucesso.',
         icon: 'success',
         confirmButtonColor: '#7c3aed'
-      }).then(() => {
-        router.refresh();
       });
+      router.refresh();
     } catch (error: any) {
       console.error('Falha ao atualizar área de trabalho:', error);
-      Swal.fire({
+      await Swal.fire({
         title: 'Erro!',
         text: 'Erro ao atualizar área de trabalho.',
         icon: 'error',
@@ -801,19 +826,19 @@ export default function DashboardClient({
   };
 
   const handleAcceptInvite = async (token: string) => {
+    const Swal = await getSwal();
     try {
       await acceptWorkspaceInviteAction(token);
-      Swal.fire({
+      await Swal.fire({
         title: 'Sucesso!',
         text: 'Você agora faz parte desta área de trabalho.',
         icon: 'success',
         confirmButtonColor: '#7c3aed'
-      }).then(() => {
-        window.location.reload();
       });
+      window.location.reload();
     } catch (err: any) {
       console.error('Erro ao aceitar convite:', err);
-      Swal.fire({
+      await Swal.fire({
         title: 'Erro!',
         text: 'Não foi possível aceitar o convite.',
         icon: 'error',
@@ -823,19 +848,19 @@ export default function DashboardClient({
   };
 
   const handleCreateBoard = async (workspaceId: string, name: string, sectorId?: number, detalhes?: string, dtatv?: string, previsto?: string) => {
+    const Swal = await getSwal();
     try {
       const newBoard = await createBoardAction(workspaceId, name, user.id, sectorId, detalhes, dtatv, previsto);
-      Swal.fire({
+      await Swal.fire({
         title: 'Atividade Criada!',
         text: `A atividade "${name}" foi criada com sucesso.`,
         icon: 'success',
         confirmButtonColor: '#7c3aed'
-      }).then(() => {
-        window.location.href = `/dashboard?boardId=${newBoard.id}`;
       });
+      window.location.href = `/dashboard?boardId=${newBoard.id}`;
     } catch (error) {
       console.error('Falha ao criar quadro:', error);
-      Swal.fire({
+      await Swal.fire({
         title: 'Erro!',
         text: 'Não foi possível criar a atividade.',
         icon: 'error',
@@ -845,6 +870,7 @@ export default function DashboardClient({
   };
 
   const handleRenameBoard = async (boardId: string, name: string, detalhes?: string | null, sectorId?: number | null, dtatv?: string | null, workspaceId?: string, assignedUserSeqid?: string | null, previsto?: string | null) => {
+    const Swal = await getSwal();
     try {
       await updateBoardAction(boardId, name, detalhes !== undefined ? detalhes : null, user.id, sectorId, dtatv, workspaceId, assignedUserSeqid, previsto);
       
@@ -932,6 +958,7 @@ export default function DashboardClient({
   };
 
   const handleCompleteBoard = async (boardId: string, boardName: string) => {
+    const Swal = await getSwal();
     const boardWorkspace = workspaces.find(ws => ws.boards?.some(b => b.id === boardId));
     const role = boardWorkspace ? (boardWorkspace as any).currentUserRole : (activeWorkspace as any)?.currentUserRole;
     const isOwner = role === 'OWNER';
@@ -951,7 +978,7 @@ export default function DashboardClient({
       if (result.isConfirmed) {
         try {
           await requestBoardCompletionAction(boardId);
-          Swal.fire({
+          await Swal.fire({
             title: 'Solicitado!',
             text: 'A solicitação de finalização foi enviada ao proprietário da atividade.',
             icon: 'success',
@@ -959,7 +986,7 @@ export default function DashboardClient({
           });
           router.refresh();
         } catch (error: any) {
-          Swal.fire('Erro', 'Erro ao solicitar finalização', 'error');
+          await Swal.fire('Erro', 'Erro ao solicitar finalização', 'error');
         }
       }
       return;
@@ -1005,17 +1032,16 @@ export default function DashboardClient({
           });
         });
 
-        Swal.fire({
+        await Swal.fire({
           title: 'Encerrada!',
           text: 'A atividade foi concluída com sucesso.',
           icon: 'success',
           confirmButtonColor: '#7c3aed'
-        }).then(() => {
-          router.refresh();
         });
+        router.refresh();
       } catch (error: any) {
         console.error('Falha ao encerrar quadro:', error);
-        Swal.fire({
+        await Swal.fire({
           title: 'Erro!',
           text: 'Erro ao encerrar atividade.',
           icon: 'error',
@@ -1324,18 +1350,18 @@ export default function DashboardClient({
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     onClick={async () => {
+                      const Swal = await getSwal();
                       try {
                         await acceptWorkspaceInviteAction(invite.token);
-                        Swal.fire({
+                        await Swal.fire({
                           title: 'Sucesso!',
                           text: `Você agora faz parte da área de trabalho ${invite.workspaceName}.`,
                           icon: 'success',
                           confirmButtonColor: '#7c3aed'
-                        }).then(() => {
-                          window.location.reload();
                         });
+                        window.location.reload();
                       } catch (err: any) {
-                        Swal.fire('Erro', 'Erro ao aceitar convite', 'error');
+                        await Swal.fire('Erro', 'Erro ao aceitar convite', 'error');
                       }
                     }}
                     style={{
@@ -1354,6 +1380,7 @@ export default function DashboardClient({
                   </button>
                   <button
                     onClick={async () => {
+                      const Swal = await getSwal();
                       const result = await Swal.fire({
                         title: 'Recusar Convite',
                         text: `Tem certeza que deseja recusar o convite para a área ${invite.workspaceName}?`,
@@ -1368,9 +1395,9 @@ export default function DashboardClient({
                         try {
                           await rejectWorkspaceInviteAction(invite.token);
                           setPendingInvites(prev => prev.filter(x => x.token !== invite.token));
-                          Swal.fire('Recusado', 'O convite foi recusado com sucesso.', 'success');
+                          await Swal.fire('Recusado', 'O convite foi recusado com sucesso.', 'success');
                         } catch (err: any) {
-                          Swal.fire('Erro', 'Erro ao recusar convite', 'error');
+                          await Swal.fire('Erro', 'Erro ao recusar convite', 'error');
                         }
                       }
                     }}
@@ -1446,6 +1473,7 @@ export default function DashboardClient({
                         className={styles.kanbanActionBtn}
                         onClick={async (e) => {
                           e.stopPropagation();
+                          const Swal = await getSwal();
                           const { value: name } = await Swal.fire({
                             title: 'Novo Fluxo',
                             input: 'text',
