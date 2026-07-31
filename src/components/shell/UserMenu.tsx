@@ -99,6 +99,15 @@ export default function UserMenu({ user, onCreateWorkspace, onOpenActivityLog, o
             <button className={styles.item}>Atalhos</button>
           </div>
 
+          <div className={styles.section}>
+            <button className={styles.item} onClick={() => {
+              window.location.href = '/admin/diagnostics';
+              setIsOpen(false);
+            }}>
+              <span className={styles.icon}>🔍</span> Diagnóstico do Servidor
+            </button>
+          </div>
+
           <div className={styles.footer}>
             <button className={styles.logoutBtn} onClick={handleLogout}>Fazer Logout</button>
           </div>

@@ -40,6 +40,7 @@ export async function getServerDiagnosticsAction(): Promise<ServerDiagnostics> {
   }
 
   const now = new Date().toISOString();
+  const userSeqid = BigInt(user.seqid || 0);
 
   // Get overall database metrics
   const [totalWorkspaces, totalBoards, totalCards, totalCardActions, totalUsers, totalMembers] = await Promise.all([
@@ -52,7 +53,6 @@ export async function getServerDiagnosticsAction(): Promise<ServerDiagnostics> {
   ]);
 
   // Get user's accessible data
-  const userSeqid = BigInt(user.seqid || 0);
   const userWorkspaces = await prisma.workspace.findMany({
     where: {
       OR: [
@@ -100,8 +100,7 @@ export async function getServerDiagnosticsAction(): Promise<ServerDiagnostics> {
     const wsBoardSeqids = wsBoards.map(b => b.seqId);
 
     const wsCards = userCards.filter(c => {
-      const cardBoard = userBoards.find(b => b.seqId === c.board_seqid);
-      return cardBoard && wsBoardSeqids.includes(cardBoard.seqId);
+      return wsBoardSeqids.includes(c.board_seqid as bigint);
     });
 
     topWorkspaces.push({
@@ -121,6 +120,34 @@ export async function getServerDiagnosticsAction(): Promise<ServerDiagnostics> {
     userBoardsAccessible: totalBoardsAccessible,
     userWorkspacesAccessible: userWorkspaces.length
   });
+
+  // Save snapshot: delete previous for this user, then insert new
+  try {
+    await prisma.serverDiagnosticSnapshot.deleteMany({
+      where: { userSeqid }
+    });
+
+    await prisma.serverDiagnosticSnapshot.create({
+      data: {
+        userSeqid,
+        totalWorkspaces,
+        totalBoards,
+        totalCards,
+        totalCardActions,
+        totalUsers,
+        totalWorkspaceMembers: totalMembers,
+        userWorkspacesOwned: workspacesOwned,
+        userWorkspacesAsMember: workspacesAsMember,
+        userBoardsAccessible: totalBoardsAccessible,
+        userCardsAccessible: totalCardsAccessible,
+        userCardActionsAccessible: totalCardActionsAccessible,
+        topWorkspacesJson: JSON.stringify(topWorkspaces.slice(0, 5)),
+        recommendationsJson: JSON.stringify(recommendations)
+      }
+    });
+  } catch (err) {
+    console.error('Failed to save diagnostic snapshot:', err);
+  }
 
   return {
     timestamp: now,
