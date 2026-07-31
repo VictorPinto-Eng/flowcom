@@ -124,6 +124,49 @@ export class WorkspaceService {
       : [];
 
     return cleanWorkspaces.map(ws => {
+      const memberRecord = memberRoles.find(mr => mr.workspaceSeqid === ws.seqid);
+      const userRole = memberRecord?.role || (ws.users_seqid === userSeqIdVal ? 'OWNER' : 'MEMBER');
+
+      // Lightweight mode: simplified mapping without cards/card_act
+      if (options?.lightweight) {
+        const wsColumns = (ws as any).columns?.map((c: any) => ({
+          ...c,
+          seqid: c.seqid.toString(),
+          workspaceSeqid: c.workspaceSeqid?.toString(),
+          id: c.seqid.toString(),
+          cards: []
+        })) || [];
+
+        return {
+          ...ws,
+          seqid: ws.seqid.toString(),
+          users_seqid: ws.users_seqid.toString(),
+          currentUserRole: userRole,
+          columns: wsColumns,
+          boards: (ws as any).boards?.map((b: any) => {
+            const boardSeqIdStr = b.seqId.toString();
+            const cardCount = (b as any)._count?.card || 0;
+
+            // In lightweight mode, boards get empty columns but real card count
+            const boardColumns = wsColumns.map((c: any) => ({
+              ...c,
+              cards: []
+            }));
+
+            return {
+              ...b,
+              id: boardSeqIdStr,
+              seqId: boardSeqIdStr,
+              workspaceId: b.workspaceId.toString(),
+              user_seqid: b.user_seqid?.toString(),
+              columns: boardColumns,
+              _cardCount: cardCount
+            };
+          }) || []
+        };
+      }
+
+      // Full mode: original behavior with cards and card_act
       const wsColumns = (ws as any).columns?.map((c: any) => ({
         ...c,
         seqid: c.seqid.toString(),
@@ -150,9 +193,6 @@ export class WorkspaceService {
         })) || []
       })) || [];
 
-      const memberRecord = memberRoles.find(mr => mr.workspaceSeqid === ws.seqid);
-      const userRole = memberRecord?.role || (ws.users_seqid === userSeqIdVal ? 'OWNER' : 'MEMBER');
-
       return {
         ...ws,
         seqid: ws.seqid.toString(),
@@ -161,12 +201,12 @@ export class WorkspaceService {
         columns: wsColumns,
         boards: (ws as any).boards?.map((b: any) => {
           const boardSeqIdStr = b.seqId.toString();
-          
+
           // Map workspace columns, filtering cards to only those belonging to this board!
           const boardColumns = wsColumns.map((c: any) => {
             const rawCol = (ws as any).columns?.find((x: any) => x.seqid.toString() === c.id);
             const filteredCards = rawCol?.cards?.filter((card: any) => card.board_seqid?.toString() === boardSeqIdStr) || [];
-            
+
             return {
               ...c,
               cards: filteredCards.map((card: any) => ({

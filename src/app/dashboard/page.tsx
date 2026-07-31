@@ -24,8 +24,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     redirect('/api/auth/clear-session');
   }
 
-  // Lightweight mode when no specific board is open (skip cards/card_act, limit boards)
-  const needsFullData = !!boardId;
+  // Full data when: board open, workspace open, or views that need cards (my-activities, kanban)
+  const needsFullData = !!boardId || !!workspaceId || viewMode === 'my-activities' || viewMode === 'kanban';
   const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString(), { lightweight: !needsFullData }) as any;
   const workspaceTypes = await getWorkspaceTypes();
   const sectors = await getSectorsAction();
