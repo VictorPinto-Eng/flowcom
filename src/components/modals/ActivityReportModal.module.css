@@ -506,18 +506,21 @@
 /* PRINT STYLES */
 @media print {
   /* Reset height/overflow limits on body and all wrapper containers for seamless multi-page print */
-  :global(html), :global(body), :global(main), :global(div) {
+  .container:global(html),
+  .container:global(body),
+  .container:global(main),
+  .container:global(div) {
     height: auto !important;
     overflow: visible !important;
   }
 
-  :global(body) {
+  .container:global(body) {
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  :global(body) * {
+  .container:global(body) * {
     visibility: hidden;
   }
 
