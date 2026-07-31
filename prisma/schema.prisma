@@ -83,6 +83,7 @@ model User {
   workspace_members WorkspaceMember[]
   sent_invites      WorkspaceInvite[]
   sessions          Session[]
+  diagnosticSnapshots ServerDiagnosticSnapshot[]
 
   @@map("users")
 }
@@ -233,4 +234,29 @@ model AuthAttempt {
   @@index([ip, type])
   @@index([email, type])
   @@map("auth_attempts")
+}
+
+model ServerDiagnosticSnapshot {
+  seqid BigInt @id @default(autoincrement())
+  userSeqid BigInt @map("user_seqid")
+  totalWorkspaces Int @map("total_workspaces")
+  totalBoards Int @map("total_boards")
+  totalCards Int @map("total_cards")
+  totalCardActions Int @map("total_card_actions")
+  totalUsers Int @map("total_users")
+  totalWorkspaceMembers Int @map("total_workspace_members")
+  userWorkspacesOwned Int @map("user_workspaces_owned")
+  userWorkspacesAsMember Int @map("user_workspaces_as_member")
+  userBoardsAccessible Int @map("user_boards_accessible")
+  userCardsAccessible Int @map("user_cards_accessible")
+  userCardActionsAccessible Int @map("user_card_actions_accessible")
+  topWorkspacesJson String @map("top_workspaces_json") @db.Text
+  recommendationsJson String @map("recommendations_json") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userSeqid], references: [seqid], onDelete: Cascade)
+
+  @@index([userSeqid], map: "idx_diagnostic_user_seqid")
+  @@index([createdAt], map: "idx_diagnostic_created_at")
+  @@map("server_diagnostic_snapshot")
 }
