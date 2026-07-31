@@ -2004,6 +2004,9 @@ export default function DashboardClient({
                   router.push(`/dashboard?workspaceId=${workspace.id}&view=kanban`);
                 }}
                 onAcceptInvite={handleAcceptInvite}
+                globalCounts={dashboardStats?.operational ? {
+                  inProgressBoards: dashboardStats.operational.inProgressBoards
+                } : undefined}
               />
             ) : (
               <WelcomeDashboard

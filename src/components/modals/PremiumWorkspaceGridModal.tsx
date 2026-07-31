@@ -52,6 +52,10 @@ interface PremiumWorkspaceGridModalProps {
   onViewActivities: (workspace: any) => void;
   onViewKanban: (workspace: any) => void;
   onAcceptInvite: (token: string) => void;
+  globalCounts?: {
+    inProgressBoards: number;
+    completedBoards?: number;
+  };
 }
 
 const getSectorColors = (acronym?: string | null) => {
@@ -96,19 +100,23 @@ export default function PremiumWorkspaceGridModal({
   onCreateBoard,
   onViewActivities,
   onViewKanban,
-  onAcceptInvite
+  onAcceptInvite,
+  globalCounts
 }: PremiumWorkspaceGridModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
 
-  // Calcular estatísticas globais
+  // Calcular estatísticas globais (usar globalCounts do servidor quando disponível)
   const globalStats = useMemo(() => {
     const totalWorkspaces = workspaces.length;
     const allBoards = workspaces.flatMap(w => w.boards || []);
     const totalBoards = allBoards.length;
-    const activeBoards = allBoards.filter(b => !b.dtcon).length;
-    const completedBoards = allBoards.filter(b => !!b.dtcon).length;
-    const completionRate = totalBoards > 0 ? Math.round((completedBoards / totalBoards) * 100) : 0;
+
+    // Prefer server-side counts (accurate) over client-side (may be limited by take)
+    const activeBoards = globalCounts?.inProgressBoards ?? allBoards.filter(b => !b.dtcon).length;
+    const completedBoards = globalCounts?.completedBoards ?? allBoards.filter(b => !!b.dtcon).length;
+    const total = activeBoards + completedBoards;
+    const completionRate = total > 0 ? Math.round((completedBoards / total) * 100) : 0;
 
     return {
       totalWorkspaces,
@@ -117,7 +125,7 @@ export default function PremiumWorkspaceGridModal({
       completedBoards,
       completionRate
     };
-  }, [workspaces]);
+  }, [workspaces, globalCounts]);
 
   // Filtrar e Ordenar Áreas de Trabalho
   const processedWorkspaces = useMemo(() => {
