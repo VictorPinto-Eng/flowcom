@@ -191,7 +191,7 @@ interface DashboardClientProps {
   successParam?: string;
   errorParam?: string;
   dashboardStats?: any;
-  workspaceCounters?: Array<{ workspaceSeqid: string; activeBoards: number; activeCards: number; overdueCards: number }>;
+  workspaceCounters?: Array<{ workspaceSeqid: string; activeBoards: number; overdueBoards: number; totalEvents: number; overdueEvents: number; completedEvents: number }>;
 }
 
 export default function DashboardClient({

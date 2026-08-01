@@ -386,8 +386,10 @@ function calcDaysOverdue(previsto: Date | string, today: Date): number {
 export interface WorkspaceCounters {
   workspaceSeqid: string;
   activeBoards: number;
-  activeCards: number;
-  overdueCards: number;
+  overdueBoards: number;
+  totalEvents: number;
+  overdueEvents: number;
+  completedEvents: number;
 }
 
 export async function getWorkspaceCountersAction(): Promise<WorkspaceCounters[]> {
@@ -412,23 +414,41 @@ export async function getWorkspaceCountersAction(): Promise<WorkspaceCounters[]>
   const results: WorkspaceCounters[] = [];
 
   for (const ws of userWorkspaces) {
-    const [activeBoards, activeCards, overdueCards] = await Promise.all([
+    // Get active board IDs for this workspace
+    const activeBoardIds = await prisma.board.findMany({
+      where: { workspaceId: ws.seqid, dtcon: null },
+      select: { seqId: true }
+    });
+    const boardSeqIds = activeBoardIds.map(b => b.seqId);
+
+    const [activeBoards, overdueBoards, totalEvents, overdueEvents, completedEvents] = await Promise.all([
+      // Atividades ativas
+      Promise.resolve(activeBoardIds.length),
+      // Atividades atrasadas (boards com previsto < hoje)
       prisma.board.count({
-        where: { workspaceId: ws.seqid, dtcon: null }
+        where: { workspaceId: ws.seqid, dtcon: null, previsto: { lt: today } }
       }),
+      // Total de eventos das atividades ativas
       prisma.card.count({
-        where: { dtcon: null, column: { workspaceSeqid: ws.seqid } }
+        where: { board_seqid: { in: boardSeqIds } }
       }),
+      // Eventos atrasados (das atividades ativas)
       prisma.card.count({
-        where: { previsto: { lt: today }, dtcon: null, column: { workspaceSeqid: ws.seqid } }
+        where: { board_seqid: { in: boardSeqIds }, previsto: { lt: today }, dtcon: null }
+      }),
+      // Eventos concluídos (das atividades ativas)
+      prisma.card.count({
+        where: { board_seqid: { in: boardSeqIds }, dtcon: { not: null } }
       })
     ]);
 
     results.push({
       workspaceSeqid: ws.seqid.toString(),
       activeBoards,
-      activeCards,
-      overdueCards
+      overdueBoards,
+      totalEvents,
+      overdueEvents,
+      completedEvents
     });
   }
 
