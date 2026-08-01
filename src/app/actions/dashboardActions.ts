@@ -382,3 +382,55 @@ function calcDaysOverdue(previsto: Date | string, today: Date): number {
   const diffMs = today.getTime() - d.getTime();
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
+
+export interface WorkspaceCounters {
+  workspaceSeqid: string;
+  activeBoards: number;
+  activeCards: number;
+  overdueCards: number;
+}
+
+export async function getWorkspaceCountersAction(): Promise<WorkspaceCounters[]> {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return [];
+
+  const userSeqId = user.seqid;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Get all workspace IDs the user has access to
+  const userWorkspaces = await prisma.workspace.findMany({
+    where: {
+      OR: [
+        { users_seqid: userSeqId },
+        { members: { some: { userSeqid: userSeqId } } }
+      ]
+    },
+    select: { seqid: true }
+  });
+
+  const results: WorkspaceCounters[] = [];
+
+  for (const ws of userWorkspaces) {
+    const [activeBoards, activeCards, overdueCards] = await Promise.all([
+      prisma.board.count({
+        where: { workspaceId: ws.seqid, dtcon: null }
+      }),
+      prisma.card.count({
+        where: { dtcon: null, column: { workspaceSeqid: ws.seqid } }
+      }),
+      prisma.card.count({
+        where: { previsto: { lt: today }, dtcon: null, column: { workspaceSeqid: ws.seqid } }
+      })
+    ]);
+
+    results.push({
+      workspaceSeqid: ws.seqid.toString(),
+      activeBoards,
+      activeCards,
+      overdueCards
+    });
+  }
+
+  return results;
+}

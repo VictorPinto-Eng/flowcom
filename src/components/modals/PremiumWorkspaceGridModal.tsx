@@ -58,6 +58,7 @@ interface PremiumWorkspaceGridModalProps {
     overdueCards: number;
     cardsCompletedThisMonth: number;
   };
+  workspaceCounters?: Array<{ workspaceSeqid: string; activeBoards: number; activeCards: number; overdueCards: number }>;
 }
 
 const getSectorColors = (acronym?: string | null) => {
@@ -103,7 +104,8 @@ export default function PremiumWorkspaceGridModal({
   onViewActivities,
   onViewKanban,
   onAcceptInvite,
-  globalCounts
+  globalCounts,
+  workspaceCounters
 }: PremiumWorkspaceGridModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name-asc');
@@ -263,10 +265,14 @@ export default function PremiumWorkspaceGridModal({
             </div>
           ) : (
             processedWorkspaces.map(ws => {
+              // Use server-side counters when available (accurate COUNT from DB)
+              const wsCounters = workspaceCounters?.find(c => c.workspaceSeqid === ws.seqid);
               const total = ws.boards?.length || 0;
-              const active = ws.boards?.filter(b => !b.dtcon).length || 0;
-              const completed = ws.boards?.filter(b => !!b.dtcon).length || 0;
+              const active = wsCounters?.activeBoards ?? (ws.boards?.filter(b => !b.dtcon).length || 0);
+              const completed = total > active ? total - active : (ws.boards?.filter(b => !!b.dtcon).length || 0);
               const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+              const wsActiveCards = wsCounters?.activeCards ?? 0;
+              const wsOverdueCards = wsCounters?.overdueCards ?? 0;
 
               // Capturar setores associados a quadros desta área de trabalho
               const sectorsSet = new Set<string>();
@@ -315,11 +321,16 @@ export default function PremiumWorkspaceGridModal({
                     <div className={styles.statItem} title={`${active} atividades em execução`}>
                       ⚡ <strong>{active}</strong> Ativas
                     </div>
+                    <div className={styles.statItem} title={`${wsActiveCards} eventos em andamento nesta área`}>
+                      📋 <strong>{wsActiveCards}</strong> Eventos
+                    </div>
+                    {wsOverdueCards > 0 && (
+                      <div className={styles.statItem} title={`${wsOverdueCards} eventos atrasados nesta área`} style={{ color: '#f87171' }}>
+                        ⚠️ <strong>{wsOverdueCards}</strong> Atrasados
+                      </div>
+                    )}
                     <div className={styles.statItem} title={`${completed} atividades concluídas`}>
                       ✅ <strong>{completed}</strong> Concluídas
-                    </div>
-                    <div className={styles.statItem} title={`${total} atividades criadas no total`}>
-                      📦 <strong>{total}</strong> Total
                     </div>
                   </div>
 

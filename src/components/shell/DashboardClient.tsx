@@ -191,6 +191,7 @@ interface DashboardClientProps {
   successParam?: string;
   errorParam?: string;
   dashboardStats?: any;
+  workspaceCounters?: Array<{ workspaceSeqid: string; activeBoards: number; activeCards: number; overdueCards: number }>;
 }
 
 export default function DashboardClient({
@@ -205,7 +206,8 @@ export default function DashboardClient({
   initialMyEvents = [],
   successParam,
   errorParam,
-  dashboardStats
+  dashboardStats,
+  workspaceCounters
 }: DashboardClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2010,6 +2012,7 @@ export default function DashboardClient({
                   overdueCards: dashboardStats.operational.overdueCards,
                   cardsCompletedThisMonth: dashboardStats.currentMonth?.cardsCompleted || 0
                 } : undefined}
+                workspaceCounters={workspaceCounters}
               />
             ) : (
               <WelcomeDashboard
