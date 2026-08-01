@@ -302,16 +302,41 @@ export default function PremiumWorkspaceGridModal({
                     <span className={styles.workspaceTypeBadge}>{ws.type.name}</span>
                   </div>
 
+                  {/* Progress */}
+                  <div className={styles.progressSection}>
+                    <div className={styles.progressLabelGroup}>
+                      <span>Progresso de Eventos</span>
+                      <span className={styles.progressPercent}>{progressPct}%</span>
+                    </div>
+                    <div className={styles.progressBar}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                  </div>
+
                   {/* Card Stats */}
                   <div className={styles.cardStats}>
                     <div className={styles.statItem} title={`${active} atividades em execução`}>
-                      ⚡ <strong>{active}</strong> Atividades Ativas
+                      ⚡ <strong>{active}</strong> Atividades
                     </div>
                     {overdueBoards > 0 && (
                       <div className={styles.statItem} title={`${overdueBoards} atividades com prazo vencido`} style={{ color: '#f87171' }}>
                         ⚠️ <strong>{overdueBoards}</strong> Atrasadas
                       </div>
                     )}
+                    <div className={styles.statItem} title={`${totalEvents} eventos das atividades ativas`}>
+                      📋 <strong>{totalEvents}</strong> Eventos
+                    </div>
+                    {overdueEvents > 0 && (
+                      <div className={styles.statItem} title={`${overdueEvents} eventos atrasados`} style={{ color: '#f87171' }}>
+                        🔴 <strong>{overdueEvents}</strong> Atrasados
+                      </div>
+                    )}
+                    <div className={styles.statItem} title={`${completedEvents} eventos concluídos`}>
+                      ✅ <strong>{completedEvents}</strong> Concluídos
+                    </div>
                   </div>
 
                   {/* Sectors Involved */}
