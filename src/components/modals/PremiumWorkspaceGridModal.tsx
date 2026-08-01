@@ -316,26 +316,26 @@ export default function PremiumWorkspaceGridModal({
                     </div>
                   </div>
 
-                  {/* Card Stats */}
+                  {/* Card Stats - Premium Layout */}
                   <div className={styles.cardStats}>
-                    <div className={styles.statItem} title={`${active} atividades em execução`}>
-                      ⚡ <strong>{active}</strong> Atividades
+                    <div className={styles.statRow}>
+                      <span className={styles.statTitle}>⚡ Atividades</span>
+                      <span className={styles.statValues}>
+                        <strong>{active}</strong> ativas
+                        {overdueBoards > 0 && (
+                          <span style={{ color: '#f87171' }}> • <strong>{overdueBoards}</strong> atrasadas</span>
+                        )}
+                      </span>
                     </div>
-                    {overdueBoards > 0 && (
-                      <div className={styles.statItem} title={`${overdueBoards} atividades com prazo vencido`} style={{ color: '#f87171' }}>
-                        ⚠️ <strong>{overdueBoards}</strong> Atrasadas
-                      </div>
-                    )}
-                    <div className={styles.statItem} title={`${totalEvents} eventos das atividades ativas`}>
-                      📋 <strong>{totalEvents}</strong> Eventos
-                    </div>
-                    {overdueEvents > 0 && (
-                      <div className={styles.statItem} title={`${overdueEvents} eventos atrasados`} style={{ color: '#f87171' }}>
-                        🔴 <strong>{overdueEvents}</strong> Atrasados
-                      </div>
-                    )}
-                    <div className={styles.statItem} title={`${completedEvents} eventos concluídos`}>
-                      ✅ <strong>{completedEvents}</strong> Concluídos
+                    <div className={styles.statRow}>
+                      <span className={styles.statTitle}>📋 Eventos</span>
+                      <span className={styles.statValues}>
+                        <strong>{totalEvents - completedEvents}</strong> ativos
+                        {overdueEvents > 0 && (
+                          <span style={{ color: '#f87171' }}> • <strong>{overdueEvents}</strong> atrasados</span>
+                        )}
+                        <span style={{ color: '#10b981' }}> • <strong>{completedEvents}</strong> concluídos</span>
+                      </span>
                     </div>
                   </div>
 

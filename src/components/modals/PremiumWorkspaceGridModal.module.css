@@ -498,6 +498,35 @@
   padding: 0.75rem 0;
 }
 
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.25rem 0;
+}
+
+.statTitle {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 100px;
+  font-size: 0.8rem;
+}
+
+.statValues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.statValues strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .statItem {
   display: flex;
   align-items: center;
