@@ -54,7 +54,9 @@ interface PremiumWorkspaceGridModalProps {
   onAcceptInvite: (token: string) => void;
   globalCounts?: {
     inProgressBoards: number;
-    completedBoards?: number;
+    inProgressCards: number;
+    overdueCards: number;
+    cardsCompletedThisMonth: number;
   };
 }
 
@@ -114,7 +116,7 @@ export default function PremiumWorkspaceGridModal({
 
     // Prefer server-side counts (accurate) over client-side (may be limited by take)
     const activeBoards = globalCounts?.inProgressBoards ?? allBoards.filter(b => !b.dtcon).length;
-    const completedBoards = globalCounts?.completedBoards ?? allBoards.filter(b => !!b.dtcon).length;
+    const completedBoards = allBoards.filter(b => !!b.dtcon).length;
     const total = activeBoards + completedBoards;
     const completionRate = total > 0 ? Math.round((completedBoards / total) * 100) : 0;
 
@@ -187,7 +189,7 @@ export default function PremiumWorkspaceGridModal({
       </header>
 
       <div className={styles.scrollContent}>
-        {/* Top KPI Cards */}
+        {/* Top KPI Cards - Visão Operacional Real */}
         <div className={styles.kpiGrid}>
           <div className={styles.kpiCard}>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>📂</div>
@@ -200,24 +202,24 @@ export default function PremiumWorkspaceGridModal({
           <div className={styles.kpiCard}>
             <div className={`${styles.kpiIcon} ${styles.iconBlue}`}>⚡</div>
             <div className={styles.kpiInfo}>
-              <span className={styles.kpiVal}>{globalStats.activeBoards}</span>
+              <span className={styles.kpiVal}>{globalCounts?.inProgressBoards ?? globalStats.activeBoards}</span>
               <span className={styles.kpiLabel}>Atividades Ativas</span>
             </div>
           </div>
 
           <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIcon} ${styles.iconGreen}`}>✅</div>
+            <div className={`${styles.kpiIcon} ${styles.iconGreen}`}>📋</div>
             <div className={styles.kpiInfo}>
-              <span className={styles.kpiVal}>{globalStats.completedBoards}</span>
-              <span className={styles.kpiLabel}>Fluxos Concluídos</span>
+              <span className={styles.kpiVal}>{globalCounts?.inProgressCards ?? 0}</span>
+              <span className={styles.kpiLabel}>Eventos em Andamento</span>
             </div>
           </div>
 
           <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIcon} ${styles.iconAmber}`}>📈</div>
+            <div className={`${styles.kpiIcon} ${styles.iconAmber}`}>⚠️</div>
             <div className={styles.kpiInfo}>
-              <span className={styles.kpiVal}>{globalStats.completionRate}%</span>
-              <span className={styles.kpiLabel}>Taxa de Conclusão</span>
+              <span className={styles.kpiVal}>{globalCounts?.overdueCards ?? 0}</span>
+              <span className={styles.kpiLabel}>Eventos Atrasados</span>
             </div>
           </div>
         </div>

@@ -2005,7 +2005,10 @@ export default function DashboardClient({
                 }}
                 onAcceptInvite={handleAcceptInvite}
                 globalCounts={dashboardStats?.operational ? {
-                  inProgressBoards: dashboardStats.operational.inProgressBoards
+                  inProgressBoards: dashboardStats.operational.inProgressBoards,
+                  inProgressCards: dashboardStats.operational.inProgressCards,
+                  overdueCards: dashboardStats.operational.overdueCards,
+                  cardsCompletedThisMonth: dashboardStats.currentMonth?.cardsCompleted || 0
                 } : undefined}
               />
             ) : (
