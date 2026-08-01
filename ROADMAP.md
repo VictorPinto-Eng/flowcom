@@ -191,6 +191,47 @@ pendente, priorizado e por quê.
 
 ---
 
+## Performance e Arquitetura
+
+### P2 — Separação de Rotas (Reduzir DashboardClient monolítico)
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| P-001 | **Separar Board/Kanban em rota própria `/dashboard/board/[id]`** | Board é o componente mais pesado (~500 linhas). Rota própria permite fetch isolado, bundle splitting natural e carregamento independente. | Pendente |
+| P-002 | **Separar MyActivities em rota própria `/dashboard/my-activities`** | Já tem lazy load via dynamic(). Rota própria elimina dependência do DashboardClient e permite Server Component com query otimizada. | Pendente |
+| P-003 | **Separar MyEvents em rota própria `/dashboard/my-events`** | Mesmo padrão de P-002. Fetch isolado, bundle independente. | Pendente |
+| P-004 | **Separar Workspace Grid em rota própria `/dashboard/workspace/[id]`** | Grid de atividades carrega full mode. Rota própria permite streaming com Suspense. | Pendente |
+| P-005 | **Eliminar query pesada `findByUserId` com includes aninhados** | Query atual carrega workspaces→columns→cards→card_act de uma vez. Separar em queries específicas por contexto. | Pendente |
+
+### P2 — Otimizações de Dados
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| P-006 | **Paginação cursor-based nos boards** | MAPLE CONSTRUTORA tem 568 boards. Sem paginação, todos carregam de uma vez. | Pendente |
+| P-007 | **Lazy load de card_act (histórico)** | Histórico de ações carrega junto com cards. Deveria carregar só ao abrir drawer. | Pendente |
+| P-008 | **Índice parcial `idx_board_workspace_active`** | `CREATE INDEX ON board(workspace_id) WHERE dtcon IS NULL` — acelera query de boards ativos. | Pendente |
+| P-009 | **Virtualização para listas >100 items** | Boards e cards renderizam todos no DOM. Com >200 items, usar @tanstack/react-virtual. | Pendente |
+
+### P3 — Admin e Observabilidade
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| P-010 | **Proteger `/admin/diagnostics` com role OWNER** | Atualmente qualquer user logado acessa. Restringir a admin da plataforma. | Pendente |
+| P-011 | **Dashboard de diagnóstico com histórico visual** | Comparar snapshots ao longo do tempo (gráficos de crescimento). | Pendente |
+
+### Concluído (Performance)
+
+| ID | Item | Data | Referência |
+|----|------|------|------------|
+| P-100 | Lazy load SweetAlert2 (dynamic import) | 31/07/2026 | `a2f9a5a` |
+| P-101 | Lazy load MyActivitiesView (dynamic import) | 31/07/2026 | `a2f9a5a` |
+| P-102 | Lightweight mode na query de workspaces | 31/07/2026 | `bb22b47` |
+| P-103 | Contadores reais por workspace via COUNT | 01/08/2026 | `27cf65f` |
+| P-104 | Página de diagnóstico admin `/admin/diagnostics` | 01/08/2026 | `3ce189d` |
+| P-105 | Build com Webpack (Alpine não suporta Turbopack) | 01/08/2026 | `b6a8e3b` |
+
+---
+
 ## Concluído
 
 | ID | Item | Data | Referência |
