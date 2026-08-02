@@ -168,6 +168,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
     prisma.card.count({
       where: {
         dtcon: null,
+        board: { dtcon: null },
         column: { workspaceSeqid: { in: workspaceSeqids } }
       }
     }),
@@ -183,6 +184,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
       where: {
         previsto: { lt: today },
         dtcon: null,
+        board: { dtcon: null },
         column: { workspaceSeqid: { in: workspaceSeqids } }
       }
     }),
@@ -220,7 +222,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
       orderBy: { previsto: 'asc' },
       take: 5
     }),
-    // Overdue items - boards
+    // Overdue items - boards (most recent overdue first)
     prisma.board.findMany({
       where: {
         previsto: { lt: today },
@@ -228,21 +230,22 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
         workspaceId: { in: workspaceSeqids }
       },
       include: { workspace: { select: { name: true } } },
-      orderBy: { previsto: 'asc' },
+      orderBy: { previsto: 'desc' },
       take: 5
     }),
-    // Overdue items - cards
+    // Overdue items - cards (only from active boards)
     prisma.card.findMany({
       where: {
         previsto: { lt: today },
         dtcon: null,
+        board: { dtcon: null },
         column: { workspaceSeqid: { in: workspaceSeqids } }
       },
       include: {
         board: { select: { name: true } },
         column: { include: { workspace: { select: { name: true } } } }
       },
-      orderBy: { previsto: 'asc' },
+      orderBy: { previsto: 'desc' },
       take: 5
     })
   ]);
