@@ -44,7 +44,7 @@ export default function BoardTopBar({
         <div className={styles.contextInfo}>
           <span className={styles.contextWorkspace}>{workspaceName || 'Área de Trabalho'}</span>
           <div className={styles.contextBoardWrapper}>
-            <span className={styles.contextBoard}>#{boardId} — {boardName}</span>
+            <span className={styles.contextBoard}><span className={styles.contextBoardId}>#{boardId}</span> — {boardName}</span>
             {viewMode !== 'completed' && !boardDtcon && onRenameBoard && (
               <button
                 className={styles.editBoardBtn}
