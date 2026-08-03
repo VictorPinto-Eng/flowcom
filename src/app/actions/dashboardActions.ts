@@ -208,11 +208,12 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
       orderBy: { previsto: 'asc' },
       take: 5
     }),
-    // Upcoming deadlines - cards
+    // Upcoming deadlines - cards (only from active boards)
     prisma.card.findMany({
       where: {
         previsto: { gte: today, lte: nextWeek },
         dtcon: null,
+        board: { dtcon: null },
         column: { workspaceSeqid: { in: workspaceSeqids } }
       },
       include: {
@@ -288,7 +289,7 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
     })
     .slice(0, 5);
 
-  // Build overdue items list (merge boards + cards, sort by most overdue, take 5)
+  // Build overdue items list (merge boards + cards, sort by most recent first - most relevant to action)
   const overdueItems = [
     ...overdueBoardsList.map(b => ({
       id: b.seqId.toString(),
@@ -308,7 +309,8 @@ export async function getDashboardStatsAction(): Promise<DashboardStats> {
       boardName: c.board?.name || ''
     }))
   ]
-    .sort((a, b) => b.daysOverdue - a.daysOverdue)
+    // Prioritize recent overdue (less days = more urgent to resolve)
+    .sort((a, b) => a.daysOverdue - b.daysOverdue)
     .slice(0, 5);
 
   return {
