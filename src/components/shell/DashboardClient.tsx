@@ -1676,6 +1676,13 @@ export default function DashboardClient({
                         📊 Relatório Completo
                       </button>
                       <button
+                        className={styles.createWorkspaceBtn}
+                        onClick={() => setIsWorkspaceModalOpen(true)}
+                        title="Criar uma nova área de trabalho"
+                      >
+                        <span className={styles.plusIcon}>+</span> Nova Área
+                      </button>
+                      <button
                         className={styles.createActivityBtn}
                         onClick={() => {
                           // Navega para a página dedicada em _self.
