@@ -232,6 +232,83 @@ pendente, priorizado e por quê.
 
 ---
 
+## Incrementos Futuros Sugeridos (2026-08-03)
+
+Funcionalidades que **fazem sentido** para um kanban colaborativo multi-tenant como o Flowcom,
+organizadas por área. **Não há datas nem prioridades firmes** — são ideias para ciclos futuros.
+
+### Funcionalidades Centrais
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| F-001 | **Templates de board** (clonar board, importar template) | Usuários perdem muito tempo recriando estruturas parecidas (ex: "Acompanhamento Mensal" → 12 instâncias). Template = economia de tempo real. |
+| F-002 | **Tags/labels livres em cards** | Hoje só há `sector` (setor fixo da atividade). Tags livres permitiriam categorizar por tema, urgência, cliente. Modelo: `card_tag` (card_id, tag_name) — sem tabela nova, array de strings. |
+| F-003 | **Subtasks/checklists dentro de cards** | Um card "Entregar relatório" pode ter 5 sub-itens. Hoje vira 5 cards separados, poluindo o board. Checklist interno com progresso (X de Y). |
+| F-004 | **Anexos/arquivos em cards** | Upload para storage (S3/MinIO) com preview inline de imagens e PDFs. Fundamental para boards de engenharia/jurídico. |
+| F-005 | **Dependências entre cards** (bloqueado por / bloqueia) | "Não posso iniciar card B até fechar card A". Visualização de cadeia no board. |
+| F-006 | **Campos customizados por board** | Cada tipo de board tem dados próprios (data de vencimento, valor, cliente). Hoje o schema é fixo. Campos custom = flexibilidade sem migração. |
+
+### Colaboração & Tempo Real
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| F-010 | **Notificações in-app** (sino com badge) | Transferências solicitadas, convites, menções, deadlines se perdendo hoje. Falta um canal centralizado. |
+| F-011 | **Menções @usuario em comentários** | Hoje só há `card_act` (andamento livre). Adicionar `@nome` com autocomplete → notifica o usuário. |
+| F-012 | **Real-time updates** (websocket / SSE) | Usuário A move um card, usuário B vê em <1s sem F5. Polling funciona mas gasta banda. WebSocket nativo com fallback SSE. |
+| F-013 | **Comentários em cards** (separado de card_act) | `card_act` é histórico/auditoria. Comentários são conversação — UI diferente (avatar, threaded). |
+| F-014 | **Visto por último / presença online** | Saber se o colega está online ou "visto há 2h" reduz ambiguidade em transferências. |
+
+### Produtividade & UX
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| U-030 | **Atalhos de teclado globais** | `c` = nova atividade, `/` = buscar, `?` = ajuda. Kanban sérios (Trello, Linear, Jira) todos têm. |
+| U-031 | **Busca global** (cmd+k) | Hoje só há busca por nome no overview do workspace. Busca global por cards, pessoas, workspaces. |
+| U-032 | **Filtros salvos / views** | "Meus atrasados", "Atividades do setor JUR" salvos como filtros nomeados. Usuário clica 1 vez. |
+| U-033 | **Bulk actions** (selecionar N cards e mover/copiar/excluir) | Útil em migrações e limpezas periódicas. |
+| U-034 | **Undo para ações destrutivas** | Excluir card / board → notificação toast com "Desfazer" por 5s. Reduz medo de clicar errado. |
+| U-035 | **Tema claro** (light mode) | App é dark-only. Light mode é requisito de muitos usuários e melhora WCAG em ambientes claros. |
+
+### Integrações
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| I-001 | **Google Calendar / Outlook** (sync de datas previstas) | Hoje há `previsto` no card mas não vai pra calendário. Two-way sync = reminder no celular. |
+| I-002 | **Slack / Teams** (notificações em canal) | Para times que vivem lá. Webhook configurável por workspace. |
+| I-003 | **Webhooks de saída** (board.updated, card.completed) | Permite integrações custom sem alterar o app. |
+| I-004 | **Importador de Trello/Asana** | Migração de times que já usam outra ferramenta. |
+| I-005 | **API pública REST/GraphQL** | Power users e scripts. Auth via API key por workspace. |
+| I-006 | **Email digest semanal** | "Suas 12 atividades pendentes esta semana" — melhora engajamento. |
+
+### Análise & Relatórios
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| R-001 | **Dashboard de métricas do workspace** | Tempo médio de conclusão, taxa de atrasos, distribuição por responsável. Cards hoje não mostram nada disso. |
+| R-002 | **Burndown / velocity chart** | Para times ágeis. Mostra trabalho concluído vs planejado ao longo do tempo. |
+| R-003 | **Heatmap de carga** | Quem tem mais cards atrasados? Quem está ocioso? Visualização por usuário. |
+| R-004 | **Export CSV/Excel** (não só PDF) | Para usuários que querem cruzar com planilhas. |
+
+### Mobile & Offline
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| M-010 | **PWA + offline mode** | Service Worker + cache de boards recentes. Usuário no campo (sem internet) ainda vê seus cards. |
+| M-011 | **App nativo** (React Native ou Capacitor) | Push notifications funcionam offline. Investimento maior, ROI maior. |
+| M-012 | **Mobile-first redesign** | Hoje funciona mas UI foi pensada pra desktop. Bottom sheets, swipe gestures, etc. |
+
+### Segurança & Compliance (continuação)
+
+| ID | Item | Justificativa |
+|----|------|---------------|
+| S-040 | **2FA / TOTP** | Senha só não basta hoje. Google Authenticator / Authy. |
+| S-041 | **SSO (SAML / OIDC)** | Para clientes enterprise (ex: MAPLE CONSTRUTORA já tem SSO?). Login com Google/Microsoft. |
+| S-042 | **Audit log persistente** (não só card_act) | Quem entrou, quem tentou entrar, quem editou workspace. Compliance (LGPD/SOC2). |
+| S-043 | **Soft delete + restore** | Excluir board/card deve ser reversível por 30 dias. Lixeira. |
+| S-044 | **Export de dados do usuário** (LGPD art. 18) | Usuário pede e recebe JSON com tudo que é sobre ele. |
+
+---
+
 ## Concluído
 
 | ID | Item | Data | Referência |
