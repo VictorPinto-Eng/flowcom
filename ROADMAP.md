@@ -85,7 +85,7 @@ pendente, priorizado e por quê.
 | ID | Item | Justificativa | Status |
 |----|------|---------------|--------|
 | A-001 | **Unificar sistema de IDs (string vs BigInt)** | `seqid` (BigInt) e `id` (cuid string) coexistem com conversões manuais espalhadas — fonte de bugs de tipo. | Pendente |
-| A-002 | **Extrair lógica de filtragem de permissões para um service** | Filtros de role (OWNER/ADMIN/MEMBER) estão duplicados em DashboardClient e Board.tsx. Centralizar em um hook ou service. | Pendente |
+| A-002 | **Extrair lógica de filtragem de permissões para um service** | Filtros de role (OWNER/ADMIN/MEMBER) estão duplicados em DashboardClient e Board.tsx. Centralizar em um hook ou service. | ✅ Parcial — DashboardClient.tsx refatorado (10 ocorrências) usando `useWorkspacePermissions`; restantes (Board.tsx, BoardTopBar,PremiumWorkspaceGridModal, etc.) ficam para ciclos futuros (this commit) |
 | A-010 | **Quebrar `DashboardClient.tsx` (2500+ linhas)** | God component com 14 useEffects, 25+ states, sem memoização. Cada mudança de state re-renderiza a árvore inteira. Extrair sub-componentes e hooks. | Pendente |
 
 ### P2 — Média
@@ -93,7 +93,7 @@ pendente, priorizado e por quê.
 | ID | Item | Justificativa | Status |
 |----|------|---------------|--------|
 | A-003 | **Substituir `(activeWorkspace as any).currentUserRole` por tipo definido** | 27 instâncias de `as any` em 8 componentes — perde type safety. | Pendente |
-| A-004 | **Criar hook `useWorkspacePermissions`** | Centralizar lógica de verificação de role e filtragem de boards/cards por permissão. | Pendente |
+| A-004 | **Criar hook `useWorkspacePermissions`** | Centralizar lógica de verificação de role e filtragem de boards/cards por permissão. | ✅ Concluído — hook + tipo `WorkspaceRole` em `src/hooks/useWorkspacePermissions.ts` e `src/types/permissions.ts` (2026-08-03) |
 | A-005 | **Mover server actions para camada de domínio consistente** | Algumas actions chamam services diretamente, outras têm lógica inline. Padronizar. | Pendente |
 | A-006 | **Adicionar testes automatizados para regras de permissão** | Sem testes, mudanças em permissões podem regredir sem detecção. Sem framework de testes configurado. | Pendente |
 | A-011 | **Extrair utilitários duplicados (`getSectorColors`, `getCardAgeText`, deadline status)** | Mesma lógica copiada em 3-4 componentes. Criar utils compartilhados. | Pendente |
@@ -245,6 +245,8 @@ pendente, priorizado e por quê.
 | S-022 | Validação de membro do workspace adicionada em BoardService.createBoard | 19/06/2026 | `BoardService.ts` |
 | S-020 | error.message substituído por mensagens hardcoded em 16 catch blocks (3 arquivos) | 19/06/2026 | `Board.tsx`, `DashboardClient.tsx`, `EditWorkspaceModal.tsx` |
 | U-008 | Scrollbar fina padronizada em MyActivities e MyEvents | 18/06/2026 | `393d88f` |
+| A-002 | Refatoração parcial: 10 filtros inline de `currentUserRole` em DashboardClient.tsx substituídos por `useWorkspacePermissions` | 03/08/2026 | this commit |
+| A-004 | Hook `useWorkspacePermissions` + tipo `WorkspaceRole` criados em `src/hooks/` e `src/types/` | 03/08/2026 | this commit |
 | U-009 | Ordenação por data mais recente em MyActivities e MyEvents | 18/06/2026 | `393d88f` |
 | U-010 | Botão Voltar padronizado à direita no painel de controle | 18/06/2026 | `393d88f` |
 | U-011 | Filtro de permissões MEMBER em Acompanhamento e Board | 18/06/2026 | `393d88f` |

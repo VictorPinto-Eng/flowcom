@@ -39,6 +39,8 @@ import {
   getPendingTransferRequestsAction
 } from '@/app/actions/cardActions';
 import styles from './DashboardClient.module.css';
+import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
+import { normalizeRole } from '@/types/permissions';
 
 // Dynamic import for SweetAlert2 (lazy load on demand)
 const getSwal = async () => {
@@ -390,6 +392,11 @@ export default function DashboardClient({
   const activeWorkspace = optimisticWorkspaceId
     ? (workspaces.find(w => w.id === optimisticWorkspaceId) || currentWorkspace)
     : currentWorkspace;
+
+  // Permissões do workspace ativo (OWNER/ADMIN/MEMBER/VIEWER).
+  // Fonte única de verdade para filtros de UI — substitui checagens inline
+  // de currentUserRole espalhadas pelo componente. Veja ROADMAP A-002/A-004.
+  const activeWorkspacePerms = useWorkspacePermissions(activeWorkspace);
 
   // Busca os eventos do usuário quando a visualização é alterada no cliente
   useEffect(() => {
@@ -962,8 +969,11 @@ export default function DashboardClient({
   const handleCompleteBoard = async (boardId: string, boardName: string) => {
     const Swal = await getSwal();
     const boardWorkspace = workspaces.find(ws => ws.boards?.some(b => b.id === boardId));
-    const role = boardWorkspace ? (boardWorkspace as any).currentUserRole : (activeWorkspace as any)?.currentUserRole;
-    const isOwner = role === 'OWNER';
+    // Reaproveita a permissão calculada para o workspace dono do board.
+    // Quando o board está no workspace ativo, equivale a activeWorkspacePerms.
+    const boardRole = (boardWorkspace as { currentUserRole?: string } | undefined)?.currentUserRole
+      ?? (activeWorkspace as { currentUserRole?: string } | undefined)?.currentUserRole;
+    const isOwner = normalizeRole(boardRole) === 'OWNER';
 
     if (!isOwner) {
       const result = await Swal.fire({
@@ -1063,8 +1073,7 @@ export default function DashboardClient({
     }
 
     // 2. Role-based filter: MEMBER users only see their own boards
-    const currentUserRole = (activeWorkspace as any)?.currentUserRole;
-    if (currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN') {
+    if (!activeWorkspacePerms.isAdminOrOwner) {
       const isCreator = board.user?.id === user.id;
       const isAssigned = board.columns?.some((col: any) =>
         col.cards?.some((card: any) =>
@@ -1432,7 +1441,7 @@ export default function DashboardClient({
                 onCreateBoard={handleCreateBoard}
                 userId={user.id}
                 userSeqid={userSeqid}
-                currentUserRole={(activeWorkspace as any)?.currentUserRole}
+                currentUserRole={activeWorkspacePerms.role}
                 onRenameBoard={() => setRenameBoardData({
                   id: currentBoard.id,
                   name: currentBoard.name,
@@ -1469,7 +1478,7 @@ export default function DashboardClient({
                   {activeWorkspace.description && (
                     <p className={styles.workspaceOverviewDescription}>{activeWorkspace.description}</p>
                   )}
-                  {((activeWorkspace as any).currentUserRole === 'OWNER' || (activeWorkspace as any).currentUserRole === 'ADMIN') && (
+                  {activeWorkspacePerms.isAdminOrOwner && (
                     <div className={styles.workspaceKanbanActions}>
                       <button
                         className={styles.kanbanActionBtn}
@@ -1536,8 +1545,7 @@ export default function DashboardClient({
                           ) : (
                             colCards
                               .filter((card: any) => {
-                                const role = (activeWorkspace as any)?.currentUserRole;
-                                if (role === 'OWNER' || role === 'ADMIN') return true;
+                                if (activeWorkspacePerms.isAdminOrOwner) return true;
                                 return card.user?.id === user.id || card.task_user?.id === user.id;
                               })
                               .map((card: any) => {
@@ -1917,11 +1925,11 @@ export default function DashboardClient({
                                     >
                                       <CircleCheckBig size={16} color="#10b981" strokeWidth={2.5} />
                                     </Link>
-                                    {((activeWorkspace as any)?.currentUserRole === 'OWNER' || (activeWorkspace as any)?.currentUserRole === 'ADMIN') && (
+                                    {activeWorkspacePerms.isAdminOrOwner && (
                                       <button
                                         className={styles.tableCompleteBoardBtn}
                                         onClick={() => handleCompleteBoard(board.id, board.name)}
-                                        title={(activeWorkspace as any)?.currentUserRole === 'OWNER' ? "Finalizar e Encerrar Atividade" : "Solicitar Finalização da Atividade"}
+                                        title={activeWorkspacePerms.isOwner ? "Finalizar e Encerrar Atividade" : "Solicitar Finalização da Atividade"}
                                       >
                                         🔒
                                       </button>
@@ -2110,8 +2118,7 @@ export default function DashboardClient({
 
       {selectedEvent && (() => {
         const isEventAssignedToMe = !!(userSeqid && selectedEvent.taskuser_seqid && selectedEvent.taskuser_seqid.toString() === userSeqid);
-        const role = (activeWorkspace as any)?.currentUserRole;
-        const isAdminOrOwner = role === 'OWNER' || role === 'ADMIN';
+        const isAdminOrOwner = activeWorkspacePerms.isAdminOrOwner;
 
         return (
           <div className={styles.drawerOverlay} onClick={() => setSelectedEvent(null)}>
