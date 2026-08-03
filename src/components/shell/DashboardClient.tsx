@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { CircleCheckBig } from 'lucide-react';
 import UserMenu from './UserMenu';
 import { KanbanClient } from '../kanban';
-import { CreateWorkspaceModal, CreateActivityModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
+import { CreateWorkspaceModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
 import ActivityHistorySidebar from './ActivityHistorySidebar';
 import WelcomeDashboard from './WelcomeDashboard';
 import { MyEventsView, MovementsView } from '../views';
@@ -231,7 +231,6 @@ export default function DashboardClient({
   }, [serverActiveWorkspace]);
 
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
-  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [reportSource, setReportSource] = useState<'FILTERED' | 'COMPLETE' | null>(null);
 
   // State para controle de visualização no lado do cliente, para uma transição mais suave
@@ -1482,30 +1481,11 @@ export default function DashboardClient({
                     <div className={styles.workspaceKanbanActions}>
                       <button
                         className={styles.kanbanActionBtn}
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          const Swal = await getSwal();
-                          const { value: name } = await Swal.fire({
-                            title: 'Novo Fluxo',
-                            input: 'text',
-                            inputPlaceholder: 'Nome do painel de atividades...',
-                            showCancelButton: true,
-                            confirmButtonColor: '#7c3aed',
-                            cancelButtonColor: 'transparent',
-                            confirmButtonText: '✓ Criar',
-                            cancelButtonText: 'Cancelar',
-                            background: '#1e1e2e',
-                            color: '#fff',
-                            width: '360px',
-                            padding: '1.5rem',
-                            backdrop: 'rgba(0,0,0,0.6)',
-                            inputValidator: (value) => {
-                              if (!value || !value.trim()) return 'Digite um nome para o fluxo';
-                            }
-                          });
-                          if (name && name.trim()) {
-                            handleCreateBoard(activeWorkspace.id, name.trim());
-                          }
+                          // Navega para a página dedicada em _self.
+                          // Alinhado com o restante da aplicação (páginas > modais/Swal).
+                          window.location.href = `/dashboard/activity/new?workspaceId=${activeWorkspace.id}`;
                         }}
                         title="Criar Novo Kanban/Quadro nesta Área"
                       >
@@ -1697,7 +1677,14 @@ export default function DashboardClient({
                       </button>
                       <button
                         className={styles.createActivityBtn}
-                        onClick={() => setIsActivityModalOpen(true)}
+                        onClick={() => {
+                          // Navega para a página dedicada em _self.
+                          // Alinhado com o restante da aplicação (páginas > modais).
+                          const wsId = activeWorkspace?.id || '';
+                          window.location.href = wsId
+                            ? `/dashboard/activity/new?workspaceId=${wsId}`
+                            : '/dashboard/activity/new';
+                        }}
                       >
                         <span className={styles.plusIcon}>+</span> Criar Atividade
                       </button>
@@ -2058,18 +2045,6 @@ export default function DashboardClient({
       )}
 
 
-
-      {isActivityModalOpen && activeWorkspace && (
-        <CreateActivityModal
-          workspaceName={activeWorkspace.name}
-          sectors={sectors}
-          onSubmit={async (name, sectorId, detalhes, dtatv, previsto) => {
-            await handleCreateBoard(activeWorkspace.id, name, sectorId, detalhes, dtatv, previsto);
-            setIsActivityModalOpen(false);
-          }}
-          onClose={() => setIsActivityModalOpen(false)}
-        />
-      )}
 
       {reportSource && activeWorkspace && (
         <ActivityReportModal

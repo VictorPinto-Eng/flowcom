@@ -50,30 +50,12 @@ export default function Sidebar({
 }: SidebarProps) {
   const router = useRouter();
 
-  const handleCreateBoardClick = async (e: React.MouseEvent, workspaceId: string) => {
+  const handleCreateBoardClick = (e: React.MouseEvent, workspaceId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    const { value: name } = await Swal.fire({
-      title: 'Nova Atividade',
-      input: 'text',
-      inputPlaceholder: 'Nome do painel de atividades...',
-      showCancelButton: true,
-      confirmButtonColor: '#7c3aed',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: '✓ Criar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)',
-      inputValidator: (value) => {
-        if (!value || !value.trim()) return 'Digite um nome para a atividade';
-      }
-    });
-    if (name && name.trim()) {
-      await onCreateBoard(workspaceId, name.trim());
-    }
+    // Navega para a página dedicada em _self.
+    // Alinhado com o restante da aplicação (páginas > modais/Swal).
+    window.location.href = `/dashboard/activity/new?workspaceId=${workspaceId}`;
   };
 
   return (
