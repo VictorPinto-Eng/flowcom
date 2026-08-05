@@ -112,6 +112,20 @@ export async function completeBoardAction(boardId: string, localDateStr?: string
   revalidatePath('/');
 }
 
+export async function getBoardPendingCardsCountAction(boardId: string) {
+  const board = await prisma.board.findUnique({
+    where: { seqId: BigInt(boardId) },
+    include: {
+      card: {
+        where: { dtcon: null },
+        select: { seqid: true }
+      }
+    }
+  });
+  if (!board) return 0;
+  return board.card.length;
+}
+
 export async function requestBoardCompletionAction(boardId: string) {
   const user = await userRepo.getLoggedUser();
 

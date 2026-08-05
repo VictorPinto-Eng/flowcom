@@ -974,6 +974,15 @@ export default function DashboardClient({
       ?? (activeWorkspace as { currentUserRole?: string } | undefined)?.currentUserRole;
     const isOwner = normalizeRole(boardRole) === 'OWNER';
 
+    // Contar cards pendentes para melhorar a confirmação
+    let pendingCardsCount = 0;
+    try {
+      const { getBoardPendingCardsCountAction } = await import('@/app/actions/boardActions');
+      pendingCardsCount = await getBoardPendingCardsCountAction(boardId);
+    } catch (err) {
+      console.error('Erro ao contar cards pendentes:', err);
+    }
+
     if (!isOwner) {
       const result = await Swal.fire({
         title: 'Solicitar Encerramento?',
@@ -1003,14 +1012,18 @@ export default function DashboardClient({
       return;
     }
 
+    const cardMsg = pendingCardsCount > 0
+      ? `Esta ação irá marcar <strong>${pendingCardsCount} evento${pendingCardsCount !== 1 ? 's' : ''} pendente${pendingCardsCount !== 1 ? 's' : ''}</strong> como concluído${pendingCardsCount !== 1 ? 's' : ''}.`
+      : 'Nenhum evento pendente será afetado.';
+
     const result = await Swal.fire({
       title: 'Encerrar Atividade?',
-      text: `Deseja realmente encerrar a atividade "${boardName}"? Todos os eventos pendentes serão marcados como concluídos.`,
+      html: `<p style="margin-bottom:0.75rem;">Deseja realmente encerrar a atividade <strong>"${boardName}"</strong>?</p><p style="font-size:0.9rem;color:#f87171;">${cardMsg}</p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Sim, encerrar!',
+      confirmButtonText: pendingCardsCount > 0 ? `Sim, encerrar (${pendingCardsCount} eventos)` : 'Sim, encerrar!',
       cancelButtonText: 'Cancelar',
       background: '#1a1a1a',
       color: '#fff'
