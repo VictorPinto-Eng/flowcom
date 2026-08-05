@@ -30,6 +30,9 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [newActionText, setNewActionText] = useState('');
   const [isSavingAction, setIsSavingAction] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterWorkspaceSeqid, setFilterWorkspaceSeqid] = useState<string>('');
+
   const getCardAgeText = (card: any) => {
     const startDate = card.dtatv ? new Date(card.dtatv) : (card.createdAt ? new Date(card.createdAt) : null);
     if (!startDate) return '—';
@@ -46,10 +49,53 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
     return `${days} dias`;
   };
 
-// Sort events by previsto ascending (oldest first)
-const sortedEvents = useMemo(() => {
+// Helper para extrair workspace seqid do evento
+const getEventWorkspaceSeqid = (ev: any): string => {
+  return (
+    ev.board?.workspace?.seqid?.toString() ||
+    ev.column?.workspace?.seqid?.toString() ||
+    ev.column?.board?.workspace?.seqid?.toString() ||
+    ''
+  );
+};
+
+// Workspaces únicos presentes nos eventos (fallback se prop vazia)
+const availableWorkspaces = useMemo(() => {
+  if (workspaces && workspaces.length > 0) return workspaces;
+  const map = new Map<string, { seqid: string; name: string }>();
+  for (const ev of events || []) {
+    const wsSeqid = getEventWorkspaceSeqid(ev);
+    if (wsSeqid && !map.has(wsSeqid)) {
+      const ws = ev.board?.workspace || ev.column?.workspace || ev.column?.board?.workspace;
+      map.set(wsSeqid, { seqid: wsSeqid, name: ws?.name || 'Sem nome' });
+    }
+  }
+  return Array.from(map.values());
+}, [workspaces, events]);
+
+// Filtrados e ordenados por previsto
+const filteredAndSortedEvents = useMemo(() => {
   if (!events) return [];
-  return [...events].sort((a, b) => {
+
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = events.filter((ev) => {
+    // Filtro por workspace
+    if (filterWorkspaceSeqid) {
+      const wsSeqid = getEventWorkspaceSeqid(ev);
+      if (wsSeqid !== filterWorkspaceSeqid) return false;
+    }
+
+    // Filtro por título/descrição (case-insensitive)
+    if (term) {
+      const title = (ev.title || '').toLowerCase();
+      const description = (ev.description || '').toLowerCase();
+      if (!title.includes(term) && !description.includes(term)) return false;
+    }
+
+    return true;
+  });
+
+  return filtered.sort((a, b) => {
     if (a.previsto && b.previsto) {
       return new Date(a.previsto).getTime() - new Date(b.previsto).getTime(); // Oldest first
     }
@@ -57,9 +103,9 @@ const sortedEvents = useMemo(() => {
     if (b.previsto) return 1;
     return 0;
   });
-}, [events]);
+}, [events, searchTerm, filterWorkspaceSeqid]);
 
-// Summary counters for the events status bar
+// Summary counters para eventos FILTRADOS
 const eventsSummary = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -68,7 +114,7 @@ const eventsSummary = useMemo(() => {
   let onTime = 0;
   let noPrevisto = 0;
 
-  for (const ev of sortedEvents) {
+  for (const ev of filteredAndSortedEvents) {
     if (!ev.previsto) { noPrevisto++; continue; }
     const dateStr = new Date(ev.previsto).toISOString().split('T')[0];
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -80,8 +126,8 @@ const eventsSummary = useMemo(() => {
     else onTime++;
   }
 
-  return { total: sortedEvents.length, overdue, dueToday, onTime, noPrevisto };
-}, [sortedEvents]);
+  return { total: filteredAndSortedEvents.length, overdue, dueToday, onTime, noPrevisto };
+}, [filteredAndSortedEvents]);
 
   // Estados de Edição de Andamentos
   const [editingActionSeqid, setEditingActionSeqid] = useState<bigint | null>(null);
@@ -298,7 +344,7 @@ const eventsSummary = useMemo(() => {
 
 
   const handleGeneratePdf = async () => {
-    if (sortedEvents.length === 0) {
+    if (filteredAndSortedEvents.length === 0) {
       Swal.fire({
         title: 'Sem dados',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum evento para gerar o PDF.</p>',
@@ -345,7 +391,7 @@ const eventsSummary = useMemo(() => {
 
       const formatDate = (d: any) => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—';
 
-      const tableRows = sortedEvents.map(ev => {
+      const tableRows = filteredAndSortedEvents.map(ev => {
         const boardName = ev.board?.name || ev.column?.board?.name || 'Atividade';
         const previstoStr = formatDate(ev.previsto);
         const assignedName = ev.task_user?.name || 'Não atribuído';
@@ -386,7 +432,7 @@ const eventsSummary = useMemo(() => {
           <tbody>${tableRows}</tbody>
         </table>
         <div style="margin-top:20px;border-top:1px solid #cbd5e1;padding-top:12px;">
-          <div style="font-size:9px;color:#64748b;">Total de eventos: <strong>${sortedEvents.length}</strong></div>
+          <div style="font-size:9px;color:#64748b;">Total de eventos: <strong>${filteredAndSortedEvents.length}</strong></div>
         </div>
       </div>`;
 
@@ -468,6 +514,75 @@ const eventsSummary = useMemo(() => {
           </div>
         ) : (
           <>
+          <div className={styles.filtersBar}>
+            <div className={styles.searchWrapper}>
+              <span className={styles.searchIcon} aria-hidden="true">🔍</span>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Buscar por título ou descrição..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Buscar eventos"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className={styles.searchClear}
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Limpar busca"
+                  title="Limpar busca"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <select
+              className={styles.workspaceFilter}
+              value={filterWorkspaceSeqid}
+              onChange={(e) => setFilterWorkspaceSeqid(e.target.value)}
+              aria-label="Filtrar por área"
+            >
+              <option value="">Todas as áreas ({availableWorkspaces.length})</option>
+              {availableWorkspaces.map((ws: any) => (
+                <option key={ws.seqid?.toString() || ws.id} value={ws.seqid?.toString() || ws.id}>
+                  {ws.name}
+                </option>
+              ))}
+            </select>
+
+            {(searchTerm || filterWorkspaceSeqid) && (
+              <button
+                type="button"
+                className={styles.clearFiltersBtn}
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterWorkspaceSeqid('');
+                }}
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+
+          {filteredAndSortedEvents.length === 0 ? (
+            <div className={styles.emptyState}>
+              <p>🔎 Nenhum evento corresponde aos filtros aplicados.</p>
+              <button
+                type="button"
+                className={styles.clearFiltersBtn}
+                style={{ marginTop: '1rem' }}
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterWorkspaceSeqid('');
+                }}
+              >
+                Limpar filtros
+              </button>
+            </div>
+          ) : (
+          <>
           <div className={styles.summaryBar}>
             <span className={styles.summaryTotal}>{eventsSummary.total} evento{eventsSummary.total !== 1 ? 's' : ''}</span>
             {eventsSummary.overdue > 0 && (
@@ -503,7 +618,7 @@ const eventsSummary = useMemo(() => {
                 </tr>
               </thead>
               <tbody>
-                {sortedEvents.map(ev => {
+                {filteredAndSortedEvents.map(ev => {
                   let statusType = 'normal'; // 'danger', 'warning', 'success', 'normal'
                   if (ev.previsto) {
                     const dateStr = new Date(ev.previsto).toISOString().split('T')[0];
@@ -605,6 +720,8 @@ const eventsSummary = useMemo(() => {
               </tbody>
             </table>
           </div>
+          </>
+          )}
           </>
         )}
       </div>
