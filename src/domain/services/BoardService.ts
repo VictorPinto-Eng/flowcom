@@ -447,14 +447,27 @@ export class BoardService {
       }
     }
 
-    // 2. Marcar o board como concluído
+    // 2. Marcar TODOS os cards do board como concluídos (inclusive os que já estão na coluna "Concluído" mas ainda não têm dtcon)
+    await prisma.card.updateMany({
+      where: {
+        board_seqid: board.seqId,
+        dtcon: null
+      },
+      data: {
+        dtcon: dtconDate,
+        moduser: userSeqid,
+        dtmod: new Date()
+      }
+    });
+
+    // 3. Marcar o board como concluído
     await this.boardRepo.updateBoard(boardId, {
       dtcon: dtconDate,
       moduser: userSeqid,
       dtmod: new Date()
     });
 
-    // 3. Criar o card "PROCESSO CONCLUÍDO"
+    // 4. Criar o card "PROCESSO CONCLUÍDO"
     await this.cardRepo.createCard({
       title: 'PROCESSO CONCLUÍDO',
       description: `Processo encerrado por ${user.name}`,
@@ -469,7 +482,7 @@ export class BoardService {
       createdAt: new Date()
     });
 
-    // 4. Log de Auditoria
+    // 5. Log de Auditoria
     await this.logRepo.createLog({
       boardId,
       userId: user.id,
