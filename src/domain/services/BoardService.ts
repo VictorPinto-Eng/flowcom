@@ -436,7 +436,7 @@ export class BoardService {
     for (const col of otherColumns) {
       if (col.cards.length > 0) {
         await prisma.card.updateMany({
-          where: { columnId: col.seqid },
+          where: { columnId: col.seqid, board_seqid: board.seqId },
           data: {
             columnId: doneCol.seqid,
             dtcon: dtconDate,
