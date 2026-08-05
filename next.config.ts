@@ -6,7 +6,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: https://github.com https://*.githubusercontent.com;
   font-src 'self';
-  connect-src 'self';
+  connect-src 'self' https://cdnjs.cloudflare.com;
   frame-src 'none';
   object-src 'none';
   base-uri 'self';
