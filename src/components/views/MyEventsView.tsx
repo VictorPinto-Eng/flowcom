@@ -59,6 +59,30 @@ const sortedEvents = useMemo(() => {
   });
 }, [events]);
 
+// Summary counters for the events status bar
+const eventsSummary = useMemo(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let overdue = 0;
+  let dueToday = 0;
+  let onTime = 0;
+  let noPrevisto = 0;
+
+  for (const ev of sortedEvents) {
+    if (!ev.previsto) { noPrevisto++; continue; }
+    const dateStr = new Date(ev.previsto).toISOString().split('T')[0];
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const expected = new Date(y, m - 1, d);
+    expected.setHours(0, 0, 0, 0);
+
+    if (expected < today) overdue++;
+    else if (expected.getTime() === today.getTime()) dueToday++;
+    else onTime++;
+  }
+
+  return { total: sortedEvents.length, overdue, dueToday, onTime, noPrevisto };
+}, [sortedEvents]);
+
   // Estados de Edição de Andamentos
   const [editingActionSeqid, setEditingActionSeqid] = useState<bigint | null>(null);
   const [editingActionText, setEditingActionText] = useState('');
@@ -443,6 +467,30 @@ const sortedEvents = useMemo(() => {
             <p>🎉 Nenhum evento pendente direcionado para você no momento!</p>
           </div>
         ) : (
+          <>
+          <div className={styles.summaryBar}>
+            <span className={styles.summaryTotal}>{eventsSummary.total} evento{eventsSummary.total !== 1 ? 's' : ''}</span>
+            {eventsSummary.overdue > 0 && (
+              <span className={styles.summaryChip + ' ' + styles.summaryDanger}>
+                {eventsSummary.overdue} atrasado{eventsSummary.overdue !== 1 ? 's' : ''}
+              </span>
+            )}
+            {eventsSummary.dueToday > 0 && (
+              <span className={styles.summaryChip + ' ' + styles.summaryWarning}>
+                {eventsSummary.dueToday} para hoje
+              </span>
+            )}
+            {eventsSummary.onTime > 0 && (
+              <span className={styles.summaryChip + ' ' + styles.summarySuccess}>
+                {eventsSummary.onTime} no prazo
+              </span>
+            )}
+            {eventsSummary.noPrevisto > 0 && (
+              <span className={styles.summaryChip + ' ' + styles.summaryNeutral}>
+                {eventsSummary.noPrevisto} sem data
+              </span>
+            )}
+          </div>
           <div className={styles.tableWrapper}>
             <table className={styles.eventsTable}>
               <thead>
@@ -557,6 +605,7 @@ const sortedEvents = useMemo(() => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
