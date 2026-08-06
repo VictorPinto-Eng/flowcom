@@ -137,6 +137,7 @@ export function useKanban(initialColumns: ColumnType[], boardId: string) {
 
     try {
       await completeCardAction(cardId, targetColId, localDateStr);
+      router.refresh();
     } catch (error) {
       console.error('Falha ao concluir card:', error);
       setColumns(initialColumns);

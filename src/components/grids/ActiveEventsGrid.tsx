@@ -2,8 +2,13 @@
 
 import React, { useState } from 'react';
 import { CircleCheckBig } from 'lucide-react';
-import Swal from 'sweetalert2';
 import { CardType, ColumnType } from '@/types/kanban';
+
+// Dynamic import for SweetAlert2 (lazy load on demand)
+const getSwal = async () => {
+  const module = await import('sweetalert2');
+  return module.default;
+};
 import { updateCardPrevistoAction, getWorkspaceMembersAction, transferCardAction } from '@/app/actions/cardActions';
 import ActionsDrawer from './ActionsDrawer';
 import styles from '../kanban/Board.module.css';
@@ -230,6 +235,7 @@ export default function ActiveEventsGrid({
                           <button
                             className={styles.completeEventBtn}
                             onClick={async () => {
+                              const Swal = await getSwal();
                               const result = await Swal.fire({
                                 title: 'Concluir Evento?',
                                 text: `Deseja marcar "${event.title}" como concluído?`,
