@@ -340,6 +340,7 @@ export default function Board({
             if (editingEvent.columnId !== newColumnId) {
               onMoveCard(id, editingEvent.columnId, newColumnId);
             }
+            router.refresh();
           }}
           onClose={() => setEditingEvent(null)}
         />
