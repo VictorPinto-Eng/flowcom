@@ -107,10 +107,21 @@ export function useKanban(initialColumns: ColumnType[], boardId: string) {
   };
 
   const completeCard = async (cardId: string, sourceColId: string, targetColId: string) => {
-    if (sourceColId === targetColId) return;
-
-    // Atualização Otimista
+    // Atualização Otimista — mesmo se sourceCol === targetCol (card já está na coluna concluído sem dtcon)
     setColumns(prev => {
+      if (sourceColId === targetColId) {
+        // Card já está na coluna alvo — apenas marca dtcon otimisticamente
+        return prev.map(col => {
+          if (col.id === targetColId) {
+            return {
+              ...col,
+              cards: col.cards.map(c => c.id === cardId ? { ...c, dtcon: new Date() } : c)
+            };
+          }
+          return col;
+        });
+      }
+
       const sourceCol = prev.find(c => c.id === sourceColId);
       const targetCol = prev.find(c => c.id === targetColId);
       const card = sourceCol?.cards.find(c => c.id === cardId);
@@ -122,7 +133,6 @@ export function useKanban(initialColumns: ColumnType[], boardId: string) {
           return { ...col, cards: col.cards.filter(c => c.id !== cardId) };
         }
         if (col.id === targetColId) {
-          // Na atualização otimista simulamos também o preenchimento de dtcon
           return { ...col, cards: [...col.cards, { ...card, dtcon: new Date() }] };
         }
         return col;
