@@ -315,7 +315,7 @@ export class CardService {
     const card = await this.cardRepo.updateCard(cardId, updateData);
 
     await this.logRepo.createLog({
-      boardId: (card.column as any).board.seqId.toString(),
+      boardId: card.board_seqid ? card.board_seqid.toString() : (card.board?.seqId?.toString() || '0'),
       userId: user.id,
       action: 'CARD_UPDATED',
       description: `atualizou os dados do evento "${title}"`
