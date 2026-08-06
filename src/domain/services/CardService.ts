@@ -222,16 +222,29 @@ export class CardService {
 
   async updateCard(cardId: string, title: string, description: string | null, previstoStr: string | null, dtconStr: string | null, dtatvStr: string | null, user: any) {
     const dateVal = previstoStr ? new Date(previstoStr) : null;
-    const dtconVal = dtconStr ? new Date(dtconStr) : null;
     const dtatvVal = dtatvStr ? new Date(dtatvStr) : null;
 
-    // Se dtcon está sendo alterado, garantir consistência com a coluna
     const existingCard = await this.cardRepo.findById(cardId);
+    if (!existingCard) throw new Error('Evento não encontrado');
+
+    // PROTEÇÃO: Se card já está concluído (dtcon preenchido), não permitir reabertura via edição
+    // dtcon só pode ser gerenciado via completeCard/moveCard (fluxos controlados)
+    let dtconVal: Date | null | undefined = undefined; // undefined = não alterar
+    if (dtconStr) {
+      dtconVal = new Date(dtconStr);
+    } else if (existingCard.dtcon && !dtconStr) {
+      // Card já concluído e tentando limpar dtcon = bloquear
+      dtconVal = undefined; // Mantém o valor atual, não altera
+    } else {
+      dtconVal = null;
+    }
+
+    // Se dtcon está sendo SETADO (card era pendente → concluindo via edição), mover para coluna correta
     let columnUpdate: { columnId?: string | bigint } = {};
 
-    if (existingCard && existingCard.board_seqid) {
+    if (existingCard.board_seqid) {
       const board = await prisma.board.findUnique({ where: { seqId: existingCard.board_seqid } });
-      if (board) {
+      if (board && dtconVal !== undefined) {
         const columns = await this.colRepo.findAllByWorkspaceId(board.workspaceId);
         const hadDtcon = !!existingCard.dtcon;
         const willHaveDtcon = !!dtconVal;
@@ -242,26 +255,26 @@ export class CardService {
           if (doneCol) {
             columnUpdate = { columnId: doneCol.seqid };
           }
-        } else if (hadDtcon && !willHaveDtcon) {
-          // Reabrindo: mover para coluna "A Fazer"
-          const todoCol = columns.find(c => c.title.toLowerCase().includes('fazer')) || columns[0];
-          if (todoCol) {
-            columnUpdate = { columnId: todoCol.seqid };
-          }
         }
       }
     }
 
-    const card = await this.cardRepo.updateCard(cardId, {
+    const updateData: any = {
       title,
       description,
       previsto: dateVal,
-      dtcon: dtconVal,
       dtatv: dtatvVal,
       moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
       dtmod: new Date(),
       ...columnUpdate
-    });
+    };
+
+    // dtcon só é alterado se não for undefined (undefined = manter valor atual)
+    if (dtconVal !== undefined) {
+      updateData.dtcon = dtconVal;
+    }
+
+    const card = await this.cardRepo.updateCard(cardId, updateData);
 
     await this.logRepo.createLog({
       boardId: (card.column as any).board.seqId.toString(),
