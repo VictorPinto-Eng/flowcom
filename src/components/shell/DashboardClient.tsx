@@ -712,8 +712,27 @@ export default function DashboardClient({
 
   const handleCompleteEvent = async (card: any) => {
     if (isCompletingEvent) return;
-    setIsCompletingEvent(card.id);
     const Swal = await getSwal();
+
+    // Confirmação antes de executar
+    const result = await Swal.fire({
+      title: 'Concluir Evento?',
+      html: `<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Deseja marcar "${card.title}" como concluído?</p>`,
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: '✓ Concluir',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff',
+      width: '360px',
+      padding: '1.5rem',
+      backdrop: 'rgba(0,0,0,0.6)'
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsCompletingEvent(card.id);
 
     const localDate = new Date();
     const year = localDate.getFullYear();
