@@ -611,7 +611,7 @@ const eventsSummary = useMemo(() => {
               <thead>
                 <tr>
                   <th>Atividade</th>
-                  <th>Nome do Evento</th>
+                  <th>Evento</th>
                   <th>Atribuído</th>
                   <th>Programado</th>
                   <th>Ações</th>
