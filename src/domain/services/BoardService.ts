@@ -416,8 +416,8 @@ export class BoardService {
     const board = await this.boardRepo.findById(boardId);
     if (!board) throw new Error('Quadro não encontrado');
 
-    const doneCol = (board as any).columns.find((c: any) => 
-      c.title.toLowerCase().includes('concluído') || 
+    const doneCol = (board as any).columns.find((c: any) =>
+      c.title.toLowerCase().includes('concluído') ||
       c.title.toLowerCase().includes('concluido')
     );
     if (!doneCol) throw new Error('Coluna "Concluído" não encontrada neste quadro');
@@ -430,64 +430,74 @@ export class BoardService {
 
     const userSeqid = user.seqid ? BigInt(user.seqid) : BigInt(1);
 
-    // 1. Atualizar todos os cards que NÃO estão na coluna concluído
-    const otherColumns = (board as any).columns.filter((c: any) => c.seqid !== doneCol.seqid);
+    // TRANSAÇÃO ATÔMICA: Todas operações devem suceder ou nenhuma
+    await prisma.$transaction(async (tx) => {
+      // 1. Atualizar todos os cards que NÃO estão na coluna concluído
+      const otherColumns = (board as any).columns.filter((c: any) => c.seqid !== doneCol.seqid);
 
-    for (const col of otherColumns) {
-      if (col.cards.length > 0) {
-        await prisma.card.updateMany({
-          where: { columnId: col.seqid, board_seqid: board.seqId },
-          data: {
-            columnId: doneCol.seqid,
-            dtcon: dtconDate,
-            moduser: userSeqid,
-            dtmod: new Date()
-          }
-        });
+      for (const col of otherColumns) {
+        if (col.cards.length > 0) {
+          await tx.card.updateMany({
+            where: { columnId: col.seqid, board_seqid: board.seqId },
+            data: {
+              columnId: doneCol.seqid,
+              dtcon: dtconDate,
+              moduser: userSeqid,
+              dtmod: new Date()
+            }
+          });
+        }
       }
-    }
 
-    // 2. Marcar TODOS os cards do board como concluídos (inclusive os que já estão na coluna "Concluído" mas ainda não têm dtcon)
-    await prisma.card.updateMany({
-      where: {
-        board_seqid: board.seqId,
-        dtcon: null
-      },
-      data: {
-        dtcon: dtconDate,
-        moduser: userSeqid,
-        dtmod: new Date()
-      }
-    });
+      // 2. Marcar TODOS os cards do board como concluídos (inclusive os que já estão na coluna "Concluído" mas ainda não têm dtcon)
+      await tx.card.updateMany({
+        where: {
+          board_seqid: board.seqId,
+          dtcon: null
+        },
+        data: {
+          dtcon: dtconDate,
+          moduser: userSeqid,
+          dtmod: new Date()
+        }
+      });
 
-    // 3. Marcar o board como concluído
-    await this.boardRepo.updateBoard(boardId, {
-      dtcon: dtconDate,
-      moduser: userSeqid,
-      dtmod: new Date()
-    });
+      // 3. Marcar o board como concluído
+      await tx.board.update({
+        where: { seqId: board.seqId },
+        data: {
+          dtcon: dtconDate,
+          moduser: userSeqid,
+          dtmod: new Date()
+        }
+      });
 
-    // 4. Criar o card "PROCESSO CONCLUÍDO"
-    await this.cardRepo.createCard({
-      title: 'PROCESSO CONCLUÍDO',
-      description: `Processo encerrado por ${user.name}`,
-      board_seqid: board.seqId,
-      columnId: doneCol.seqid,
-      order: 0,
-      dtatv: new Date(),
-      dtcon: dtconDate,
-      user_seqid: BigInt(1),
-      taskuser_seqid: BigInt(1),
-      created_by: BigInt(1),
-      createdAt: new Date()
-    });
+      // 4. Criar o card "PROCESSO CONCLUÍDO"
+      await tx.card.create({
+        data: {
+          title: 'PROCESSO CONCLUÍDO',
+          description: `Processo encerrado por ${user.name}`,
+          board_seqid: board.seqId,
+          columnId: doneCol.seqid,
+          order: 0,
+          dtatv: new Date(),
+          dtcon: dtconDate,
+          user_seqid: BigInt(1),
+          taskuser_seqid: BigInt(1),
+          created_by: BigInt(1),
+          createdAt: new Date()
+        }
+      });
 
-    // 5. Log de Auditoria
-    await this.logRepo.createLog({
-      boardId,
-      userId: user.id,
-      action: 'BOARD_COMPLETED',
-      description: `encerrou a atividade "${board.name}"`
+      // 5. Log de Auditoria
+      await tx.activityLog.create({
+        data: {
+          boardId: boardId,
+          userId: user.id,
+          action: 'BOARD_COMPLETED',
+          description: `encerrou a atividade "${board.name}"`
+        }
+      });
     });
   }
 
