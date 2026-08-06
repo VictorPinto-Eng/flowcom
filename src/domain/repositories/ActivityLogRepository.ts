@@ -2,6 +2,13 @@ import prisma from '@/lib/prisma';
 
 export class ActivityLogRepository {
   async createLog(data: { boardId: string; userId: string; action: string; description: string }) {
+    // Validação: boardId deve ser um número válido (referência ao board.seqId)
+    if (!data.boardId || data.boardId === '0' || !/^\d+$/.test(data.boardId)) {
+      console.warn(`[ActivityLog] boardId inválido: "${data.boardId}" — ação: ${data.action}`);
+    }
+    if (!data.userId) {
+      console.warn(`[ActivityLog] userId vazio — ação: ${data.action}`);
+    }
     return await prisma.activityLog.create({ data });
   }
 
