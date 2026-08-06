@@ -114,10 +114,14 @@ export class BoardService {
 
     let logDescription = `atualizou os dados da atividade "${name}"`;
 
+    // ============================================================
+    // FASE 1: VALIDAÇÕES E LEITURAS (fora da transação)
+    // ============================================================
+
     // 1. Resolver o workspace de destino para validação
     let targetWorkspaceSeqid = board.workspaceId;
+    let targetWorkspace: any = null;
     if (workspaceId !== undefined && workspaceId !== null && workspaceId !== '') {
-      let targetWorkspace: any = null;
       if (/^\d+$/.test(workspaceId)) {
         targetWorkspace = await prisma.workspace.findUnique({
           where: { seqid: BigInt(workspaceId) }
@@ -132,15 +136,16 @@ export class BoardService {
       }
     }
 
-    // 2. Verificar e processar alteração de responsável da Atividade (Quadro)
+    // 2. Validar alteração de responsável
+    let newUserName = '';
+    let responsavelChanged = false;
     if (assignedUserSeqid !== undefined) {
       const currentAssignedStr = board.user_seqid ? board.user_seqid.toString() : '';
       const newAssignedStr = assignedUserSeqid ? assignedUserSeqid : '';
       if (currentAssignedStr !== newAssignedStr) {
-        let newUserObj = null;
+        responsavelChanged = true;
         if (assignedUserSeqid) {
           const userSeqIdBig = BigInt(assignedUserSeqid);
-          // Validar se o novo responsável pertence ao workspace
           const isMember = await prisma.workspaceMember.findFirst({
             where: {
               workspaceSeqid: targetWorkspaceSeqid,
@@ -150,233 +155,218 @@ export class BoardService {
           if (!isMember) {
             throw new Error('O usuário selecionado não é colaborador deste Workspace.');
           }
-          newUserObj = await prisma.user.findUnique({
+          const newUserObj = await prisma.user.findUnique({
             where: { seqid: userSeqIdBig }
           });
+          newUserName = newUserObj?.name || 'Usuário Desconhecido';
+        } else {
+          newUserName = 'SEM RESPONSÁVEL';
         }
         dataToUpdate.user_seqid = assignedUserSeqid ? BigInt(assignedUserSeqid) : null;
-
-        const newUserName = newUserObj ? newUserObj.name : 'SEM RESPONSÁVEL';
         logDescription += ` e transferiu a responsabilidade da atividade para "${newUserName}"`;
+      }
+    }
 
-        // Registrar o evento card no quadro na coluna Concluído correspondente
-        let workspaceColumns = await prisma.column.findMany({
-          where: { workspaceSeqid: targetWorkspaceSeqid }
+    // 3. Validar transferência de workspace
+    let workspaceChanged = false;
+    let oldWorkspaceName = '';
+    let oldColumns: any[] = [];
+    let newColumns: any[] = [];
+    let boardCards: any[] = [];
+
+    if (workspaceId !== undefined && workspaceId !== null && workspaceId !== '' && targetWorkspace) {
+      if (!targetWorkspace) {
+        throw new Error('Área de trabalho de destino não encontrada.');
+      }
+      if (board.workspaceId !== targetWorkspace.seqid) {
+        workspaceChanged = true;
+        const oldWorkspace = await prisma.workspace.findUnique({
+          where: { seqid: board.workspaceId }
         });
-        if (workspaceColumns.length === 0) {
-          await prisma.column.createMany({
+        oldWorkspaceName = oldWorkspace?.name || 'Área Antiga';
+        dataToUpdate.workspaceId = targetWorkspace.seqid;
+        logDescription += ` e transferiu a atividade da área "${oldWorkspaceName}" para a área "${targetWorkspace.name}"`;
+
+        oldColumns = await prisma.column.findMany({
+          where: { workspaceSeqid: board.workspaceId }
+        });
+        newColumns = await prisma.column.findMany({
+          where: { workspaceSeqid: targetWorkspace.seqid }
+        });
+        boardCards = await prisma.card.findMany({
+          where: { board_seqid: board.seqId }
+        });
+      }
+    }
+
+    // 4. Resolver dados de setor
+    let sectorChanged = false;
+    let oldSectorName = '';
+    let newSectorName = '';
+    if (sectorId !== undefined && board.sectorId !== sectorId) {
+      sectorChanged = true;
+      const oldSector = board.sectorId
+        ? await prisma.sector.findUnique({ where: { id: board.sectorId } })
+        : null;
+      oldSectorName = oldSector ? oldSector.name : 'SEM SETOR';
+      const newSector = sectorId
+        ? await prisma.sector.findUnique({ where: { id: sectorId } })
+        : null;
+      newSectorName = newSector ? newSector.name : 'SEM SETOR';
+      logDescription += ` e alterou o setor de "${oldSectorName}" para "${newSectorName}"`;
+    }
+
+    // ============================================================
+    // FASE 2: ESCRITAS (dentro da transação atômica)
+    // ============================================================
+
+    await prisma.$transaction(async (tx) => {
+      const userSeqid = user.seqid ? BigInt(user.seqid) : board.user_seqid;
+
+      // Helper: buscar ou criar colunas de um workspace
+      const ensureColumns = async (wsSeqid: bigint) => {
+        let cols = await tx.column.findMany({ where: { workspaceSeqid: wsSeqid } });
+        if (cols.length === 0) {
+          await tx.column.createMany({
             data: [
-              { title: 'A Fazer', order: 0, workspaceSeqid: targetWorkspaceSeqid },
-              { title: 'Em Progresso', order: 1, workspaceSeqid: targetWorkspaceSeqid },
-              { title: 'Concluído', order: 2, workspaceSeqid: targetWorkspaceSeqid }
+              { title: 'A Fazer', order: 0, workspaceSeqid: wsSeqid },
+              { title: 'Em Progresso', order: 1, workspaceSeqid: wsSeqid },
+              { title: 'Concluído', order: 2, workspaceSeqid: wsSeqid }
             ]
           });
-          workspaceColumns = await prisma.column.findMany({
-            where: { workspaceSeqid: targetWorkspaceSeqid }
-          });
+          cols = await tx.column.findMany({ where: { workspaceSeqid: wsSeqid } });
         }
-        const doneColumn = workspaceColumns.find(c => c.title.toLowerCase().includes('concluído')) || workspaceColumns[0];
-        if (doneColumn) {
-          await prisma.card.create({
+        return cols;
+      };
+
+      // A. Alteração de responsável → criar card de sistema
+      if (responsavelChanged) {
+        const cols = await ensureColumns(targetWorkspaceSeqid);
+        const doneCol = cols.find(c => c.title.toLowerCase().includes('concluído')) || cols[0];
+        if (doneCol) {
+          await tx.card.create({
             data: {
               title: `ATIVIDADE DELEGADA PARA ${newUserName.toUpperCase()}`,
               board_seqid: board.seqId,
-              user_seqid: user.seqid ? BigInt(user.seqid) : board.user_seqid,
-              taskuser_seqid: BigInt(1), // Admin / Sistema
-              columnId: doneColumn.seqid,
+              user_seqid: userSeqid,
+              taskuser_seqid: BigInt(1),
+              columnId: doneCol.seqid,
               dtatv: new Date(),
               dtcon: new Date(),
               order: 0,
-              created_by: user.seqid ? BigInt(user.seqid) : null
+              created_by: userSeqid
             }
           });
         }
       }
-    }
 
-    if (workspaceId !== undefined && workspaceId !== null && workspaceId !== '') {
-      let targetWorkspace: any = null;
-      if (/^\d+$/.test(workspaceId)) {
-        targetWorkspace = await prisma.workspace.findUnique({
-          where: { seqid: BigInt(workspaceId) }
-        });
-      } else {
-        targetWorkspace = await prisma.workspace.findUnique({
-          where: { id: workspaceId }
-        });
-      }
-      
-      if (!targetWorkspace) {
-        throw new Error('Área de trabalho de destino não encontrada.');
-      }
-      
-      if (board.workspaceId !== targetWorkspace.seqid) {
-        const oldWorkspace = await prisma.workspace.findUnique({
-          where: { seqid: board.workspaceId }
-        });
-        const oldWorkspaceName = oldWorkspace?.name || 'Área Antiga';
-        
-        dataToUpdate.workspaceId = targetWorkspace.seqid;
-        
-        logDescription += ` e transferiu a atividade da área "${oldWorkspaceName}" para a área "${targetWorkspace.name}"`;
-        
-        // 1. Buscar colunas das duas áreas de trabalho para fazer o mapeamento
-        let oldColumns = await prisma.column.findMany({
-          where: { workspaceSeqid: board.workspaceId }
-        });
-        let newColumns = await prisma.column.findMany({
-          where: { workspaceSeqid: targetWorkspace.seqid }
-        });
-        
-        // Auto-heal new workspace columns if they are empty
+      // B. Transferência de workspace → remapear cards e criar card de sistema
+      if (workspaceChanged && targetWorkspace) {
+        // Auto-heal colunas se necessário
         if (newColumns.length === 0) {
-          const defaultColumns = [
-            { title: 'A Fazer', order: 0, workspaceSeqid: targetWorkspace.seqid },
-            { title: 'Em Progresso', order: 1, workspaceSeqid: targetWorkspace.seqid },
-            { title: 'Concluído', order: 2, workspaceSeqid: targetWorkspace.seqid }
-          ];
-          await prisma.column.createMany({
-            data: defaultColumns
-          });
-          newColumns = await prisma.column.findMany({
-            where: { workspaceSeqid: targetWorkspace.seqid }
-          });
+          newColumns = await ensureColumns(targetWorkspace.seqid);
+        }
+        if (oldColumns.length === 0) {
+          oldColumns = await ensureColumns(board.workspaceId);
         }
 
-        // Auto-heal old workspace columns if they are empty
-        if (oldColumns.length === 0) {
-          const defaultColumns = [
-            { title: 'A Fazer', order: 0, workspaceSeqid: board.workspaceId },
-            { title: 'Em Progresso', order: 1, workspaceSeqid: board.workspaceId },
-            { title: 'Concluído', order: 2, workspaceSeqid: board.workspaceId }
-          ];
-          await prisma.column.createMany({
-            data: defaultColumns
-          });
-          oldColumns = await prisma.column.findMany({
-            where: { workspaceSeqid: board.workspaceId }
-          });
-        }
-        
-        // Achar a coluna de conclusão no novo workspace
         const newDoneColumn = newColumns.find(c => c.title.toLowerCase().includes('concluído')) || newColumns[0];
-        
-        // 2. Mapear todos os cards existentes deste quadro para as novas colunas
-        const boardCards = await prisma.card.findMany({
-          where: { board_seqid: board.seqId }
-        });
-        
+
+        // Remapear cards para colunas do novo workspace
         for (const card of boardCards) {
           const oldCol = oldColumns.find(c => c.seqid === card.columnId);
           if (oldCol) {
             const matchingNewCol = newColumns.find(c => c.title.trim().toLowerCase() === oldCol.title.trim().toLowerCase()) || newColumns[0];
             if (matchingNewCol && matchingNewCol.seqid !== card.columnId) {
-              await prisma.card.update({
+              await tx.card.update({
                 where: { seqid: card.seqid },
                 data: { columnId: matchingNewCol.seqid }
               });
             }
           }
         }
-        
-        // 3. Registrar o evento card no quadro na nova coluna Concluído
+
+        // Card de sistema
         if (newDoneColumn) {
-          await prisma.card.create({
+          await tx.card.create({
             data: {
               title: `ALTERADO AREA DE TRABALHO DE ${oldWorkspaceName.toUpperCase()}`,
               board_seqid: board.seqId,
-              user_seqid: user.seqid ? BigInt(user.seqid) : board.user_seqid,
-              taskuser_seqid: BigInt(1), // Admin / Sistema
+              user_seqid: userSeqid,
+              taskuser_seqid: BigInt(1),
               columnId: newDoneColumn.seqid,
               dtatv: new Date(),
               dtcon: new Date(),
               order: 0,
-              created_by: user.seqid ? BigInt(user.seqid) : null
+              created_by: userSeqid
             }
           });
         }
       }
-    }    if (sectorId !== undefined && board.sectorId !== sectorId) {
-      const oldSector = board.sectorId 
-        ? await prisma.sector.findUnique({ where: { id: board.sectorId } }) 
-        : null;
-      const oldSectorName = oldSector ? oldSector.name : 'SEM SETOR';
 
-      const newSector = sectorId 
-        ? await prisma.sector.findUnique({ where: { id: sectorId } }) 
-        : null;
-      const newSectorName = newSector ? newSector.name : 'SEM SETOR';
+      // C. Alteração de setor → criar card de sistema
+      if (sectorChanged) {
+        const wsSeqid = dataToUpdate.workspaceId || board.workspaceId;
+        const cols = await ensureColumns(wsSeqid);
+        const doneCol = cols.find(c => c.title.toLowerCase().includes('concluído')) || cols[0];
+        if (doneCol) {
+          await tx.card.create({
+            data: {
+              title: `ALTERADO SETOR DE ${oldSectorName.toUpperCase()}`,
+              board_seqid: board.seqId,
+              user_seqid: userSeqid,
+              taskuser_seqid: BigInt(1),
+              columnId: doneCol.seqid,
+              dtatv: new Date(),
+              dtcon: new Date(),
+              order: 0,
+              created_by: userSeqid
+            }
+          });
+        }
+      }
 
-      logDescription += ` e alterou o setor de "${oldSectorName}" para "${newSectorName}"`;
-
-      // Registrar o evento card no quadro na coluna Concluído correspondente
-      const targetWorkspaceSeqid = dataToUpdate.workspaceId || board.workspaceId;
-      let workspaceColumns = await prisma.column.findMany({
-        where: { workspaceSeqid: targetWorkspaceSeqid }
+      // D. Atualizar o board
+      await tx.board.update({
+        where: { seqId: board.seqId },
+        data: dataToUpdate
       });
 
-      // Auto-heal se as colunas estiverem vazias
-      if (workspaceColumns.length === 0) {
-        await prisma.column.createMany({
-          data: [
-            { title: 'A Fazer', order: 0, workspaceSeqid: targetWorkspaceSeqid },
-            { title: 'Em Progresso', order: 1, workspaceSeqid: targetWorkspaceSeqid },
-            { title: 'Concluído', order: 2, workspaceSeqid: targetWorkspaceSeqid }
-          ]
-        });
-        workspaceColumns = await prisma.column.findMany({
-          where: { workspaceSeqid: targetWorkspaceSeqid }
-        });
+      // E. Construir descrição final do log
+      if (board.name !== name) {
+        logDescription = `renomeou a atividade de "${board.name}" para "${name}"`;
+      }
+      if (board.detalhes !== detalhes) {
+        logDescription += ` e atualizou as informações`;
+      }
+      if (dtatv !== undefined) {
+        const oldDate = board.dtatv ? new Date(board.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
+        const newDate = dataToUpdate.dtatv ? new Date(dataToUpdate.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
+        if (oldDate !== newDate) {
+          logDescription += ` e alterou a data de início de ${oldDate} para ${newDate}`;
+        }
+      }
+      if (previsto !== undefined) {
+        const oldPrevDate = board.previsto ? new Date(board.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
+        const newPrevDate = dataToUpdate.previsto ? new Date(dataToUpdate.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
+        if (oldPrevDate !== newPrevDate) {
+          logDescription += ` e alterou a data prevista de ${oldPrevDate} para ${newPrevDate}`;
+        }
       }
 
-      const doneColumn = workspaceColumns.find(c => c.title.toLowerCase().includes('concluído')) || workspaceColumns[0];
-      
-      if (doneColumn) {
-        await prisma.card.create({
-          data: {
-            title: `ALTERADO SETOR DE ${oldSectorName.toUpperCase()}`,
-            board_seqid: board.seqId,
-            user_seqid: user.seqid ? BigInt(user.seqid) : board.user_seqid,
-            taskuser_seqid: BigInt(1), // Admin / Sistema
-            columnId: doneColumn.seqid,
-            dtatv: new Date(),
-            dtcon: new Date(),
-            order: 0,
-            created_by: user.seqid ? BigInt(user.seqid) : null
-          }
-        });
-      }
-    }
-
-    const updated = await this.boardRepo.updateBoard(boardId, dataToUpdate);
-    if (board.name !== name) {
-      logDescription = `renomeou a atividade de "${board.name}" para "${name}"`;
-    }
-    if (board.detalhes !== detalhes) {
-      logDescription += ` e atualizou as informações`;
-    }
-    if (dtatv !== undefined) {
-      const oldDate = board.dtatv ? new Date(board.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
-      const newDate = dataToUpdate.dtatv ? new Date(dataToUpdate.dtatv).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
-      if (oldDate !== newDate) {
-        logDescription += ` e alterou a data de início de ${oldDate} para ${newDate}`;
-      }
-    }
-    if (previsto !== undefined) {
-      const oldPrevDate = board.previsto ? new Date(board.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
-      const newPrevDate = dataToUpdate.previsto ? new Date(dataToUpdate.previsto).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'sem data';
-      if (oldPrevDate !== newPrevDate) {
-        logDescription += ` e alterou a data prevista de ${oldPrevDate} para ${newPrevDate}`;
-      }
-    }
-
-    await this.logRepo.createLog({
-      boardId,
-      userId: user.id,
-      action: 'BOARD_RENAMED',
-      description: logDescription
+      // F. Log de auditoria
+      await tx.activityLog.create({
+        data: {
+          boardId: boardId,
+          userId: user.id,
+          action: 'BOARD_RENAMED',
+          description: logDescription
+        }
+      });
     });
 
+    // Retornar board atualizado (leitura fora da transação)
+    const updated = await this.boardRepo.findById(boardId);
     return this.serializeBoard(updated);
   }
 
