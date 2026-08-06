@@ -58,7 +58,7 @@ export class BoardService {
           dtatv: now,
           dtcon: now,
           order: 0,
-          created_by: user.seqid ? BigInt(user.seqid) : null
+          created_by: user.seqid ? BigInt(user.seqid) : BigInt(1)
         }
       });
     }
