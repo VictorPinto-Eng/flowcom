@@ -216,6 +216,33 @@ export class CardService {
     const dtconVal = dtconStr ? new Date(dtconStr) : null;
     const dtatvVal = dtatvStr ? new Date(dtatvStr) : null;
 
+    // Se dtcon está sendo alterado, garantir consistência com a coluna
+    const existingCard = await this.cardRepo.findById(cardId);
+    let columnUpdate: { columnId?: string | bigint } = {};
+
+    if (existingCard && existingCard.board_seqid) {
+      const board = await prisma.board.findUnique({ where: { seqId: existingCard.board_seqid } });
+      if (board) {
+        const columns = await this.colRepo.findAllByWorkspaceId(board.workspaceId);
+        const hadDtcon = !!existingCard.dtcon;
+        const willHaveDtcon = !!dtconVal;
+
+        if (!hadDtcon && willHaveDtcon) {
+          // Concluindo: mover para coluna "Concluído"
+          const doneCol = columns.find(c => c.title.toLowerCase().includes('concluído'));
+          if (doneCol) {
+            columnUpdate = { columnId: doneCol.seqid };
+          }
+        } else if (hadDtcon && !willHaveDtcon) {
+          // Reabrindo: mover para coluna "A Fazer"
+          const todoCol = columns.find(c => c.title.toLowerCase().includes('fazer')) || columns[0];
+          if (todoCol) {
+            columnUpdate = { columnId: todoCol.seqid };
+          }
+        }
+      }
+    }
+
     const card = await this.cardRepo.updateCard(cardId, {
       title,
       description,
@@ -223,7 +250,8 @@ export class CardService {
       dtcon: dtconVal,
       dtatv: dtatvVal,
       moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
-      dtmod: new Date()
+      dtmod: new Date(),
+      ...columnUpdate
     });
 
     await this.logRepo.createLog({
