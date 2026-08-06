@@ -345,12 +345,42 @@ export class CardService {
     const card = await this.cardRepo.findById(cardId);
     if (!card) throw new Error('Atividade não encontrada');
 
+    // Validação: converter IDs com tratamento de erro
+    let workspaceSeqIdBig: bigint;
+    let boardSeqIdBig: bigint;
+    let columnSeqIdBig: bigint;
+    try {
+      workspaceSeqIdBig = BigInt(workspaceSeqid);
+      boardSeqIdBig = BigInt(boardSeqid);
+      columnSeqIdBig = BigInt(columnSeqid);
+    } catch {
+      throw new Error('IDs inválidos fornecidos.');
+    }
+
+    // Validação: board de destino deve existir e pertencer ao workspace de destino
+    const targetBoard = await prisma.board.findUnique({
+      where: { seqId: boardSeqIdBig }
+    });
+    if (!targetBoard) throw new Error('Atividade de destino não encontrada');
+    if (targetBoard.workspaceId !== workspaceSeqIdBig) {
+      throw new Error('A atividade de destino não pertence à Área informada.');
+    }
+
+    // Validação: coluna de destino deve existir e pertencer ao workspace de destino
+    const targetColumn = await prisma.column.findUnique({
+      where: { seqid: columnSeqIdBig }
+    });
+    if (!targetColumn) throw new Error('Coluna de destino não encontrada');
+    if (targetColumn.workspaceSeqid !== workspaceSeqIdBig) {
+      throw new Error('A coluna de destino não pertence à Área informada.');
+    }
+
     const oldWorkspaceName = card.column?.workspace?.name || 'Área Antiga';
     const oldBoardSeqId = card.board_seqid;
 
     const updatedCard = await this.cardRepo.updateCard(cardId, {
-      board_seqid: BigInt(boardSeqid),
-      columnId: BigInt(columnSeqid),
+      board_seqid: boardSeqIdBig,
+      columnId: columnSeqIdBig,
       moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
       dtmod: new Date()
     });
@@ -363,11 +393,22 @@ export class CardService {
       description: `transferiu o evento "${card.title}" da Área "${oldWorkspaceName}" para a nova Área`
     });
 
-    // 2. Sincroniza datas previstas nos quadros de origem e destino
+    // 2. Card Act (andamento no histórico do card)
+    const targetWorkspace = await prisma.workspace.findUnique({
+      where: { seqid: workspaceSeqIdBig }
+    });
+    const targetWorkspaceName = targetWorkspace?.name || 'Nova Área';
+    await this.addCardActionLog(
+      card.seqid,
+      `EVENTO TRANSFERIDO DA ÁREA "${oldWorkspaceName}" PARA A ÁREA "${targetWorkspaceName}"`,
+      user
+    );
+
+    // 3. Sincroniza datas previstas nos quadros de origem e destino
     if (oldBoardSeqId) {
       await this.syncBoardPredictedDate(oldBoardSeqId);
     }
-    await this.syncBoardPredictedDate(BigInt(boardSeqid));
+    await this.syncBoardPredictedDate(boardSeqIdBig);
 
     return this.serializeCard(updatedCard);
   }
