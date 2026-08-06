@@ -221,7 +221,7 @@ export class BoardService {
     // ============================================================
 
     await prisma.$transaction(async (tx) => {
-      const userSeqid = user.seqid ? BigInt(user.seqid) : board.user_seqid;
+      const userSeqid = user.seqid ? BigInt(user.seqid) : (board.user_seqid || BigInt(1));
 
       // Helper: buscar ou criar colunas de um workspace
       const ensureColumns = async (wsSeqid: bigint) => {
