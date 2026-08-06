@@ -94,12 +94,21 @@ export class CardService {
     const nextOrder = lastCardInTarget ? lastCardInTarget.order + 1 : 0;
     const isDone = targetCol.title.toLowerCase().includes('concluído');
 
+    // Validação: se está sendo movido PARA coluna concluído, setar dtcon
+    // Se está sendo movido DE coluna concluído, limpar dtcon
+    let dtconUpdate: { dtcon?: Date | null } = {};
+    if (isDone && !card.dtcon) {
+      dtconUpdate = { dtcon: new Date() };
+    } else if (!isDone && card.dtcon) {
+      dtconUpdate = { dtcon: null };
+    }
+
     await this.cardRepo.updateCard(cardId, {
       columnId: targetColId,
       order: nextOrder,
-      dtcon: isDone ? new Date() : null,
       moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
-      dtmod: new Date()
+      dtmod: new Date(),
+      ...dtconUpdate
     });
 
     if (card.columnId.toString() !== targetColId) {
