@@ -1181,7 +1181,6 @@ export default function DashboardClient({
             className={styles.myActivitiesTrigger}
             onClick={() => {
               router.push('/dashboard?view=my-activities');
-              setClientView('my-activities');
             }}
             title="Listagem de todas as atividades sob sua responsabilidade ordenada por agendamento"
           >
@@ -1191,7 +1190,6 @@ export default function DashboardClient({
             className={styles.myEventsTrigger}
             onClick={() => {
               router.push('/dashboard?view=my-events');
-              setClientView('my-events');
             }}
             title="Listagem de todos eventos em andamento sob responsabilidade direta do seu usuário"
           >
