@@ -103,26 +103,44 @@ export class CardService {
       dtconUpdate = { dtcon: null };
     }
 
-    await this.cardRepo.updateCard(cardId, {
-      columnId: targetColId,
-      order: nextOrder,
-      moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
-      dtmod: new Date(),
-      ...dtconUpdate
-    });
-
-    if (card.columnId.toString() !== targetColId) {
-      await this.logRepo.createLog({
-        boardId: card.board_seqid ? card.board_seqid.toString() : '0',
-        userId: user.id,
-        action: 'CARD_MOVED',
-        description: `moveu o card "${card.title}" de "${card.column.title}" para "${targetCol.title}"`
+    // TRANSAÇÃO ATÔMICA: update + log + card_act
+    await prisma.$transaction(async (tx) => {
+      await tx.card.update({
+        where: { seqid: BigInt(cardId) },
+        data: {
+          columnId: BigInt(targetColId),
+          order: nextOrder,
+          moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
+          dtmod: new Date(),
+          ...dtconUpdate
+        }
       });
-    }
 
-    if (isDone) {
-      await this.addCardActionLog(card.seqid, 'Evento concluído', user);
-    }
+      if (card.columnId.toString() !== targetColId) {
+        await tx.activityLog.create({
+          data: {
+            boardId: card.board_seqid ? card.board_seqid.toString() : '0',
+            userId: user.id,
+            action: 'CARD_MOVED',
+            description: `moveu o card "${card.title}" de "${card.column.title}" para "${targetCol.title}"`
+          }
+        });
+      }
+
+      if (isDone) {
+        const userSeqId = user?.seqid ? BigInt(user.seqid) : undefined;
+        await tx.card_act.create({
+          data: {
+            card_seqid: card.seqid,
+            description: 'Evento concluído',
+            user_seqid: userSeqId,
+            created_by: userSeqId,
+            created_at: new Date(),
+            dtatv: new Date()
+          }
+        });
+      }
+    });
   }
 
   async completeCard(cardId: string, targetColId: string, user: any, localDateStr?: string) {
@@ -141,22 +159,40 @@ export class CardService {
       dtconDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
     }
 
-    await this.cardRepo.updateCard(cardId, {
-      columnId: targetColId,
-      order: nextOrder,
-      dtcon: dtconDate,
-      moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
-      dtmod: new Date()
-    });
+    // TRANSAÇÃO ATÔMICA: update + log + card_act
+    await prisma.$transaction(async (tx) => {
+      await tx.card.update({
+        where: { seqid: BigInt(cardId) },
+        data: {
+          columnId: BigInt(targetColId),
+          order: nextOrder,
+          dtcon: dtconDate,
+          moduser: user.seqid ? BigInt(user.seqid) : BigInt(1),
+          dtmod: new Date()
+        }
+      });
 
-    await this.logRepo.createLog({
-      boardId: card.board_seqid ? card.board_seqid.toString() : '0',
-      userId: user.id,
-      action: 'CARD_COMPLETED',
-      description: `concluiu o evento "${card.title}"`
-    });
+      await tx.activityLog.create({
+        data: {
+          boardId: card.board_seqid ? card.board_seqid.toString() : '0',
+          userId: user.id,
+          action: 'CARD_COMPLETED',
+          description: `concluiu o evento "${card.title}"`
+        }
+      });
 
-    await this.addCardActionLog(card.seqid, 'Evento concluído', user);
+      const userSeqId = user?.seqid ? BigInt(user.seqid) : undefined;
+      await tx.card_act.create({
+        data: {
+          card_seqid: card.seqid,
+          description: 'Evento concluído',
+          user_seqid: userSeqId,
+          created_by: userSeqId,
+          created_at: new Date(),
+          dtatv: new Date()
+        }
+      });
+    });
   }
 
   async updateCardPrevisto(cardId: string, previstoStr: string | null, user: any) {
