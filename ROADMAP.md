@@ -309,7 +309,37 @@ organizadas por área. **Não há datas nem prioridades firmes** — são ideias
 
 ---
 
-## Concluído
+## Integridade de Dados (Auditoria 2026-08-06)
+
+### Concluído
+
+| ID | Item | Severidade | Data | Referência |
+|----|------|-----------|------|------------|
+| D-001 | **completeActivity em transação atômica** — 5 operações de encerramento de atividade agora rodam em `prisma.$transaction()`. Se qualquer falhar, TODAS revertem. | CRÍTICO | 06/08/2026 | `400316d` |
+| D-002 | **card.board_seqid NOT NULL** — reforça integridade referencial. Card não pode existir sem board. | CRÍTICO | 06/08/2026 | `3040329` |
+| D-003 | **created_by, moduser, dtmod NOT NULL com defaults** — todo card registra obrigatoriamente quem criou, quem modificou e quando. Default: 1 (sistema) e NOW(). | ALTO | 06/08/2026 | `3040329` |
+| D-004 | **ActivityLog validação de boardId/userId** — valida no código que boardId é numérico e userId existe antes de gravar. Emite warning se inválido. | ALTO | 06/08/2026 | `b4cc309` |
+| D-005 | **Proteção dtcon contra reabertura** — card concluído não pode ter dtcon zerado via edição direta. Só via fluxos controlados (completeCard, moveCard). | MÉDIO | 06/08/2026 | `704502a` |
+| D-006 | **Validação na transferência entre workspaces** — board/coluna destino devem existir e pertencer ao workspace informado. Registra card_act histórico. | MÉDIO | 06/08/2026 | `c4c5c97` |
+| D-007 | **Consistência coluna↔dtcon** — ao editar card: setar dtcon move para Concluído; remover dtcon move para A Fazer. | MÉDIO | 06/08/2026 | `37713b9` |
+| D-008 | **moveCard valida dtcon** — ao arrastar: para Concluído seta dtcon; de Concluído limpa dtcon. Outras colunas não alteram. | MÉDIO | 06/08/2026 | `3f9beb5` |
+| D-009 | **Confirmação ao concluir evento no Kanban** — botão Concluir agora pede confirmação via SwalFire antes de gravar. | MÉDIO | 06/08/2026 | `b7c7077` |
+| D-010 | **respondTransferRequestAction com auditoria** — registra moduser/dtmod ao aceitar transferência. | MÉDIO | 06/08/2026 | `f3730d9` |
+| D-011 | **dtcon como único critério de conclusão no Kanban** — antes verificava coluna + dtcon. Agora usa apenas dtcon (a coluna é consequência, não causa). | MÉDIO | 06/08/2026 | `707c309` |
+| D-012 | **ID do evento visível em Meus Eventos** — mostra #seqid de forma discreta para rastreabilidade. | BAIXO | 06/08/2026 | `f3730d9` |
+
+### Princípios de Dados Estabelecidos
+
+| Campo | Semântica | Regra |
+|-------|-----------|-------|
+| `dtcon` | Data de CONCLUSÃO do evento | Só pode ser setado via completeCard/moveCard/completeActivity |
+| `dtmod` | Data de MODIFICAÇÃO do registro | Setado em TODA operação que altera o card (obrigatório) |
+| `moduser` | QUEM modificou | Setado em TODA operação que altera o card (obrigatório) |
+| `created_by` | QUEM criou | Setado na criação, imutável após (obrigatório) |
+
+---
+
+## Concluído (Geral)
 
 | ID | Item | Data | Referência |
 |----|------|------|------------|
