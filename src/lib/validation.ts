@@ -71,6 +71,21 @@ export function validateDescription(value: unknown, fieldLabel: string, required
   return clean;
 }
 
+/**
+ * Valida se um valor é um ID sequencial válido (BigInt-safe).
+ * Aceita string numérica ou number. Rejeita null, undefined, strings não-numéricas.
+ */
+export function validateSeqId(value: unknown, fieldLabel: string): string {
+  if (value === null || value === undefined || value === '') {
+    throw new Error(`${fieldLabel} é obrigatório.`);
+  }
+  const str = String(value).trim();
+  if (!/^\d+$/.test(str)) {
+    throw new Error(`${fieldLabel} contém valor inválido.`);
+  }
+  return str;
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**

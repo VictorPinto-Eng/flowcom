@@ -210,6 +210,14 @@ export async function deleteCardActionLogAction(actionSeqid: string) {
   if (!log || !log.card_seqid) throw new Error('Andamento não encontrado');
   await checkCardPermission(log.card_seqid.toString(), user, false);
 
+  // Registrar quem deletou antes de excluir (rastreabilidade)
+  const card = await prisma.card.findUnique({ where: { seqid: log.card_seqid } });
+  await cardService.addCardActionLog(
+    log.card_seqid,
+    `Andamento excluído por ${user.name}: "${(log.description || '').substring(0, 80)}"`,
+    user
+  );
+
   await cardService.deleteCardActionLog(BigInt(actionSeqid));
   revalidatePath('/');
 }

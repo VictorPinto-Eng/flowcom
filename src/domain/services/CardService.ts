@@ -125,14 +125,16 @@ export class CardService {
             description: `moveu o card "${card.title}" de "${card.column.title}" para "${targetCol.title}"`
           }
         });
-      }
 
-      if (isDone) {
+        // Registrar andamento no histórico do card (rastreabilidade completa)
         const userSeqId = user?.seqid ? BigInt(user.seqid) : undefined;
+        const actDescription = isDone
+          ? 'Evento concluído'
+          : `Evento movido de "${card.column.title}" para "${targetCol.title}"`;
         await tx.card_act.create({
           data: {
             card_seqid: card.seqid,
-            description: 'Evento concluído',
+            description: actDescription,
             user_seqid: userSeqId,
             created_by: userSeqId,
             created_at: new Date(),
