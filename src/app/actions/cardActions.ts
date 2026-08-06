@@ -295,7 +295,11 @@ export async function respondTransferRequestAction(cardId: string, actionSeqid: 
   if (accept) {
     await prisma.card.update({
       where: { seqid: BigInt(cardId) },
-      data: { taskuser_seqid: user.seqid }
+      data: {
+        taskuser_seqid: user.seqid,
+        moduser: user.seqid,
+        dtmod: new Date()
+      }
     });
 
     await cardService.addCardActionLog(BigInt(cardId), `Transferência aceita. Responsável atual: ${user.name}`, user);

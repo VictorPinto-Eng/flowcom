@@ -208,6 +208,14 @@
   color: #64748b;
   margin-top: 0.25rem;
 }
+
+.eventId {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 0.2rem;
+  letter-spacing: 0.3px;
+}
 .deadlineWrapper {
   display: flex;
   flex-direction: column;

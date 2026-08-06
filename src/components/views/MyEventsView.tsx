@@ -657,6 +657,7 @@ const eventsSummary = useMemo(() => {
                       <td>
                         <div className={styles.eventTitle}>{ev.title}</div>
                         {ev.description && <div className={styles.eventDesc}>{ev.description}</div>}
+                        <div className={styles.eventId}>#{ev.seqid}</div>
                       </td>
                       <td>
                         <div
