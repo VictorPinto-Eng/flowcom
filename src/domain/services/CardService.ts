@@ -212,8 +212,8 @@ export class CardService {
         dtcon: new Date(),
         order: 0,
         created_by: user.seqid ? BigInt(user.seqid) : null, // Preencher created_by
-        moduser: null, // Deixar null conforme solicitado
-        dtmod: null    // Deixar null conforme solicitado
+        moduser: BigInt(1), // Sistema
+        dtmod: new Date()
       });
     }
 

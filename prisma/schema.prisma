@@ -43,7 +43,7 @@ model Card {
   seqid          BigInt           @id @default(autoincrement())
   title          String
   description    String?
-  board_seqid    BigInt?
+  board_seqid    BigInt
   user_seqid     BigInt?
   taskuser_seqid BigInt?
   dtatv          DateTime?        @map("dtatv") @db.Date
@@ -51,12 +51,12 @@ model Card {
   previsto       DateTime?        @map("previsto") @db.Date
   dtcon          DateTime?        @map("dtcon") @db.Timestamptz(6)
   order          Int              @default(0) @map("sort_order")
-  created_by     BigInt?          @map("created_by")
+  created_by     BigInt           @default(1) @map("created_by")
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  moduser        BigInt?          @map("moduser")
-  dtmod          DateTime?        @map("dtmod") @db.Timestamptz(6)
+  moduser        BigInt           @default(1) @map("moduser")
+  dtmod          DateTime         @default(now()) @map("dtmod") @db.Timestamptz(6)
   columnId       BigInt           @map("column_id")
-  board          Board?           @relation(fields: [board_seqid], references: [seqId], onDelete: Cascade)
+  board          Board            @relation(fields: [board_seqid], references: [seqId], onDelete: Cascade)
   column         Column           @relation(fields: [columnId], references: [seqid], onDelete: Cascade)
   task_user      User?            @relation("CardTaskUser", fields: [taskuser_seqid], references: [seqid])
   users          User?            @relation("CardOwner", fields: [user_seqid], references: [seqid])
