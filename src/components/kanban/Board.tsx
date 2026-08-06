@@ -91,13 +91,13 @@ export default function Board({
         if (!isCreator && !isAssigned) return;
       }
 
-      const isDoneCol = col.title.toLowerCase().includes('concluído') || col.title.toLowerCase().includes('concluido');
+      // dtcon define o status: se tem data está concluído, se null está pendente
       if (viewMode === 'completed') {
-        if (isDoneCol || card.dtcon) {
+        if (card.dtcon) {
           displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
         }
       } else {
-        if (!isDoneCol && !card.dtcon) {
+        if (!card.dtcon) {
           displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
         }
       }
