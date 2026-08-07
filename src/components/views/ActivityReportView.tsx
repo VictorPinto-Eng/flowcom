@@ -72,6 +72,135 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
     return { total, completed, pending, overdue, progress, daysOpen };
   }, [allCards, board.dtatv, board.dtcon]);
 
+  // Parecer Técnico Executivo — interpreta dados e fornece recomendações
+  const parecer = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const getDaysOverdue = (card: any) => {
+      if (!card.previsto || card.dtcon) return 0;
+      const dateStr = new Date(card.previsto).toISOString().split('T')[0];
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const expected = new Date(y, m - 1, d);
+      expected.setHours(0, 0, 0, 0);
+      if (expected >= today) return 0;
+      return Math.floor((today.getTime() - expected.getTime()) / (1000 * 60 * 60 * 24));
+    };
+
+    const getDaysToDue = (card: any) => {
+      if (!card.previsto || card.dtcon) return null;
+      const dateStr = new Date(card.previsto).toISOString().split('T')[0];
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const expected = new Date(y, m - 1, d);
+      expected.setHours(0, 0, 0, 0);
+      return Math.ceil((expected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    };
+
+    const overduePercent = stats.total > 0 ? (stats.overdue / stats.total) * 100 : 0;
+    const boardPrevisto = board.previsto ? new Date(board.previsto) : null;
+    const boardOverdue = boardPrevisto && boardPrevisto < today && !board.dtcon;
+    const boardExpiresIn = boardPrevisto ? Math.ceil((boardPrevisto.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    // Classificação (semáforo)
+    let classification: 'verde' | 'amarelo' | 'vermelho' = 'verde';
+    if (boardOverdue || overduePercent > 30) classification = 'vermelho';
+    else if (stats.overdue > 0 || (boardExpiresIn !== null && boardExpiresIn <= 3 && boardExpiresIn >= 0)) classification = 'amarelo';
+    else if (stats.progress < 50 && stats.total > 0) classification = 'amarelo';
+
+    const classificationLabel = classification === 'verde' ? '✅ OK' : classification === 'amarelo' ? '🟡 ATENÇÃO' : '🔴 CRÍTICO';
+
+    // Status resumido
+    let status: string;
+    if (stats.total === 0) {
+      status = 'Atividade sem eventos cadastrados.';
+    } else if (stats.completed === stats.total) {
+      status = 'Atividade 100% concluída. Todos os eventos foram finalizados dentro dos prazos.';
+    } else if (classification === 'vermelho') {
+      status = `A atividade apresenta sinais críticos: ${stats.overdue} ${stats.overdue === 1 ? 'evento atrasado' : 'eventos atrasados'} ${boardOverdue ? 'e o prazo da atividade já foi ultrapassado' : ''}. Risco real de não cumprir o prazo final.`;
+    } else if (classification === 'amarelo') {
+      status = `A atividade progride, porém apresenta pontos de atenção${stats.overdue > 0 ? ` (${stats.overdue} atrasado${stats.overdue === 1 ? '' : 's'})` : ''}${boardExpiresIn !== null && boardExpiresIn <= 3 && boardExpiresIn >= 0 ? ` e o prazo vence em ${boardExpiresIn} ${boardExpiresIn === 1 ? 'dia' : 'dias'}` : ''}.`;
+    } else {
+      status = `A atividade está saudável: ${stats.progress}% concluído${stats.overdue === 0 ? ', sem eventos atrasados' : ''}. O ritmo de execução está dentro do esperado.`;
+    }
+
+    // Pontos Críticos (top 3 atrasados)
+    const criticalEvents = allCards
+      .filter(c => !c.dtcon && getDaysOverdue(c) > 0)
+      .sort((a, b) => getDaysOverdue(b) - getDaysOverdue(a))
+      .slice(0, 3);
+
+    // Oportunidades
+    const opportunities: { icon: string; text: string }[] = [];
+    if (stats.progress >= 50 && stats.progress < 100) {
+      opportunities.push({ icon: '✓', text: `${stats.progress}% dos eventos já concluídos — ritmo consistente.` });
+    }
+    if (stats.progress === 100) {
+      opportunities.push({ icon: '🏆', text: 'Atividade totalmente concluída.' });
+    }
+    const unassignedCount = allCards.filter(c => !c.dtcon && !c.task_user).length;
+    if (unassignedCount > 0) {
+      opportunities.push({ icon: '👤', text: `${unassignedCount} ${unassignedCount === 1 ? 'evento pendente sem responsável' : 'eventos pendentes sem responsável'} — oportunidade de designação.` });
+    }
+    const nearDueEvents = allCards.filter(c => !c.dtcon && getDaysToDue(c) !== null && getDaysToDue(c)! <= 2 && getDaysToDue(c)! >= 0);
+    if (nearDueEvents.length > 0) {
+      opportunities.push({ icon: '⏰', text: `${nearDueEvents.length} ${nearDueEvents.length === 1 ? 'evento vence' : 'eventos vencem'} em até 2 dias — atenção ao prazo.` });
+    }
+
+    // Recomendação
+    let recomendacao: string;
+    if (criticalEvents.length > 0) {
+      const top = criticalEvents[0];
+      const days = getDaysOverdue(top);
+      const resp = top.task_user?.name || 'sem responsável';
+      recomendacao = `Priorizar "${top.title}" (atrasado há ${days} ${days === 1 ? 'dia' : 'dias'}, responsável: ${resp}). Considerar reatribuição ou reagendamento. ${unassignedCount > 0 ? `Designar responsável para ${unassignedCount} evento${unassignedCount === 1 ? '' : 's'} pendente${unassignedCount === 1 ? '' : 's'}.` : ''}`;
+    } else if (unassignedCount > 0) {
+      recomendacao = `Designar responsável para ${unassignedCount} evento${unassignedCount === 1 ? '' : 's'} sem atribuição para evitar atrasos futuros.`;
+    } else if (nearDueEvents.length > 0) {
+      recomendacao = `Acompanhar de perto ${nearDueEvents.length} evento${nearDueEvents.length === 1 ? '' : 's'} com prazo próximo. Manter comunicação ativa com os responsáveis.`;
+    } else if (classification === 'verde') {
+      recomendacao = `Manter o ritmo atual de execução. Sem ações críticas necessárias no momento.`;
+    } else {
+      recomendacao = `Revisar o plano de execução para garantir a conclusão no prazo.`;
+    }
+
+    // Previsão (velocidade média + projeção)
+    const completedCards = allCards.filter(c => c.dtcon);
+    let avgDaysPerCard = 0;
+    if (completedCards.length > 0) {
+      const totalDays = completedCards.reduce((acc, c) => {
+        const start = c.dtatv ? new Date(c.dtatv) : new Date(c.createdAt || today);
+        const end = new Date(c.dtcon);
+        const days = Math.max(1, Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+        return acc + days;
+      }, 0);
+      avgDaysPerCard = totalDays / completedCards.length;
+    }
+    const pendingCount = stats.total - stats.completed;
+    const estimatedDaysToComplete = avgDaysPerCard > 0 ? Math.ceil(avgDaysPerCard * pendingCount) : null;
+    const estimatedCompletionDate = estimatedDaysToComplete !== null ? (() => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + estimatedDaysToComplete);
+      return d;
+    })() : null;
+    const daysDeltaBoard = (boardPrevisto && estimatedCompletionDate) ? Math.ceil((estimatedCompletionDate.getTime() - boardPrevisto.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    return {
+      classification,
+      classificationLabel,
+      status,
+      criticalEvents,
+      opportunities,
+      recomendacao,
+      previsao: {
+        velocidade: avgDaysPerCard,
+        estimatedDaysToComplete,
+        estimatedCompletionDate,
+        boardPrevisto: boardPrevisto ? new Date(boardPrevisto) : null,
+        daysDeltaBoard
+      }
+    };
+  }, [allCards, stats, board.previsto, board.dtcon]);
+
   const sortedCards = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -198,6 +327,57 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
             ${board.dtcon ? `<span>Concluído: <strong>${formatDate(board.dtcon)}</strong></span>` : ''}
           </div>
         </div>
+        ${(() => {
+          const cls = parecer.classification;
+          const borderColor = cls === 'verde' ? '#10b981' : cls === 'amarelo' ? '#f59e0b' : '#ef4444';
+          const bgGrad = cls === 'verde' ? 'rgba(16, 185, 129, 0.05)' : cls === 'amarelo' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+
+          const criticosHtml = parecer.criticalEvents.map((evt: any) => {
+            const dateStr = new Date(evt.previsto).toISOString().split('T')[0];
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const expected = new Date(y, m - 1, d);
+            expected.setHours(0, 0, 0, 0);
+            const tRef = new Date();
+            tRef.setHours(0, 0, 0, 0);
+            const daysOver = Math.floor((tRef.getTime() - expected.getTime()) / (1000 * 60 * 60 * 24));
+            const resp = evt.task_user?.name || 'sem responsável';
+            return `<li style="font-size:9px;padding:2px 0;color:#1e293b;"><strong>${evt.title}</strong> — atrasado há ${daysOver} ${daysOver === 1 ? 'dia' : 'dias'} · ${resp}</li>`;
+          }).join('');
+
+          const oportunidadesHtml = parecer.opportunities.map(o =>
+            `<li style="font-size:9px;padding:2px 0;color:#1e293b;">${o.text}</li>`
+          ).join('');
+
+          const previsaoHtml = parecer.previsao.estimatedCompletionDate ? `
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:120px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:6px 10px;">
+                <div style="font-size:7px;color:#64748b;text-transform:uppercase;">Velocidade Média</div>
+                <div style="font-size:11px;font-weight:700;color:#0f172a;">${parecer.previsao.velocidade.toFixed(1)} dias/evento</div>
+              </div>
+              <div style="flex:1;min-width:120px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:6px 10px;">
+                <div style="font-size:7px;color:#64748b;text-transform:uppercase;">Conclusão Estimada</div>
+                <div style="font-size:11px;font-weight:700;color:${parecer.previsao.daysDeltaBoard && parecer.previsao.daysDeltaBoard > 0 ? '#ef4444' : '#10b981'};">${parecer.previsao.estimatedCompletionDate.toLocaleDateString('pt-BR')}</div>
+              </div>
+            </div>
+          ` : '';
+
+          return `
+            <div style="background:${bgGrad};border-left:4px solid ${borderColor};border-radius:6px;padding:12px 14px;margin-bottom:16px;page-break-inside:avoid;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="font-size:11px;font-weight:700;color:#0f172a;">🩺 Parecer Técnico</div>
+                <div style="background:${borderColor};color:white;padding:2px 8px;border-radius:10px;font-size:8px;font-weight:700;">${parecer.classificationLabel}</div>
+              </div>
+              <div style="font-size:10px;color:#1e293b;line-height:1.5;margin-bottom:8px;">${parecer.status}</div>
+              ${criticosHtml ? `<div style="margin-bottom:6px;"><div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:3px;">⚠️ Pontos Críticos</div><ul style="margin:0;padding-left:16px;">${criticosHtml}</ul></div>` : ''}
+              ${oportunidadesHtml ? `<div style="margin-bottom:6px;"><div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:3px;">💡 Oportunidades</div><ul style="margin:0;padding-left:16px;">${oportunidadesHtml}</ul></div>` : ''}
+              <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:4px;padding:8px 10px;margin-top:6px;">
+                <div style="font-size:8px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:3px;">🎯 Recomendação</div>
+                <div style="font-size:9px;color:#1e293b;line-height:1.5;">${parecer.recomendacao}</div>
+              </div>
+              ${previsaoHtml}
+            </div>
+          `;
+        })()}
         <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 14px;text-align:center;">
             <div style="font-size:18px;font-weight:700;color:#0f172a;">${stats.total}</div>
@@ -304,6 +484,94 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
           <button className={styles.pdfBtn} onClick={handleGeneratePdf}>📄 PDF</button>
           <button className={styles.backBtn} onClick={onBack}>← Voltar</button>
         </div>
+      </div>
+
+      {/* Parecer Técnico Executivo */}
+      <div className={`${styles.parecer} ${parecer.classification === 'verde' ? styles.parecerVerde : parecer.classification === 'amarelo' ? styles.parecerAmarelo : styles.parecerVermelho}`}>
+        <div className={styles.parecerHeader}>
+          <h3 className={styles.parecerTitulo}>🩺 Parecer Técnico</h3>
+          <span className={`${styles.classificacao} ${parecer.classification === 'verde' ? styles.classificacaoVerde : parecer.classification === 'amarelo' ? styles.classificacaoAmarelo : styles.classificacaoVermelho}`}>
+            {parecer.classificationLabel}
+          </span>
+        </div>
+
+        <div className={styles.parecerStatus}>{parecer.status}</div>
+
+        {parecer.criticalEvents.length > 0 && (
+          <div className={styles.parecerSecao}>
+            <div className={styles.parecerSecaoTitulo}>⚠️ Pontos Críticos</div>
+            <ul className={styles.parecerLista}>
+              {parecer.criticalEvents.map((evt: any) => {
+                const dateStr = new Date(evt.previsto).toISOString().split('T')[0];
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const expected = new Date(y, m - 1, d);
+                expected.setHours(0, 0, 0, 0);
+                const tRef = new Date();
+                tRef.setHours(0, 0, 0, 0);
+                const days = Math.floor((tRef.getTime() - expected.getTime()) / (1000 * 60 * 60 * 24));
+                return (
+                  <li key={evt.id} className={styles.parecerItem}>
+                    <span className={styles.parecerItemIcon}>🔴</span>
+                    <span className={styles.parecerItemTexto}>
+                      <strong>{evt.title}</strong> — atrasado há {days} {days === 1 ? 'dia' : 'dias'}
+                      {evt.task_user?.name && ` · responsável: ${evt.task_user.name}`}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {parecer.opportunities.length > 0 && (
+          <div className={styles.parecerSecao}>
+            <div className={styles.parecerSecaoTitulo}>💡 Oportunidades</div>
+            <ul className={styles.parecerLista}>
+              {parecer.opportunities.map((opp, i) => (
+                <li key={i} className={styles.parecerItem}>
+                  <span className={styles.parecerItemIcon}>{opp.icon}</span>
+                  <span className={styles.parecerItemTexto}>{opp.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className={styles.recomendacaoBox}>
+          <div className={styles.recomendacaoTitulo}>🎯 Recomendação</div>
+          <p className={styles.recomendacaoTexto}>{parecer.recomendacao}</p>
+        </div>
+
+        {parecer.previsao.estimatedCompletionDate && (
+          <div className={styles.previsaoBox}>
+            <div className={styles.previsaoItem}>
+              <div className={styles.previsaoLabel}>Velocidade Média</div>
+              <div className={styles.previsaoValor}>{parecer.previsao.velocidade.toFixed(1)} dias/evento</div>
+            </div>
+            <div className={styles.previsaoItem}>
+              <div className={styles.previsaoLabel}>Conclusão Estimada</div>
+              <div className={`${styles.previsaoValor} ${parecer.previsao.daysDeltaBoard && parecer.previsao.daysDeltaBoard > 0 ? styles.previsaoValorAtrasado : styles.previsaoValorNoPrazo}`}>
+                {parecer.previsao.estimatedCompletionDate.toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+            {parecer.previsao.boardPrevisto && (
+              <div className={styles.previsaoItem}>
+                <div className={styles.previsaoLabel}>Prazo Original</div>
+                <div className={styles.previsaoValor}>
+                  {parecer.previsao.boardPrevisto.toLocaleDateString('pt-BR')}
+                </div>
+              </div>
+            )}
+            {parecer.previsao.daysDeltaBoard !== null && parecer.previsao.daysDeltaBoard !== 0 && (
+              <div className={styles.previsaoItem}>
+                <div className={styles.previsaoLabel}>Diferença</div>
+                <div className={`${styles.previsaoValor} ${parecer.previsao.daysDeltaBoard > 0 ? styles.previsaoValorAtrasado : styles.previsaoValorNoPrazo}`}>
+                  {parecer.previsao.daysDeltaBoard > 0 ? `+${parecer.previsao.daysDeltaBoard}` : parecer.previsao.daysDeltaBoard} dias
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* KPIs */}
