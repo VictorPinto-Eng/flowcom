@@ -1,0 +1,306 @@
+.container {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.headerMeta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.headerMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pdfBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #6d28d9;
+  background: #7c3aed;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pdfBtn:hover {
+  background: #6d28d9;
+}
+
+.backBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* KPIs */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpiCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.kpiLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+}
+
+.kpiValueDanger {
+  color: #ef4444;
+}
+
+.kpiValueWarning {
+  color: #f59e0b;
+}
+
+.kpiValueSuccess {
+  color: #10b981;
+}
+
+/* Progress bar */
+.progressSection {
+  margin-bottom: 1.5rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.4rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* Table */
+.tableWrapper {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.eventsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.eventsTable thead {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.eventsTable th {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.eventsTable td {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+}
+
+.eventsTable tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eventRow {
+  cursor: pointer;
+}
+
+.eventTitle {
+  font-weight: 500;
+}
+
+.eventId {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.statusDanger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.statusWarning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+.statusSuccess {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.statusNormal {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+
+.expandIcon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-right: 0.35rem;
+}
+
+/* Andamentos expandidos */
+.actionsPanel {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.actionsPanel td {
+  padding: 0;
+}
+
+.actionsList {
+  padding: 0.5rem 1rem 0.75rem 2rem;
+}
+
+.actionItem {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.actionItem:last-child {
+  border-bottom: none;
+}
+
+.actionDate {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 85px;
+}
+
+.actionText {
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.actionUser {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.emptyActions {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eventsTable {
+    font-size: 0.75rem;
+  }
+}

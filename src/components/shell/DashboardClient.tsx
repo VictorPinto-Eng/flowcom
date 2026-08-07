@@ -12,7 +12,15 @@ import ActivityHistorySidebar from './ActivityHistorySidebar';
 import WelcomeDashboard from './WelcomeDashboard';
 import { MyEventsView, MovementsView } from '../views';
 
-// Dynamic import for MyActivitiesView (lazy load on route)
+// Dynamic imports for views (lazy load on route)
+const ActivityReportView = dynamic(() => import('../views/ActivityReportView'), {
+  loading: () => (
+    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+      <p>Carregando relatório...</p>
+    </div>
+  ),
+  ssr: false
+});
 const MyActivitiesView = dynamic(() => import('../views/MyActivitiesView'), {
   loading: () => (
     <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -243,6 +251,7 @@ export default function DashboardClient({
   }
 
   const [myEvents, setMyEvents] = useState(initialMyEvents);
+  const [reportBoard, setReportBoard] = useState<any | null>(null);
 
   useEffect(() => {
     setMyEvents(initialMyEvents);
@@ -1970,6 +1979,12 @@ export default function DashboardClient({
                 </div>
               </div>
             ) : clientView === 'my-activities' ? (
+              reportBoard ? (
+                <ActivityReportView
+                  board={reportBoard}
+                  onBack={() => setReportBoard(null)}
+                />
+              ) : (
               <MyActivitiesView
                 workspaces={workspaces}
                 currentUser={user}
@@ -1985,8 +2000,13 @@ export default function DashboardClient({
                   previsto: board.previsto
                 })}
                 onCompleteBoard={handleCompleteBoard}
+                onViewReport={(board: any) => {
+                  const ws = workspaces.find(w => w.boards?.some((b: any) => b.id === board.id));
+                  setReportBoard({ ...board, workspaceName: ws?.name || '' });
+                }}
                 onBack={handleBack}
               />
+              )
             ) : clientView === 'my-events' ? (
               isLoadingMyEvents && myEvents.length === 0 ? (
                 <div className={styles.emptyTableState} style={{ padding: '4rem' }}>

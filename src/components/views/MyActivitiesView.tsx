@@ -37,6 +37,7 @@ interface MyActivitiesViewProps {
   userSeqid: string;
   onEditBoard: (board: any) => void;
   onCompleteBoard: (boardId: string, boardName: string) => Promise<void>;
+  onViewReport?: (board: any) => void;
   onBack?: () => void;
 }
 
@@ -77,6 +78,7 @@ export default function MyActivitiesView({
   userSeqid,
   onEditBoard,
   onCompleteBoard,
+  onViewReport,
   onBack
 }: MyActivitiesViewProps) {
   const router = useRouter();
@@ -398,6 +400,15 @@ return filtered.sort((a, b) => {
                     >
                       ✅ Histórico
                     </Link>
+                    {onViewReport && (
+                      <button
+                        className={styles.actionBtnSecondary}
+                        onClick={() => onViewReport(board)}
+                        title="Relatório completo da atividade"
+                      >
+                        📊 Relatório
+                      </button>
+                    )}
                     {!board.dtcon && (
                       <button
                         className={styles.actionBtnWarn}
@@ -495,6 +506,15 @@ return filtered.sort((a, b) => {
                           >
                             ✅
                           </Link>
+                          {onViewReport && (
+                            <button
+                              className={styles.tableActionBtnHistory}
+                              onClick={() => onViewReport(board)}
+                              title="Relatório completo da atividade"
+                            >
+                              📊
+                            </button>
+                          )}
                           {!board.dtcon && (
                             <button
                               className={styles.tableActionBtnLock}
