@@ -22,6 +22,7 @@ interface KanbanClientProps {
   boardCreatedAt?: string | Date;
   boardPrevisto?: string | Date | null;
   boardDtcon?: string | Date | null;
+  onViewReport?: () => void;
 }
 
 export default function KanbanClient({ 
@@ -41,12 +42,13 @@ export default function KanbanClient({
   boardDtatv,
   boardCreatedAt,
   boardPrevisto,
-  boardDtcon
+  boardDtcon,
+  onViewReport
 }: KanbanClientProps) {
   const { columns, addColumn, addCard, moveCard, copyColumn, deleteColumn, completeCard } = useKanban(initialColumns, boardId);
 
   return (
-    <Board 
+    <Board
       boardName={boardName}
       boardDetalhes={boardDetalhes}
       workspaceName={workspaceName}
@@ -54,10 +56,10 @@ export default function KanbanClient({
       workspaceBoards={workspaceBoards}
       onCreateBoard={onCreateBoard}
       boardId={boardId}
-      columns={columns} 
-      onAddColumn={addColumn} 
-      onAddCard={addCard} 
-      onMoveCard={moveCard} 
+      columns={columns}
+      onAddColumn={addColumn}
+      onAddCard={addCard}
+      onMoveCard={moveCard}
       onCompleteCard={completeCard}
       onCopyColumn={copyColumn}
       onDeleteColumn={deleteColumn}
@@ -70,6 +72,7 @@ export default function KanbanClient({
       boardCreatedAt={boardCreatedAt}
       boardPrevisto={boardPrevisto}
       boardDtcon={boardDtcon}
+      onViewReport={onViewReport}
     />
   );
 }

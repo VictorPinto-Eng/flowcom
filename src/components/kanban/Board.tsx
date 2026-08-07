@@ -49,6 +49,7 @@ interface BoardProps {
   boardCreatedAt?: string | Date;
   boardPrevisto?: string | Date | null;
   boardDtcon?: string | Date | null;
+  onViewReport?: () => void;
 }
 
 export default function Board({
@@ -67,7 +68,8 @@ export default function Board({
   onRenameBoard,
   viewMode = 'ongoing',
   boardDtcon,
-  boardPrevisto
+  boardPrevisto,
+  onViewReport
 }: BoardProps) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -290,6 +292,7 @@ export default function Board({
         onToggleAdding={() => setIsAdding(!isAdding)}
         onRenameBoard={onRenameBoard}
         onEncerrar={handleEncerrarAtividade}
+        onViewReport={onViewReport}
       />
 
       {isAdding && viewMode !== 'completed' && (

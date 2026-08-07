@@ -19,6 +19,7 @@ interface BoardTopBarProps {
   onToggleAdding: () => void;
   onRenameBoard?: (boardId: string, name: string) => void;
   onEncerrar: () => void;
+  onViewReport?: () => void;
 }
 
 export default function BoardTopBar({
@@ -34,7 +35,8 @@ export default function BoardTopBar({
   isAdding,
   onToggleAdding,
   onRenameBoard,
-  onEncerrar
+  onEncerrar,
+  onViewReport
 }: BoardTopBarProps) {
   const router = useRouter();
 
@@ -52,6 +54,15 @@ export default function BoardTopBar({
                 title="Editar dados da Atividade (Alterar prazo, responsável, setor...)"
               >
                 ✏️
+              </button>
+            )}
+            {onViewReport && (
+              <button
+                className={styles.reportBoardBtn}
+                onClick={onViewReport}
+                title="Relatório de Situação da Atividade (imprimir/PDF)"
+              >
+                📊
               </button>
             )}
           </div>

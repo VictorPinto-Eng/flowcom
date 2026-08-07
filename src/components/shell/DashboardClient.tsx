@@ -1495,6 +1495,13 @@ export default function DashboardClient({
                 boardCreatedAt={currentBoard.createdAt}
                 boardPrevisto={currentBoard.previsto}
                 boardDtcon={currentBoard.dtcon}
+                onViewReport={() => {
+                  setReportBoard({
+                    ...currentBoard,
+                    workspaceName: activeWorkspace?.name || ''
+                  });
+                  setClientView('my-activities');
+                }}
               />
             ) : activeWorkspace && clientView === 'kanban' ? (
               <div className={styles.workspaceOverview}>

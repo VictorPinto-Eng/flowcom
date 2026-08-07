@@ -1065,6 +1065,22 @@
   transform: scale(1.1);
 }
 
+.reportBoardBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.reportBoardBtn:hover {
+  background: rgba(124, 58, 237, 0.1);
+  transform: scale(1.1);
+}
+
 .contextPrevisto {
   display: inline-flex;
   align-items: center;
