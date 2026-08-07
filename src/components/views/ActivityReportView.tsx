@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import styles from './ActivityReportView.module.css';
 
 interface ActivityReportViewProps {
@@ -370,9 +370,8 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
                 const assignedName = card.task_user?.name || 'Não atribuído';
 
                 return (
-                  <>
+                  <React.Fragment key={card.id}>
                     <tr
-                      key={card.id}
                       className={styles.eventRow}
                       onClick={() => toggleExpand(card.id)}
                       title={hasActions ? 'Clique para ver andamentos' : undefined}
@@ -393,7 +392,7 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
                       <td>{getCardAge(card)}</td>
                     </tr>
                     {isExpanded && (
-                      <tr key={`${card.id}-actions`} className={styles.actionsPanel}>
+                      <tr className={styles.actionsPanel}>
                         <td colSpan={6}>
                           <div className={styles.actionsList}>
                             {!hasActions ? (
@@ -413,7 +412,7 @@ export default function ActivityReportView({ board, onBack }: ActivityReportView
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
