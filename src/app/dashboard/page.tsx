@@ -25,7 +25,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   // Full data when: board open, workspace open, or views that need cards (my-activities, kanban)
-  const needsFullData = !!boardId || !!workspaceId || viewMode === 'my-activities' || viewMode === 'kanban';
+  const needsFullData = !!boardId || !!workspaceId || viewMode === 'my-activities' || viewMode === 'kanban' || viewMode === 'activity-report';
   const workspaces = await getUserWorkspaces(user.id, user.seqid?.toString(), { lightweight: !needsFullData }) as any;
   const workspaceTypes = await getWorkspaceTypes();
   const sectors = await getSectorsAction();

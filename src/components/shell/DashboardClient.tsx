@@ -251,7 +251,6 @@ export default function DashboardClient({
   }
 
   const [myEvents, setMyEvents] = useState(initialMyEvents);
-  const [reportBoard, setReportBoard] = useState<any | null>(null);
 
   useEffect(() => {
     setMyEvents(initialMyEvents);
@@ -1467,7 +1466,12 @@ export default function DashboardClient({
                 </div>
               </div>
             ))}
-            {currentBoard && clientView !== 'my-events' && clientView !== 'my-activities' ? (
+            {currentBoard && clientView === 'activity-report' ? (
+              <ActivityReportView
+                board={{ ...currentBoard, workspaceName: activeWorkspace?.name || '' }}
+                onBack={() => router.back()}
+              />
+            ) : currentBoard && clientView !== 'my-events' && clientView !== 'my-activities' ? (
               <KanbanClient
                 initialColumns={currentBoard.columns}
                 boardId={currentBoard.id}
@@ -1496,11 +1500,7 @@ export default function DashboardClient({
                 boardPrevisto={currentBoard.previsto}
                 boardDtcon={currentBoard.dtcon}
                 onViewReport={() => {
-                  setReportBoard({
-                    ...currentBoard,
-                    workspaceName: activeWorkspace?.name || ''
-                  });
-                  setClientView('my-activities');
+                  router.push(`/dashboard?view=activity-report&boardId=${currentBoard.id}`);
                 }}
               />
             ) : activeWorkspace && clientView === 'kanban' ? (
@@ -1986,12 +1986,6 @@ export default function DashboardClient({
                 </div>
               </div>
             ) : clientView === 'my-activities' ? (
-              reportBoard ? (
-                <ActivityReportView
-                  board={reportBoard}
-                  onBack={() => setReportBoard(null)}
-                />
-              ) : (
               <MyActivitiesView
                 workspaces={workspaces}
                 currentUser={user}
@@ -2008,12 +2002,10 @@ export default function DashboardClient({
                 })}
                 onCompleteBoard={handleCompleteBoard}
                 onViewReport={(board: any) => {
-                  const ws = workspaces.find(w => w.boards?.some((b: any) => b.id === board.id));
-                  setReportBoard({ ...board, workspaceName: ws?.name || '' });
+                  router.push(`/dashboard?view=activity-report&boardId=${board.id}`);
                 }}
                 onBack={handleBack}
               />
-              )
             ) : clientView === 'my-events' ? (
               isLoadingMyEvents && myEvents.length === 0 ? (
                 <div className={styles.emptyTableState} style={{ padding: '4rem' }}>
