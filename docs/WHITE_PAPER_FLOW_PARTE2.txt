@@ -1,0 +1,336 @@
+============================================================
+4. MODULOS, FUNCIONALIDADES E REGRAS DE NEGOCIO
+============================================================
+
+------------------------------------------------------------
+4.1 MODULO DE AUTENTICACAO E SESSAO
+------------------------------------------------------------
+
+Nome: Autenticacao e Gestao de Sessao
+Objetivo: Garantir identidade do usuario, controlar acesso e manter sessoes seguras.
+Problema resolvido: Acesso nao autorizado, identidade nao verificada, sessoes indefinidas.
+Usuarios/perfis: Todos os usuarios do sistema.
+
+Entradas necessarias:
+- Registro: nome, email, confirmacao de email, senha (8+ chars, 1 maiuscula, 1 minuscula, 1 digito, 1 especial)
+- Login: email, senha
+- Recuperacao: email
+- Reset: token + nova senha
+
+Processamento realizado:
+- Registro: validacao de senha, verificacao de email duplicado, hash bcryptjs (10 rounds), criacao de token de ativacao (validade 24h), envio de email via Resend API.
+- Login: verificacao de rate limiting (5 tentativas / 15 min por IP), busca por email, comparacao bcrypt, verificacao de conta ativa, revogacao de sessoes anteriores, geracao JWT (7 dias), gravacao em cookie httpOnly + tabela session.
+- Verificacao de email: validacao de token, ativacao da conta (active = true).
+- Recuperacao de senha: rate limiting (2 tentativas / hora), geracao de token (validade 1h), envio de email.
+- Reset de senha: validacao de token, hash da nova senha, revogacao de todas as sessoes do usuario.
+
+Regras de negocio identificadas:
+- Senha obrigatoriamente com 8+ caracteres, 1 maiuscula, 1 minuscula, 1 digito, 1 caractere especial
+- Email unico no sistema (case-insensitive, normalizado para lowercase)
+- Conta inativa ate verificacao por email
+- Sessao unica por usuario (login revoga sessoes anteriores)
+- Token de ativacao expira em 24 horas
+- Token de reset de senha expira em 1 hora
+- Rate limiting por IP E por email
+
+Saidas:
+- Cookie httpOnly com JWT (sameSite: strict, secure em producao)
+- Registro na tabela Session (whitelist para revogacao)
+- Emails transacionais (ativacao, recuperacao, convite)
+
+Dependencias: Resend API (envio de email), PostgreSQL (persistencia), bcryptjs (hash).
+
+Status atual: Em producao.
+
+Limitacoes e pontos de atencao:
+- JWT sem refresh token (sessao expira abruptamente apos 7 dias) — item S-009 pendente
+- Enumeracao de email possivel via mensagem de registro ("Este e-mail ja esta em uso") — item S-034 pendente
+- Rate limiting distribuido (multiplos IPs) nao totalmente mitigado — item S-013 pendente
+- Logging de acoes de seguranca usa console.error (nao estruturado) — item S-014 pendente
+
+------------------------------------------------------------
+4.2 MODULO DE WORKSPACES (AREAS DE TRABALHO)
+------------------------------------------------------------
+
+Nome: Gestao de Workspaces
+Objetivo: Organizar equipes e projetos em containers isolados com controle de acesso.
+Problema resolvido: Projetos misturados sem delimitacao de acesso, equipes sem organizacao.
+Usuarios/perfis: OWNER (criador), ADMIN, MEMBER, VIEWER.
+
+Entradas necessarias:
+- Criacao: nome (max 100 chars), tipo (predefinido), descricao (opcional, max 5000 chars)
+- Convite: email do convidado, papel (ADMIN ou MEMBER)
+- Gestao de membros: alteracao de papel, remocao
+
+Processamento realizado:
+- Criacao: sanitizacao de inputs, validacao de tamanho, criacao do workspace, criacao automatica de 3 colunas padrao ("A Fazer", "Em Progresso", "Concluido"), associacao do criador como OWNER via WorkspaceMember.
+- Convite: validacao de email, verificacao se usuario ja e membro, geracao de token unico (expira em 7 dias), envio de email diferenciado (usuario existente vs novo), registro do convite no banco.
+- Aceite de convite: validacao de token (formato UUID), verificacao de email do destinatario, verificacao de expiracao, criacao de WorkspaceMember com papel definido.
+- Gestao de membros: allowlist de papeis (OWNER/ADMIN/MEMBER), restricao de nao remover ultimo OWNER.
+
+Regras de negocio identificadas:
+- Workspace criado sempre tem OWNER (criador)
+- 3 colunas padrao criadas automaticamente: "A Fazer" (order 0), "Em Progresso" (order 1), "Concluido" (order 2)
+- Convite expira em 7 dias
+- Convite diferencia usuario existente (redireciona para login) de novo (redireciona para registro)
+- Papel padrao ao aceitar convite: MEMBER
+- Apenas OWNER pode alterar papeis e remover membros
+- Nao e possivel remover o ultimo OWNER do workspace
+- Token de convite nao e exposto em respostas de API (seguranca)
+- Role validada contra allowlist (prevencao de injecao)
+
+Saidas:
+- Workspace com colunas iniciais
+- Registro WorkspaceMember com papel
+- Email de convite com instrucoes diferenciadas
+- Banners de convites pendentes no dashboard
+
+Dependencias: Modulo de Autenticacao (usuario logado), Resend API (email).
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem limite definido de membros por workspace
+- Sem limite definido de workspaces por usuario
+- Papel VIEWER nao tem verificacao implementada na UI (item S-010 pendente)
+
+------------------------------------------------------------
+4.3 MODULO DE BOARDS (ATIVIDADES)
+------------------------------------------------------------
+
+Nome: Gestao de Boards/Atividades
+Objetivo: Representar projetos ou atividades dentro de um workspace, com metadados de prazo e responsabilidade.
+Problema resolvido: Projetos sem estrutura, sem prazos formais, sem responsavel definido.
+Usuarios/perfis: OWNER e ADMIN criam/editam; MEMBER visualiza e interage com cards internos.
+
+Entradas necessarias:
+- Criacao: workspace destino, nome (max 100 chars), detalhes (max 5000 chars), setor, data inicio, data prevista de conclusao
+- Edicao: mesmos campos + workspace destino (transferencia), usuario responsavel
+- Encerramento: confirmacao (OWNER direto) ou solicitacao + aprovacao
+
+Processamento realizado:
+- Criacao: validacao de inputs (sanitizacao XSS, limites de tamanho), verificacao de membro do workspace (BoardService.createBoard), registro com created_by e dtmod.
+- Edicao: verificacao de permissao (OWNER/ADMIN via getLoggedUser), sanitizacao, atualizacao com moduser/dtmod.
+- Encerramento (completeActivity): operacao atomica via prisma.$transaction() — move TODOS os cards pendentes para coluna "Concluido", seta dtcon em cada card, seta dtcon no board. Se qualquer operacao falhar, TODAS revertem.
+- Fluxo de aprovacao: MEMBER/ADMIN solicita conclusao -> OWNER recebe banner -> OWNER autoriza -> executa completeActivity.
+
+Regras de negocio identificadas:
+- Board pertence a exatamente 1 workspace
+- Board pode ter responsavel (user_seqid) — quem responde pela atividade
+- Setor e opcional (FOLLOW UP, SUPORTE, ENGENHARIA, CONTABILIDADE, FINANCEIRO, OBRA, QUALIDADE, RECURSOS HUMANOS, COMERCIAL, MANUTENCAO, JURIDICO)
+- Board pendente: dtcon IS NULL
+- Board concluido: dtcon IS NOT NULL
+- Encerramento atomico: nenhum card fica "orfao" em estado intermediario
+- Apenas OWNER pode encerrar diretamente; outros solicitam
+- Board pode ser transferido para outro workspace (OWNER/ADMIN)
+- Campos de auditoria obrigatorios: created_by, moduser, dtmod
+
+Saidas:
+- Board com metadados e status
+- Registro em ActivityLog ("BOARD_CREATED")
+- Notificacao (banner) de solicitacao de encerramento ao OWNER
+
+Dependencias: Modulo de Workspaces, Modulo de Colunas (para encerramento), Cards.
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem paginacao (todos os boards carregam de uma vez) — itens P-002/P-006 pendentes
+- Sem templates (clonar board) — item F-001 planejado
+- Sem campos customizados — item F-006 planejado
+
+------------------------------------------------------------
+4.4 MODULO DE CARDS (EVENTOS/TAREFAS)
+------------------------------------------------------------
+
+Nome: Gestao de Cards/Eventos
+Objetivo: Representar tarefas atomicas dentro de um board, com ciclo de vida rastreado.
+Problema resolvido: Tarefas sem rastreabilidade, sem responsavel, sem controle de conclusao.
+Usuarios/perfis: OWNER/ADMIN criam; MEMBER pode criar se autorizado; responsavel (taskuser) gerencia.
+
+Entradas necessarias:
+- Criacao: titulo (max 200 chars, sanitizado contra XSS), descricao (max 5000 chars, preserva newlines), board destino, coluna, datas, responsavel
+- Edicao: mesmos campos + coluna destino
+- Movimentacao: coluna destino (drag-and-drop)
+- Transferencia: novo responsavel OU novo workspace/board/coluna
+- Conclusao: confirmacao
+
+Processamento realizado:
+- Criacao: sanitizacao (remove HTML, limita tamanho), validacao de permissao (checkCardPermission), registro com created_by, moduser, dtmod obrigatorios.
+- Movimentacao (moveCard): valida dtcon — se move para "Concluido" seta dtcon = hoje; se move DE "Concluido" limpa dtcon. Outras colunas nao alteram dtcon.
+- Conclusao (completeCard): seta dtcon = hoje, move para coluna "Concluido".
+- Edicao: se setar dtcon via edicao, move para Concluido; se remover dtcon, move para "A Fazer".
+- Transferencia entre workspaces: valida que board/coluna destino existem e pertencem ao workspace informado; registra card_act historico.
+- Protecao dtcon: card concluido nao pode ter dtcon zerado via edicao direta (apenas via fluxos controlados).
+
+Regras de negocio identificadas:
+- dtcon e o UNICO criterio de conclusao (a coluna e consequencia, nao causa)
+- Card DEVE pertencer a um board (board_seqid NOT NULL)
+- created_by e moduser sao NOT NULL com default 1 (sistema)
+- dtmod e NOT NULL com default NOW()
+- Permissao de edicao: OWNER/ADMIN editam qualquer card; MEMBER edita apenas se criador OU responsavel (taskuser_seqid)
+- Ordem dentro da coluna controlada por sort_order
+- Movimentacao registra card_act automaticamente
+- Transferencia de responsabilidade: reatribui taskuser_seqid mantendo historico
+
+Saidas:
+- Card com estado completo (titulo, responsavel, datas, coluna, auditoria)
+- Registro card_act para cada acao
+- Registro ActivityLog para eventos globais
+- Atualizacao visual otimista no Kanban (rollback em caso de erro)
+
+Dependencias: Modulo de Boards, Modulo de Colunas, Modulo de Workspaces (permissoes).
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem subtasks/checklists — item F-003 planejado
+- Sem anexos/arquivos — item F-004 planejado
+- Sem tags/labels — item F-002 planejado
+- Sem dependencias entre cards — item F-005 planejado
+- Drag-and-drop sem alternativa de teclado (acessibilidade) — item U-017 pendente
+
+------------------------------------------------------------
+4.5 MODULO DE COLUNAS KANBAN
+------------------------------------------------------------
+
+Nome: Gestao de Colunas
+Objetivo: Organizar visualmente o fluxo de trabalho em etapas customizaveis por workspace.
+Problema resolvido: Fluxo rigido sem possibilidade de customizacao.
+Usuarios/perfis: OWNER e ADMIN (gerenciam); todos os membros (visualizam).
+
+Entradas: titulo (max 100 chars), ordem, visibilidade.
+
+Processamento:
+- Criar coluna: valida permissao (assertColumnPermission — OWNER/ADMIN), sanitiza titulo, define order.
+- Renomear: validacao de permissao, sanitizacao.
+- Reordenar: atualiza sort_order de todas as colunas afetadas.
+- Copiar: duplica coluna com todos os cards.
+- Excluir: remove coluna (CASCADE nos cards).
+- Ocultar/Exibir: toggle de campo visible.
+
+Regras de negocio:
+- Colunas sao compartilhadas por TODOS os boards do workspace
+- 3 colunas padrao criadas automaticamente no workspace novo
+- Apenas OWNER/ADMIN podem manipular colunas (seguranca S-026 corrigida)
+- Ordem controlada por sort_order
+- Visibilidade controlada por campo boolean
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem limite maximo de colunas por workspace
+- Excluir coluna remove cards em cascata (sem soft-delete)
+
+------------------------------------------------------------
+4.6 MODULO DE HISTORICO E AUDITORIA
+------------------------------------------------------------
+
+Nome: Historico de Acoes (card_act) e Auditoria Global (ActivityLog)
+Objetivo: Registrar toda interacao com cards e eventos globais para rastreabilidade.
+Problema resolvido: Impossibilidade de auditar quem fez o que e quando.
+
+Entradas:
+- card_act: descricao da acao, card associado, usuario executor, data
+- ActivityLog: tipo de acao, board, usuario, descricao, timestamp
+
+Processamento:
+- card_act: registrado automaticamente em movimentacoes, conclusoes, transferencias; registrado manualmente pelo usuario (andamentos).
+- ActivityLog: registrado automaticamente em eventos estruturais (BOARD_CREATED, CARD_MOVED, CARD_COMPLETED, COLUMN_CREATED, etc.). Validacao de boardId (numerico) e userId antes de gravar.
+
+Regras de negocio:
+- card_act e vinculado ao card (FK com CASCADE delete)
+- ActivityLog NAO tem integridade referencial (boardId e userId sao strings sem FK) — item M-006 pendente
+- Historico e imutavel (registros nao sao editados ou excluidos pelo usuario)
+- Indexes: boardId, userId, createdAt para consultas rapidas
+
+Status atual: Em producao.
+
+Limitacoes:
+- ActivityLog sem FK = risco de dados orfaos (item M-006)
+- Logging de seguranca usa console.error sem estrutura (item S-014)
+- Sem audit log persistente para acoes de sistema (login, tentativas) — item S-042 planejado
+
+------------------------------------------------------------
+4.7 MODULO DE RELATORIOS
+------------------------------------------------------------
+
+Nome: Relatorios e Parecer Tecnico
+Objetivo: Gerar visao consolidada de status de atividades com analise automatizada.
+Problema resolvido: Relatorios manuais, demorados e subjetivos.
+
+Tipos de relatorio identificados:
+
+4.7.1 RELATORIO DE ATIVIDADE (por board):
+- Parecer Tecnico Executivo com classificacao semaforo:
+  - VERDE: atividade no prazo, progresso adequado
+  - AMARELO: sinais de alerta (atrasos parciais, progresso abaixo de 50%)
+  - VERMELHO: atividade critica (percentual alto de atrasos, board atrasado)
+- KPIs: total de eventos, concluidos, pendentes, atrasados, percentual de progresso, dias em aberto
+- Pontos criticos: top 3 eventos atrasados com dias de atraso e responsavel
+- Oportunidades: marcos de progresso, eventos sem responsavel, proximos de vencimento
+- Recomendacao: acao sugerida com base na situacao
+- Previsao de velocidade: media de dias/evento, data estimada de conclusao, delta vs meta
+- Barra de progresso visual
+- Tabela de eventos com historico expandivel
+- Exportacao PDF (html2pdf.js, client-side)
+
+4.7.2 RELATORIO GLOBAL (cross-workspace):
+- Stats: atividades, eventos, acoes, lead time medio, taxa de conclusao
+- Filtros: usuario, workspace, nome de atividade, status, periodo de conclusao
+- Agrupamento por board com detalhes
+- Drill-down para eventos individuais com andamentos
+- Exportacao PDF com numero de controle deterministico (hash, nao random)
+
+4.7.3 MEUS EVENTOS (lista pessoal):
+- Tabela de todos os cards atribuidos ao usuario
+- Filtro por workspace e busca
+- Barra resumo: atrasados/hoje/no prazo/sem data
+- Exportacao PDF simplificada
+
+Status atual: Em producao.
+
+Limitacoes:
+- PDF gerado client-side (html2pdf.js ~500KB sem preload) — item P-005 pendente
+- Sem export CSV/Excel — item R-004 planejado
+- Sem dashboard de metricas de workspace (burndown, heatmap) — itens R-001, R-002, R-003 planejados
+
+------------------------------------------------------------
+4.8 MODULO DE DASHBOARD E METRICAS
+------------------------------------------------------------
+
+Nome: Dashboard e Welcome
+Objetivo: Oferecer visao consolidada de KPIs e acoes rapidas.
+
+Funcionalidades:
+- Saudacao personalizada por periodo do dia
+- KPIs mensais com delta vs mes anterior:
+  - Atividades criadas / concluidas
+  - Cards criados / concluidos
+- Indicadores operacionais: itens atrasados, prazos proximos (7 dias)
+- Links rapidos para acoes frequentes
+- Contadores reais por workspace (via COUNT — otimizado)
+
+Status atual: Em producao (WelcomeDashboard.tsx).
+
+------------------------------------------------------------
+4.9 MODULO DE DIAGNOSTICO DO SERVIDOR
+------------------------------------------------------------
+
+Nome: Diagnostico do Servidor
+Objetivo: Prover metricas do sistema para analise tecnica e decisao.
+Usuarios: Qualquer usuario autenticado (restricao por role OWNER pendente — item P-010).
+
+Funcionalidades:
+- Contadores globais: workspaces, boards, cards, card_actions, users, workspace_members
+- Contadores por usuario: workspaces proprios, como membro, boards/cards/actions acessiveis
+- Top workspaces por quantidade de cards
+- Recomendacoes geradas server-side
+- JSON copiavel para analise
+- Snapshot gravado no banco (1 por usuario, substitui anterior)
+
+Status atual: Em producao.
+
+Limitacoes:
+- Acessivel a qualquer usuario logado (sem restricao de role) — item P-010 pendente
+- Sem historico visual de snapshots — item P-011 pendente

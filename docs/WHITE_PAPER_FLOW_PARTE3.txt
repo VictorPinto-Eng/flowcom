@@ -1,0 +1,418 @@
+============================================================
+5. ARQUITETURA TECNICA ATUAL
+============================================================
+
+MODELO DE HOSPEDAGEM E INFRAESTRUTURA:
+- Servidor de producao: Docker Swarm em maquina Linux identificada como "hv5srvd"
+- Container registry local: 127.0.0.1:5000/flow:<commit-sha>
+- Container base: Node.js 22 Alpine (multi-stage build)
+- Porta exposta: 3000
+- Banco de dados: PostgreSQL via container pgvector (mesmo host, DATABASE_URL injetada como variavel de ambiente)
+
+AMBIENTES EXISTENTES:
+- Desenvolvimento: local (Windows 11, next dev)
+- Producao: Docker Swarm (Linux, next start)
+- Ambiente de staging: informacao nao identificada nos materiais fornecidos
+
+FRONT-END:
+- Framework: React 19.2.4
+- Renderizacao: Server Components (Next.js 16 App Router) + Client Components
+- Estilizacao: CSS Modules com design system customizado ("Ice Theme" — glassmorphism)
+- Icones: Lucide React 1.16.0
+- Dialogs: SweetAlert2 11.26.24 (lazy-loaded via dynamic import)
+- Fontes: Outfit (Google Fonts) + Geist (next/font)
+- Estado: useState/useEffect + URL params (useSearchParams) + sessionStorage
+- Hooks customizados: useKanban (estado Kanban), useWorkspacePermissions (RBAC)
+- PDF: html2pdf.js (carregado via CDN no momento do clique)
+
+BACK-END:
+- Runtime: Next.js 16.2.6 (App Router com Server Actions)
+- Linguagem: TypeScript 5 (strict mode)
+- Server Actions: "use server" functions em src/app/actions/ (substitui REST para mutacoes)
+- API Routes: apenas autenticacao (login, register, clear-session, forgot-password, reset-password)
+- Middleware: src/proxy.ts (verificacao JWT, redirect de rotas protegidas, limpeza de cookies invalidos)
+- Validacao: src/lib/validation.ts (sanitizacao XSS, limites de tamanho, validacao de email e IDs)
+- Rate Limiting: src/lib/rate-limit.ts (por IP + email, persistido no banco via AuthAttempt)
+
+LINGUAGENS, FRAMEWORKS E BIBLIOTECAS:
+
+Dependencias de producao:
+- next 16.2.6 — Framework fullstack
+- react 19.2.4 — UI library
+- react-dom 19.2.4 — React DOM renderer
+- @prisma/client 7.8.0 — ORM client
+- @prisma/adapter-pg 7.8.0 — PostgreSQL adapter com connection pooling
+- pg 8.20.0 — Driver PostgreSQL nativo
+- prisma 7.8.0 — ORM toolkit
+- bcryptjs 3.0.3 — Hash de senhas
+- jsonwebtoken 9.0.3 — Geracao e verificacao JWT
+- resend 6.12.3 — API de envio de email
+- lucide-react 1.16.0 — Biblioteca de icones
+- sweetalert2 11.26.24 — Modais e dialogos
+- cookie 1.1.1 — Parsing de cookies (instalado mas possivelmente nao utilizado — item M-001)
+
+Dependencias de desenvolvimento:
+- typescript 5 — Linguagem
+- ts-node 10.9.2 — Execucao de scripts TS (seed)
+- @types/jsonwebtoken 9.0.10
+- @types/node 20
+- @types/pg 8.20.0
+- @types/react 19
+- @types/react-dom 19
+
+BANCO DE DADOS:
+- Engine: PostgreSQL 14+ (via container pgvector)
+- ORM: Prisma Client 7.8.0 com adapter PrismaPg
+- Connection pooling: pg.Pool (nativo)
+- Modelos: 14 entidades
+- Migrations: Prisma Migrate (gera SQL, execucao manual em producao)
+- Seed: ts-node com dados iniciais (WorkspaceTypes + Sectors)
+- Logging: query + error + warn em dev; apenas error em prod
+
+ESTRUTURA DE SERVICOS:
+
+src/app/actions/ — Server Actions (camada de entrada)
+  authActions.ts
+  workspaceActions.ts
+  boardActions.ts
+  cardActions.ts
+  columnActions.ts
+  dashboardActions.ts
+  diagnosticsActions.ts
+
+src/domain/services/ — Logica de negocio
+  AuthService.ts
+  WorkspaceService.ts
+  BoardService.ts
+  CardService.ts
+  ColumnService.ts
+
+src/domain/repositories/ — Acesso a dados
+  UserRepository.ts
+  WorkspaceRepository.ts
+  BoardRepository.ts
+  CardRepository.ts
+  ColumnRepository.ts
+  ActivityLogRepository.ts
+
+src/lib/ — Utilitarios compartilhados
+  prisma.ts — Singleton do Prisma Client
+  validation.ts — Sanitizacao e validacao de inputs
+  rate-limit.ts — Rate limiting persistido
+  resend.ts — Envio de emails (ativacao, reset, convite)
+
+CONTAINERS E DOCKER:
+- Dockerfile multi-stage:
+  - Stage 1 (builder): node:22-alpine, instala libc6-compat, npm install, prisma generate, npm run build
+  - Stage 2 (runner): node:22-alpine, copia artefatos de build, NODE_ENV=production, npm start
+- Orquestracao: Docker Swarm (service update com rollback automatico)
+- Registry: local em 127.0.0.1:5000
+- Tag: commit SHA do git
+
+APIs:
+- Server Actions (RPC via Next.js): todas as mutacoes e queries de dominio
+- REST (apenas autenticacao):
+  - POST /api/auth/login
+  - POST /api/auth/register
+  - POST /api/auth/clear-session
+  - POST /api/auth/forgot-password
+  - POST /api/auth/reset-password
+
+AUTENTICACAO E AUTORIZACAO:
+- Autenticacao: JWT (jsonwebtoken, provavelmente HS256 com JWT_SECRET)
+- Armazenamento: cookie httpOnly, secure (prod), sameSite: strict
+- Sessao: whitelist no banco (tabela Session) — verificada a cada request protegido
+- Revogacao: deleteMany por userSeqid no login; delete all no reset de senha
+- Middleware: src/proxy.ts verifica JWT, rejeita tokens expirados/adulterados, limpa cookie invalido
+- Autorizacao: RBAC por workspace (OWNER > ADMIN > MEMBER > VIEWER)
+- Verificacao: getLoggedUser() em cada server action + checkCardPermission / assertColumnPermission
+
+PROCESSOS ASSINCRONOS:
+- Envio de emails (Resend API): sincrono dentro da server action (sem fila)
+- Informacao sobre filas, workers ou jobs: nao identificada nos materiais
+
+ARMAZENAMENTO DE ARQUIVOS:
+- Nao implementado. Cards nao suportam anexos (item F-004 planejado).
+
+LOGS, MONITORAMENTO E OBSERVABILIDADE:
+- Logs: console.error em catch blocks (67 ocorrencias, nao estruturado)
+- Monitoramento: /admin/diagnostics (metricas sob demanda, sem coleta continua)
+- APM: nao identificado
+- Alertas: nao identificados
+- Metricas em tempo real: nao identificadas
+
+ESTRATEGIA DE DEPLOY E VERSIONAMENTO:
+- Deploy: git pull -> docker build -> docker push (registry local) -> docker service update -> rollback automatico se falhar
+- Build: next build --webpack (Turbopack incompativel com Alpine/musl)
+- Versionamento: Git (branch main), commits com conventional commits parcial
+- CI/CD pipeline automatizada: nao identificada nos materiais (deploy aparenta ser manual via script)
+
+DEPENDENCIAS EXTERNAS:
+- Resend API: envio de emails transacionais
+- cdnjs.cloudflare.com: html2pdf.js para geracao de PDF client-side
+- GitHub/githubusercontent.com: imagens de avatar (permitido no CSP)
+
+------------------------------------------------------------
+DIAGRAMA LOGICO DA ARQUITETURA
+------------------------------------------------------------
+
+[Navegador/Cliente]
+    |
+    | HTTPS (port 443 — reverse proxy nao documentado)
+    |
+[Docker Swarm — hv5srvd]
+    |
+    +-- [Container: flow (Node 22 Alpine, port 3000)]
+    |       |
+    |       +-- [Next.js 16 App Router]
+    |       |       |
+    |       |       +-- Middleware (proxy.ts: JWT check, redirect)
+    |       |       |
+    |       |       +-- Pages/Layouts (Server Components)
+    |       |       |       |
+    |       |       |       +-- Server Actions (src/app/actions/)
+    |       |       |               |
+    |       |       |               +-- Domain Services (src/domain/services/)
+    |       |       |                       |
+    |       |       |                       +-- Repositories (src/domain/repositories/)
+    |       |       |                               |
+    |       |       |                               +-- Prisma Client (PrismaPg adapter)
+    |       |       |                                       |
+    |       |       +-- API Routes (/api/auth/*)             |
+    |       |       |                                       |
+    |       |       +-- Static Assets (.next/static)        |
+    |       |                                               |
+    |       +-- [pg.Pool] ---------------------------------+
+    |                                                       |
+    +-- [Container: pgvector (PostgreSQL 14+)] <------------+
+    |
+    +-- [Registry: 127.0.0.1:5000]
+
+[Servicos Externos]
+    |
+    +-- Resend API (emails transacionais)
+    +-- cdnjs.cloudflare.com (html2pdf.js — CDN)
+
+
+============================================================
+6. MODELO DE DADOS E INFORMACOES GERENCIADAS
+============================================================
+
+PRINCIPAIS ENTIDADES DO DOMINIO:
+
+1. User — Usuario do sistema (identidade, credenciais, estado de ativacao)
+2. Session — Sessao ativa (whitelist JWT para revogacao)
+3. VerificationToken — Tokens temporarios (ativacao de conta, reset de senha)
+4. AuthAttempt — Registro de tentativas para rate limiting
+5. Workspace — Area de trabalho multi-tenant (container de projetos e equipe)
+6. WorkspaceType — Tipo/categoria do workspace (predefinido)
+7. WorkspaceMember — Relacao N:N User<->Workspace com papel (role)
+8. WorkspaceInvite — Convite pendente para workspace
+9. Board — Atividade/projeto dentro de um workspace
+10. Card — Evento/tarefa dentro de um board, posicionado em uma coluna
+11. card_act — Registro de acao/andamento em um card
+12. Column — Coluna Kanban (compartilhada por workspace)
+13. Sector — Setor/area da atividade (predefinido)
+14. ActivityLog — Registro global de auditoria
+15. ServerDiagnosticSnapshot — Snapshot de metricas do sistema
+
+RELACOES RELEVANTES:
+
+User 1:N Workspace (como criador)
+User 1:N WorkspaceMember (participa de multiplos workspaces)
+User 1:N Session (sessao unica por vez, mas historico)
+User 1:N Board (como responsavel)
+User 1:N Card (como criador — CardOwner)
+User 1:N Card (como responsavel — CardTaskUser)
+User 1:N card_act (como executor da acao)
+User 1:N WorkspaceInvite (como remetente)
+User 1:N ServerDiagnosticSnapshot (1 snapshot ativo por usuario)
+
+Workspace 1:N Board
+Workspace 1:N Column
+Workspace 1:N WorkspaceMember
+Workspace 1:N WorkspaceInvite
+Workspace N:1 WorkspaceType
+
+Board N:1 Workspace
+Board 1:N Card
+Board N:1 Sector (opcional)
+Board N:1 User (responsavel, opcional)
+
+Card N:1 Board (obrigatorio, NOT NULL)
+Card N:1 Column (obrigatorio)
+Card N:1 User (criador, opcional)
+Card N:1 User (responsavel/taskuser, opcional)
+Card 1:N card_act
+
+Column N:1 Workspace
+Column 1:N Card
+
+REGRAS DE INTEGRIDADE E VALIDACAO:
+- card.board_seqid NOT NULL — card nao existe sem board
+- card.created_by NOT NULL DEFAULT 1 — criador sempre registrado
+- card.moduser NOT NULL DEFAULT 1 — modificador sempre registrado
+- card.dtmod NOT NULL DEFAULT NOW() — data de modificacao sempre presente
+- WorkspaceMember UNIQUE (workspaceSeqid, userSeqid) — um papel por usuario/workspace
+- User.email UNIQUE — email e identificador unico
+- Sector.name UNIQUE — nomes de setor nao repetem
+- VerificationToken UNIQUE (email, token) — par email+token unico
+- Session.token UNIQUE — token de sessao unico
+- CASCADE DELETE: Card -> card_act; Column -> Card; Board -> Card; Workspace -> WorkspaceMember, WorkspaceInvite, Column; User -> Session
+
+HISTORICO, AUDITORIA E RASTREABILIDADE:
+- card_act: historico completo de interacoes com cada card
+- ActivityLog: eventos globais indexados por board, user e timestamp
+- Campos de auditoria em Card: created_by, moduser, dtmod, createdAt
+- Campos de auditoria em Board: created_by, moduser, dtmod, createdAt
+- ServerDiagnosticSnapshot: metricas pontuais do sistema
+
+DADOS PESSOAIS OU SENSIVEIS TRATADOS:
+- Nome do usuario (User.name)
+- Email do usuario (User.email) — identificador principal
+- Senha (User.password) — armazenada como hash bcrypt
+- IP de acesso (AuthAttempt.ip) — para rate limiting
+- Tokens JWT (Session.token) — credencial de sessao
+- Tokens de verificacao (VerificationToken.token) — acesso temporario
+
+CUIDADOS LGPD:
+- Dados pessoais: nome e email sao os unicos PII identificados
+- Senha: armazenada como hash (nao reversivel) — adequado
+- IP: coletado para seguranca (rate limiting) — base legal: interesse legitimo
+- Retencao: informacao nao identificada nos materiais sobre politica de retencao ou exclusao automatica
+- Direito de exportacao de dados (art. 18 LGPD): nao implementado — item S-044 planejado
+- Direito de exclusao: nao implementado (sem soft-delete generico) — item S-043 planejado
+- Consentimento: informacao nao identificada sobre termos de uso ou politica de privacidade
+
+
+============================================================
+7. SEGURANCA, ACESSO E CONFORMIDADE
+============================================================
+
+CONTROLES CONFIRMADOS (em producao):
+
+Autenticacao:
+- Hash de senha: bcryptjs com 10 rounds de salt
+- Requisitos de senha: 8+ chars, 1 maiuscula, 1 minuscula, 1 digito, 1 especial
+- Verificacao de email obrigatoria para ativacao de conta
+- Rate limiting por IP e email (persistido no banco):
+  - LOGIN: 5 tentativas / 15 min
+  - REGISTER: 3 / hora
+  - FORGOT_PASSWORD: 2 / hora
+  - RESET_PASSWORD: 3 / hora
+  - VERIFY_EMAIL: 5 / 15 min
+  - RESEND_ACTIVATION: 3 / hora
+  - ACCEPT_INVITE: 10 / 15 min
+  - REQUEST_TRANSFER: 10 / 15 min
+  - RESPOND_TRANSFER: 10 / 15 min
+
+Sessao:
+- JWT com expiracao de 7 dias
+- Cookie: httpOnly, secure (producao), sameSite: strict
+- Whitelist de sessao no banco (tabela Session) — verificada em cada request
+- Sessao unica por usuario (login revoga anteriores)
+- Reset de senha revoga todas as sessoes
+- Middleware (proxy.ts): verifica JWT, limpa cookie invalido, redireciona
+
+Autorizacao:
+- RBAC por workspace: OWNER > ADMIN > MEMBER > VIEWER
+- Verificacao de role em todas as server actions (via getLoggedUser + assertColumnPermission/checkCardPermission)
+- Allowlist de roles em convites/updates (prevencao de injecao de papel)
+- Filtro de permissao por contexto: MEMBER so edita cards que criou ou e responsavel
+- OWNER-only: encerramento de board, exclusao de atividades, gestao de membros
+
+Validacao de inputs:
+- Sanitizacao XSS (remocao de HTML tags) em todos os campos de texto
+- Limites de tamanho: nome 100 chars, titulo 200 chars, descricao 5000 chars
+- Validacao de email (regex + normalize + max 254 chars)
+- Validacao de IDs sequenciais (numerico-only)
+- Validacao de token de convite (formato UUID)
+- Verificacao de email do destinatario no aceite de convite
+
+Security headers (via next.config.ts):
+- Content-Security-Policy (CSP) completo
+- Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+Integridade de dados:
+- Transacoes atomicas (prisma.$transaction) para operacoes compostas
+- Protecao de dtcon contra reabertura indevida
+- NOT NULL enforcements em campos de auditoria
+- Validacao de existencia de entidades em transferencias
+
+Protecao de segredos:
+- .env no .gitignore
+- MOCK_USER_ENABLED removido (bypass de dev eliminado)
+- Tokens de convite nao expostos em respostas de API
+- Mensagens de erro genericas para o cliente (allowlist de mensagens conhecidas)
+
+CONTROLES NAO CONFIRMADOS:
+- Criptografia de dados em repouso (disco/banco)
+- TLS termination (reverse proxy nao documentado)
+- Backup automatizado do banco de dados
+- Rotacao de JWT_SECRET
+- Monitoramento de intrusao (IDS/IPS)
+- WAF (Web Application Firewall)
+- Segregacao de rede entre containers
+- Scan de vulnerabilidades em imagens Docker
+- Politica de retencao de logs
+- Plano de resposta a incidentes
+
+RISCOS IDENTIFICADOS:
+
+1. JWT sem refresh token (S-009): sessao expira abruptamente apos 7 dias sem aviso.
+   Impacto: UX ruim + possivel perda de dados em formulario.
+   Recomendacao: Implementar sliding session ou refresh token.
+
+2. Papel VIEWER nao auditado (S-010): VIEWER pode ter acesso indevido a acoes de escrita.
+   Impacto: Possivel escalacao de privilegio.
+   Recomendacao: Auditar e implementar verificacao de VIEWER em todas as actions.
+
+3. CSP com 'unsafe-inline' e 'unsafe-eval': reduz eficacia contra XSS.
+   Impacto: XSS persistente pode executar scripts mesmo com CSP.
+   Recomendacao: Migrar para nonce-based CSP.
+
+4. Sem backup documentado: perda total de dados em caso de falha do container/disco.
+   Impacto: Critico — perda irreversivel de dados.
+   Recomendacao: Implementar backup automatizado com verificacao de restauracao.
+
+5. Sem monitoramento continuo: falhas e ataques podem passar despercebidos.
+   Impacto: Tempo de deteccao indefinido.
+   Recomendacao: Implementar logging estruturado + alertas.
+
+6. Enumeracao de email (S-034): possivel descobrir emails cadastrados.
+   Impacto: Facilitacao de ataques direcionados.
+   Recomendacao: Mensagem generica para registro e recuperacao.
+
+RECOMENDACOES TECNICAS DE SEGURANCA:
+- Implementar refresh token com sliding session
+- Auditar role VIEWER em todas as server actions
+- Migrar CSP para nonce-based (eliminar unsafe-inline/eval)
+- Documentar e implementar backup automatizado
+- Implementar logging estruturado (JSON) para acoes de seguranca
+- Adicionar 2FA/TOTP (item S-040 planejado)
+- Implementar soft-delete com periodo de retencao (item S-043)
+- Implementar export de dados do usuario (LGPD art. 18, item S-044)
+
+
+============================================================
+8. INTEGRACOES E DEPENDENCIAS EXTERNAS
+============================================================
+
+Sistema ou Servico | Finalidade | Tipo de integracao | Dados envolvidos | Status | Riscos e dependencias
+Resend API | Envio de emails transacionais (ativacao, reset, convite) | REST API (SDK oficial v6.12.3) | Email destino, nome, tokens de link | Em producao | Dependencia critica — sem Resend nao ha ativacao de conta, recuperacao de senha ou convites. Sem fallback configurado.
+cdnjs.cloudflare.com (html2pdf.js) | Geracao de PDF a partir de HTML client-side | CDN script inject | Conteudo HTML do relatorio (renderizado no browser) | Em producao | Se CDN indisponivel, geracao de PDF falha silenciosamente (item P-005). Dados do relatorio trafegam apenas no browser (nao saem para servidor externo).
+GitHub/githubusercontent.com | Imagens de avatar de usuario | Referencia de imagem via CSP | URLs de imagem publica | Em producao | Baixo risco — apenas imagens publicas.
+PostgreSQL (pgvector container) | Persistencia de todos os dados do sistema | Driver nativo pg + Prisma adapter | Todos os dados de dominio | Em producao | Ponto unico de falha — sem replicacao ou failover documentados. DATABASE_URL injetada como variavel de ambiente.
+
+INTEGRACOES PLANEJADAS (NAO ATIVAS):
+- Google Calendar / Outlook: sync de datas previstas (item I-001)
+- Slack / Teams: notificacoes em canal (item I-002)
+- Webhooks de saida: eventos do sistema para integracao custom (item I-003)
+- Importador Trello/Asana: migracao de dados (item I-004)
+- API publica REST/GraphQL: acesso programatico (item I-005)
+- Email digest semanal: engajamento (item I-006)

@@ -143,6 +143,11 @@ export class CardService {
         });
       }
     });
+
+    // Sincroniza data prevista da atividade (próximo evento pendente)
+    if (card.board_seqid) {
+      await this.syncBoardPredictedDate(card.board_seqid);
+    }
   }
 
   async completeCard(cardId: string, targetColId: string, user: any, localDateStr?: string) {
@@ -195,6 +200,11 @@ export class CardService {
         }
       });
     });
+
+    // Sincroniza data prevista da atividade (próximo evento pendente)
+    if (card.board_seqid) {
+      await this.syncBoardPredictedDate(card.board_seqid);
+    }
   }
 
   async updateCardPrevisto(cardId: string, previstoStr: string | null, user: any) {
@@ -619,25 +629,26 @@ export class CardService {
   }
 
   private async syncBoardPredictedDate(boardSeqId: bigint) {
-    const latestCard = await prisma.card.findFirst({
-      where: { board_seqid: boardSeqId, previsto: { not: null } },
-      orderBy: { previsto: 'desc' },
+    // Primeira data a ser cumprida: menor previsto entre eventos ainda pendentes (dtcon nulo)
+    const nextCard = await prisma.card.findFirst({
+      where: { board_seqid: boardSeqId, previsto: { not: null }, dtcon: null },
+      orderBy: { previsto: 'asc' },
       select: { previsto: true }
     });
-    const latestDate = latestCard?.previsto || null;
+    const nextDate = nextCard?.previsto || null;
 
-    const latestCardDtatv = await prisma.card.findFirst({
-      where: { board_seqid: boardSeqId, dtatv: { not: null } },
-      orderBy: { dtatv: 'desc' },
+    const nextCardDtatv = await prisma.card.findFirst({
+      where: { board_seqid: boardSeqId, dtatv: { not: null }, dtcon: null },
+      orderBy: { dtatv: 'asc' },
       select: { dtatv: true }
     });
-    const latestDtatvDate = latestCardDtatv?.dtatv || null;
+    const nextDtatvDate = nextCardDtatv?.dtatv || null;
 
     await prisma.board.update({
       where: { seqId: boardSeqId },
       data: {
-        previsto: latestDate,
-        dtatv: latestDtatvDate
+        previsto: nextDate,
+        dtatv: nextDtatvDate
       }
     });
   }

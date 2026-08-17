@@ -384,22 +384,22 @@ export class BoardService {
   }
 
   async syncBoardPredictedDate(boardSeqId: bigint) {
-    // 1. Buscar a data prevista mais distante entre todos os cards do board
-    const latestCard = await prisma.card.findFirst({
-      where: { board_seqid: boardSeqId, previsto: { not: null } },
-      orderBy: { previsto: 'desc' },
+    // 1. Buscar a primeira data a ser cumprida (menor previsto) entre eventos pendentes (dtcon nulo)
+    const nextCard = await prisma.card.findFirst({
+      where: { board_seqid: boardSeqId, previsto: { not: null }, dtcon: null },
+      orderBy: { previsto: 'asc' },
       select: { previsto: true }
     });
 
     // 2. Atualizar o board com essa data
-    const latestDate = latestCard?.previsto || null;
+    const nextDate = nextCard?.previsto || null;
 
     await prisma.board.update({
       where: { seqId: boardSeqId },
-      data: { previsto: latestDate }
+      data: { previsto: nextDate }
     });
 
-    return latestDate;
+    return nextDate;
   }
 
   async completeActivity(boardId: string, user: any, localDateStr?: string) {
@@ -527,6 +527,26 @@ export class BoardService {
             created_by: act.created_by?.toString(),
             moduser: act.moduser?.toString()
           }))
+        }))
+      })),
+      allCards: board.allCards?.map((card: any) => ({
+        ...card,
+        id: card.seqid.toString(),
+        seqid: card.seqid.toString(),
+        board_seqid: card.board_seqid?.toString(),
+        user_seqid: card.user_seqid?.toString(),
+        taskuser_seqid: card.taskuser_seqid?.toString(),
+        columnId: card.columnId.toString(),
+        moduser: card.moduser?.toString(),
+        created_by: card.created_by?.toString(),
+        columnName: card.column?.title ?? null,
+        card_act: card.card_act?.map((act: any) => ({
+          ...act,
+          seqid: act.seqid.toString(),
+          card_seqid: act.card_seqid?.toString(),
+          user_seqid: act.user_seqid?.toString(),
+          created_by: act.created_by?.toString(),
+          moduser: act.moduser?.toString()
         }))
       }))
     };

@@ -1,0 +1,407 @@
+﻿============================================================
+12. LIMITACOES, RISCOS E PONTOS DE ATENCAO
+============================================================
+
+Risco ou limitacao | Impacto | Probabilidade | Evidencia | Recomendacao
+DashboardClient.tsx monolitico (2500+ linhas) | Re-renders excessivos, dificuldade de manutencao | Alta | A-010 no roadmap | Refatorar em sub-componentes e hooks
+Sem testes automatizados | Regressoes nao detectadas em mudancas | Alta | A-006 no roadmap, sem framework de teste | Implementar Jest/Vitest + testes de permissao
+Sem backup documentado do banco | Perda irreversivel de dados | Media | Nenhuma evidencia de backup | Implementar pg_dump automatizado + verificacao
+JWT sem refresh token | Sessao expira abruptamente (7 dias) | Alta | S-009 no roadmap | Sliding session ou refresh token
+Papel VIEWER nao implementado na UI | Escalacao de privilegio | Media | S-010 no roadmap | Auditar e implementar verificacao
+IDs duais (BigInt + cuid) | Bugs de tipo, conversoes manuais | Alta | A-001 no roadmap | Unificar para BigInt seqid
+CSP com unsafe-inline/eval | XSS pode executar scripts | Media | next.config.ts | Migrar para nonce-based CSP
+ActivityLog sem FK | Dados orfaos possiveis | Media | M-006 no roadmap | Adicionar foreign keys
+Sem monitoramento continuo | Falhas nao detectadas | Alta | Apenas /admin/diagnostics sob demanda | Implementar observabilidade
+Servidor unico sem redundancia | Indisponibilidade total em falha | Media | Infraestrutura atual | Avaliar redundancia
+Sem ESLint configurado | Inconsistencias de codigo | Media | M-005 no roadmap | Configurar linting
+Envio de email sincrono | Timeout em server actions | Baixa | resend.ts sem fila | Avaliar fila assincrona
+html2pdf.js via CDN sem preload | PDF falha se CDN lento | Baixa | P-005 no roadmap | Preload ou bundle local
+67 ocorrencias de console.error | Logs nao estruturados, nao audataveis | Media | S-014 no roadmap | Logger estruturado (JSON)
+Drag-and-drop sem teclado | Inacessivel para usuarios sem mouse | Media | U-017 no roadmap | Implementar alternativa keyboard
+Modais sem ARIA | Inacessivel para screen readers | Alta | U-013 no roadmap | Implementar focus trap, role=dialog
+Sem politica de retencao LGPD | Risco de nao-conformidade | Media | S-044 planejado | Implementar export + exclusao de dados
+Sem soft-delete | Exclusoes irreversiveis | Media | S-043 planejado | Lixeira com retencao 30 dias
+Query pesada findByUserId | Lentidao com crescimento de dados | Alta | P-005 no roadmap | Separar queries por contexto
+
+
+============================================================
+13. RECOMENDACOES TECNICAS PARA CONTINUIDADE
+============================================================
+
+Nota: Todas as recomendacoes abaixo sao sugestoes baseadas na analise dos materiais.
+NAO sao funcionalidades ja existentes.
+
+CURTO PRAZO (1-3 meses):
+
+Estabilizacao:
+- Implementar backup automatizado do PostgreSQL (pg_dump diario + offsite)
+- Verificar e documentar procedimento de restauracao
+- Testar rollback do Docker Swarm manualmente
+
+Correcoes criticas:
+- Auditar role VIEWER em todas as server actions (S-010)
+- Implementar refresh token / sliding session (S-009)
+- Proteger /admin/diagnostics com verificacao de role (P-010)
+
+Documentacao:
+- Criar .env.example documentado com todas as variaveis
+- Documentar procedimento de deploy passo a passo
+- Documentar procedimento de migracao de banco
+
+Seguranca:
+- Implementar logging estruturado (JSON) para acoes de seguranca
+- Revisar CSP para reduzir unsafe-inline/eval
+- Documentar plano de resposta a incidentes
+
+MEDIO PRAZO (3-6 meses):
+
+Testes:
+- Configurar framework de testes (Vitest recomendado para Next.js)
+- Escrever testes para regras de permissao (RBAC)
+- Escrever testes para logica de dtcon (conclusao)
+- Meta: 80% de cobertura em domain/services/
+
+Observabilidade:
+- Substituir console.error por logger estruturado
+- Implementar health check endpoint
+- Considerar Sentry ou similar para error tracking
+- Dashboard de metricas operacionais
+
+Padronizacao:
+- Configurar ESLint + Prettier
+- Tipar todas as props com any[] (A-013)
+- Substituir as any por tipos definidos (A-003)
+- Padronizar tratamento de erros em actions (M-003)
+
+Melhorias arquiteturais:
+- Quebrar DashboardClient.tsx em sub-componentes (A-010)
+- Separar Board/Kanban em rota propria (P-001)
+- Separar MyEvents e MyActivities em rotas proprias (P-002, P-003)
+- Implementar paginacao cursor-based para boards (P-006)
+
+Reducao de debitos tecnicos:
+- Unificar sistema de IDs — plano de migracao (A-001)
+- Adicionar indexes no banco para queries frequentes (P-003)
+- Implementar lazy load de card_act (P-007)
+
+LONGO PRAZO (6-12 meses):
+
+Escalabilidade:
+- Avaliar replicacao PostgreSQL (read replica)
+- Implementar cache layer (Redis) para queries frequentes
+- Virtualizar listas grandes (P-009)
+- Avaliar CDN para assets estaticos
+
+Governanca:
+- Implementar soft-delete com retencao (S-043)
+- Implementar export de dados LGPD (S-044)
+- Audit log persistente para acoes de sistema (S-042)
+- Politica de retencao de dados documentada
+
+Automacao:
+- CI/CD pipeline (GitHub Actions ou similar)
+- Testes automatizados no pipeline
+- Deploy automatizado com gates de qualidade
+- npm audit automatizado
+
+Evolucao de produto:
+- Notificacoes in-app (F-010)
+- Real-time com WebSocket/SSE (F-012)
+- Templates de board (F-001)
+- Subtasks/checklists (F-003)
+
+Expansao de integracoes:
+- API publica REST (I-005)
+- Webhooks de saida (I-003)
+- Integracao calendario (I-001)
+
+Estrategia de dados:
+- Dashboard analitico por workspace (R-001)
+- Metricas de velocity/burndown (R-002)
+- Export CSV/Excel (R-004)
+
+
+============================================================
+14. DIVERGENCIAS E PONTOS QUE EXIGEM VALIDACAO
+============================================================
+
+1. Reverse proxy nao documentado: A aplicacao expoe porta 3000, mas nao ha evidencia de como o TLS e terminado ou como o trafego externo chega ao container. Validar: Nginx? Traefik? Caddy?
+
+2. Backup do banco: Nenhuma evidencia de backup automatizado. Validar com equipe de infra se existe rotina externa.
+
+3. Algoritmo JWT: Codigo usa jsonwebtoken com JWT_SECRET (string). Provavelmente HS256, mas nao confirmado. Validar se e HS256 ou RS256.
+
+4. Pool size PostgreSQL: Nao ha configuracao explicita de pool size no pg.Pool. Usa defaults do driver. Validar se adequado para carga atual.
+
+5. Item M-008 duplica A-017: Ambos pedem remocao do modelo Department. A-017 ja foi concluido. Validar se M-008 pode ser removido do roadmap.
+
+6. Modelo 'Department' no schema: A-017 indica que foi removido, mas validar se a migration foi aplicada em producao.
+
+7. Campo 'cookie' em dependencias: Instalado mas nao referenciado no codigo. Validar se pode ser removido.
+
+8. Campo User.role: Item S-011 indica remocao. Validar se migration foi aplicada em producao.
+
+9. Workspace.userId (legacy) vs users_seqid: Dois campos para criador. Validar se userId (string) pode ser removido.
+
+10. CDN html2pdf.js: Versao especifica nao documentada. Validar compatibilidade e considerar bundle local.
+
+11. Resend free tier vs pago: Nao documentado qual plano. Validar limites de envio.
+
+12. Numero real de usuarios e workspaces em producao: Diagnostico menciona "MAPLE CONSTRUTORA com 568 boards" mas dados de escala geral nao documentados.
+
+13. forceConsistentCasingInFileNames: A-018 indica conclusao, mas validar se ha arquivos com casing inconsistente ja existentes.
+
+
+============================================================
+15. CONCLUSAO
+============================================================
+
+O FLOW e uma plataforma de gestao de projetos e atividades com fundacao tecnica solida e visao clara de evolucao. O sistema ja opera em producao com funcionalidades essenciais entregues: gestao de workspaces multi-tenant, boards e cards Kanban, controle de acesso RBAC, historico de acoes, relatorios automatizados com parecer tecnico e infraestrutura containerizada.
+
+NIVEL DE MATURIDADE:
+O produto esta no estagio de MVP funcional em producao (v0.1.0). A base de seguranca foi significativamente fortalecida (40+ itens de seguranca documentados, maioria dos criticos resolvidos). A arquitetura segue padroes modernos (Next.js 16, Server Actions, separacao de camadas) mas acumula debitos tecnicos identificados e documentados no roadmap.
+
+O QUE JA ESTA CONSOLIDADO:
+- Autenticacao segura com sessao revogavel e rate limiting
+- RBAC funcional por workspace (OWNER/ADMIN/MEMBER)
+- CRUD completo de workspaces, boards, cards e colunas
+- Kanban com drag-and-drop e atualizacoes otimistas
+- Relatorios com parecer tecnico automatizado (semaforo)
+- Integridade de dados (transacoes atomicas, protecao dtcon, auditoria)
+- Security headers completos
+- Validacao e sanitizacao de inputs
+- Deploy containerizado com rollback
+
+POTENCIAL DE EVOLUCAO:
+Alto. O roadmap documenta 60+ itens entre seguranca, arquitetura, UX, performance, funcionalidades, integracoes e compliance. A separacao em camadas (Actions/Services/Repositories) facilita evolucao incremental. As funcionalidades planejadas (notificacoes, real-time, templates, API publica, mobile) representam caminho natural de evolucao de produto.
+
+PRIORIDADES PARA CONTINUIDADE:
+1. Backup automatizado do banco (risco critico nao mitigado)
+2. Refatoracao do DashboardClient.tsx (bloqueador de produtividade)
+3. Framework de testes automatizados (prevencao de regressoes)
+4. Observabilidade basica (logging estruturado, health checks)
+5. Refresh token / sliding session (UX de sessao)
+
+O QUE PRECISA SER VALIDADO:
+- Existencia e adequacao de backup do banco
+- Configuracao do reverse proxy (TLS termination)
+- Plano do Resend API (limites de envio)
+- Migrations pendentes em producao (Department, User.role)
+- Escala atual do sistema (usuarios, dados, carga)
+
+
+============================================================
+16. APENDICES
+============================================================
+
+------------------------------------------------------------
+APENDICE A: GLOSSARIO DE TERMOS
+------------------------------------------------------------
+
+Workspace: Area de trabalho multi-tenant que agrupa equipes, boards e colunas.
+Board: Atividade ou projeto dentro de um workspace, com prazos e responsavel.
+Card: Evento ou tarefa atomica dentro de um board, posicionado em uma coluna Kanban.
+card_act: Registro de acao/andamento em um card (historico).
+Column: Coluna Kanban (ex: A Fazer, Em Progresso, Concluido). Compartilhada por workspace.
+Sector: Categoria fixa de atividade (ex: ENGENHARIA, SUPORTE, FINANCEIRO).
+dtcon: Campo de data de conclusao. Unico criterio para determinar se card/board esta concluido.
+dtmod: Data de ultima modificacao do registro.
+moduser: Identificador de quem realizou a ultima modificacao.
+RBAC: Role-Based Access Control. Controle de acesso baseado em papeis.
+OWNER: Papel com controle total do workspace (criar, editar, excluir, gerenciar membros).
+ADMIN: Papel com controle operacional (criar boards, gerenciar colunas, membros limitado).
+MEMBER: Papel de executor (interage com cards atribuidos ou criados por ele).
+VIEWER: Papel de leitura (definido no schema, nao implementado na UI).
+Server Action: Funcao "use server" do Next.js que executa no servidor (substitui REST para mutacoes).
+Parecer Tecnico: Relatorio automatizado com classificacao semaforo (verde/amarelo/vermelho).
+
+------------------------------------------------------------
+APENDICE B: INVENTARIO DE MODULOS
+------------------------------------------------------------
+
+1. Autenticacao (authActions, AuthService, UserRepository)
+2. Workspaces (workspaceActions, WorkspaceService, WorkspaceRepository)
+3. Boards/Atividades (boardActions, BoardService, BoardRepository)
+4. Cards/Eventos (cardActions, CardService, CardRepository)
+5. Colunas Kanban (columnActions, ColumnService, ColumnRepository)
+6. Historico/Auditoria (ActivityLogRepository, card_act)
+7. Relatorios (ActivityReportView, ReportsView, MyEventsView)
+8. Dashboard (dashboardActions, WelcomeDashboard)
+9. Diagnostico (diagnosticsActions, ServerDiagnosticSnapshot)
+10. Landing Page (page.tsx raiz)
+11. Convites (WorkspaceInvite, email, aceite)
+
+------------------------------------------------------------
+APENDICE C: INVENTARIO DE TECNOLOGIAS
+------------------------------------------------------------
+
+Categoria | Tecnologia | Versao | Finalidade
+Framework | Next.js | 16.2.6 | Fullstack (App Router, Server Actions)
+UI | React | 19.2.4 | Renderizacao de interface
+Linguagem | TypeScript | 5 | Tipagem estatica
+ORM | Prisma | 7.8.0 | Acesso a dados
+Banco | PostgreSQL | 14+ | Persistencia
+Driver DB | pg | 8.20.0 | Conexao PostgreSQL
+Auth | jsonwebtoken | 9.0.3 | JWT
+Hash | bcryptjs | 3.0.3 | Hash de senhas
+Email | Resend | 6.12.3 | Emails transacionais
+Icones | Lucide React | 1.16.0 | Icones SVG
+Dialogs | SweetAlert2 | 11.26.24 | Modais e alertas
+PDF | html2pdf.js | CDN | Geracao PDF client-side
+Container | Docker | - | Build e deploy
+Orquestracao | Docker Swarm | - | Service management
+Runtime | Node.js | 22 Alpine | Execucao
+
+------------------------------------------------------------
+APENDICE D: INVENTARIO DE INTEGRACOES
+------------------------------------------------------------
+
+Integracao | Status | Tipo
+Resend API (email) | Em producao | REST SDK
+cdnjs.cloudflare.com (html2pdf.js) | Em producao | CDN script
+GitHub/githubusercontent.com (avatares) | Em producao | Imagem URL
+Google Calendar/Outlook | Planejado | -
+Slack/Teams | Planejado | -
+Webhooks | Planejado | -
+API publica | Planejado | -
+Trello/Asana import | Planejado | -
+
+------------------------------------------------------------
+APENDICE E: DOCUMENTOS ANALISADOS
+------------------------------------------------------------
+
+1. package.json — Dependencias e scripts
+2. ROADMAP.md — Roadmap completo com 60+ itens
+3. CLAUDE.md / AGENTS.md — Padroes de desenvolvimento e infraestrutura
+4. prisma/schema.prisma — Modelo de dados completo (14 entidades)
+5. Dockerfile — Build multi-stage Node 22 Alpine
+6. next.config.ts — Security headers e CSP
+7. src/proxy.ts — Middleware de autenticacao
+8. src/lib/prisma.ts — Singleton Prisma com PrismaPg adapter
+9. src/lib/validation.ts — Sanitizacao e validacao de inputs
+10. src/lib/rate-limit.ts — Rate limiting persistido
+11. src/lib/resend.ts — Envio de emails transacionais
+12. src/hooks/useWorkspacePermissions.ts — Hook de RBAC
+13. src/types/permissions.ts — Tipos de permissao
+14. src/app/actions/ — Todas as server actions (7 arquivos)
+15. src/domain/services/ — Servicos de dominio (5 arquivos)
+16. src/domain/repositories/ — Repositorios (6 arquivos)
+17. src/components/ — Componentes UI (shell, kanban, grids, modals, views, shared)
+18. src/app/ — Paginas e rotas (dashboard, auth, admin, reports, invite, landing)
+
+------------------------------------------------------------
+APENDICE F: PERGUNTAS TECNICAS EM ABERTO
+------------------------------------------------------------
+
+1. Qual reverse proxy termina TLS antes do container?
+2. Existe backup automatizado do PostgreSQL? Com que frequencia?
+3. Qual o plano da Resend API (free/pro)? Quantos emails/mes?
+4. Quantos usuarios ativos existem em producao?
+5. Qual o volume de dados atual (boards, cards, card_acts)?
+6. A migration de remocao do Department foi aplicada?
+7. A migration de remocao do User.role foi aplicada?
+8. Existe monitoramento externo (uptime, alertas)?
+9. Qual o RTO/RPO aceitavel para o negocio?
+10. Ha algum SLA definido para disponibilidade?
+
+
+============================================================
+ENTREGAS ADICIONAIS OBRIGATORIAS
+============================================================
+
+------------------------------------------------------------
+A. LACUNAS DE INFORMACAO
+------------------------------------------------------------
+
+1. Configuracao do reverse proxy (TLS, dominio, certificado)
+2. Existencia e configuracao de backup automatizado
+3. Plano e limites do Resend API
+4. Metricas de uso real (usuarios ativos, volume de dados, carga)
+5. Politica de retencao de dados
+6. Termos de uso e politica de privacidade
+7. Plano de disaster recovery e RTO/RPO
+8. Algoritmo exato do JWT (HS256 vs RS256)
+9. Pool size do PostgreSQL em producao
+10. Monitoramento externo (uptime, alertas)
+11. SLA de disponibilidade
+12. CI/CD pipeline (se existe fora do repositorio)
+13. Testes manuais ou automatizados executados antes de deploy
+14. Processo de rollback detalhado
+15. Custos de infraestrutura (servidor, Resend, dominio)
+
+------------------------------------------------------------
+B. PERGUNTAS PARA DISCOVERY TECNICO
+------------------------------------------------------------
+
+ARQUITETURA:
+1. Existe plano de separar o front-end do back-end em servicos distintos?
+2. Server Actions sao suficientes ou ha necessidade de API REST separada?
+3. Qual a estrategia para escalar horizontalmente?
+
+INFRAESTRUTURA:
+4. Qual reverse proxy esta em uso (Nginx, Traefik, Caddy)?
+5. Existe redundancia no servidor (multi-node Swarm)?
+6. Qual o tamanho do disco e uso atual?
+7. Ha monitoramento de recursos (CPU, memoria, disco)?
+
+BANCO DE DADOS:
+8. Qual o tamanho atual do banco em GB?
+9. Ha queries lentas identificadas alem de findByUserId?
+10. Existe rotina de VACUUM/ANALYZE?
+11. Pool size esta configurado explicitamente?
+
+SEGURANCA:
+12. JWT_SECRET e rotacionado periodicamente?
+13. Ha plano de implementar 2FA?
+14. Existe WAF ou protecao DDoS?
+15. Como sao gerenciadas as variaveis de ambiente em producao?
+
+DEPLOY:
+16. Deploy e manual ou existe CI/CD?
+17. Qual a frequencia de deploys?
+18. Ha ambiente de staging?
+19. Como sao testadas mudancas antes de producao?
+
+MONITORAMENTO:
+20. Existe alerting para downtime?
+21. Como sao investigados incidentes hoje?
+22. Ha metricas de performance coletadas?
+
+TESTES:
+23. Ha testes manuais documentados?
+24. Qual framework de testes sera adotado?
+25. Ha plano de implementar testes E2E?
+
+ROADMAP:
+26. Qual a capacidade da equipe (devs, horas/semana)?
+27. Quais itens do roadmap sao prioridade absoluta para o negocio?
+28. Ha datas ou sprints definidos?
+
+METRICAS DE NEGOCIO:
+29. Quantos usuarios ativos existem?
+30. Qual a taxa de crescimento?
+31. Ha metricas de engajamento (DAU/MAU)?
+
+------------------------------------------------------------
+C. CHECKLIST DE VALIDACAO FINAL
+------------------------------------------------------------
+
+[ ] Todas as secoes obrigatorias (1-16) estao presentes
+[ ] Nenhuma funcionalidade foi inventada
+[ ] Status de cada item claramente diferenciado (producao/parcial/pendente/planejado)
+[ ] Dados sensiveis omitidos ou substituidos
+[ ] Texto em portugues do Brasil
+[ ] Formato texto simples sem Markdown
+[ ] Tabelas em formato "coluna | coluna"
+[ ] Sem emojis ou elementos decorativos
+[ ] Roadmap integrado mas diferenciado de funcionalidades entregues
+[ ] Divergencias documentadas na secao 14
+[ ] Recomendacoes claramente marcadas como sugestoes
+[ ] Lacunas de informacao explicitadas
+[ ] Perguntas de discovery priorizadas
+[ ] Fontes de evidencia citadas (arquivos, itens de roadmap)
+[ ] Documento adequado para analistas tecnicos experientes
+
+============================================================
+FIM DO DOCUMENTO
+============================================================

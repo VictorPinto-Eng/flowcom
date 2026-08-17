@@ -1,0 +1,168 @@
+WHITE PAPER TECNICO E ESTRATEGICO — FLOW
+============================================================
+Plataforma de Gestao de Projetos, Atividades, Equipes e Fluxos Operacionais
+
+VERSAO: 0.1.0
+DATA DE ELABORACAO: 2026-08-11
+CLASSIFICACAO: Informacao nao identificada nos materiais fornecidos.
+
+============================================================
+1. RESUMO EXECUTIVO
+============================================================
+
+O FLOW e uma plataforma SaaS de gestao de projetos e atividades que unifica equipes, organiza fluxos de trabalho em formato Kanban e automatiza a geracao de relatorios de situacao. Desenvolvido com arquitetura moderna (Next.js 16, React 19, PostgreSQL, Prisma ORM), o sistema opera em ambiente Docker Swarm em producao.
+
+PROPOSTA DE VALOR:
+"Gerencie seus projetos com fluxo continuo e elegancia." O FLOW centraliza a gestao de atividades, eventos (tarefas), equipes e relatorios em uma unica plataforma multi-tenant com controle de acesso granular por papeis (OWNER, ADMIN, MEMBER, VIEWER).
+
+PROBLEMAS QUE RESOLVE:
+- Descentralizacao de informacoes de projetos entre equipes
+- Falta de rastreabilidade em atividades e tarefas
+- Processos manuais de geracao de relatorios de situacao
+- Ausencia de controle de acesso e permissoes por area de trabalho
+- Dificuldade de acompanhar prazos, responsaveis e andamentos
+
+PUBLICO-ALVO IDENTIFICADO:
+- Equipes de engenharia/TI
+- Operacoes
+- CRM de vendas
+- Educacao
+- Marketing
+- Recursos Humanos
+- Pequenas empresas
+- Corporacoes (multiplos workspaces)
+
+PRINCIPAIS CAPACIDADES ATUAIS:
+- Gestao de areas de trabalho (workspaces) com convites e papeis
+- Boards (atividades) com setores, prazos e responsaveis
+- Cards (eventos/tarefas) em colunas Kanban com drag-and-drop
+- Historico de acoes (andamentos) por card
+- Relatorios de situacao com Parecer Tecnico automatizado (semaforo verde/amarelo/vermelho)
+- Transferencia de responsabilidade e de workspace
+- Fluxo de solicitacao/aprovacao para encerramento de atividades
+- Exportacao PDF de relatorios
+- Dashboard com KPIs mensais e comparativos
+- Auditoria global de movimentacoes
+- Diagnostico de servidor (metricas do sistema)
+- Autenticacao JWT com sessao revogavel, rate limiting e validacao de inputs
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
+
+ESTAGIO DE MATURIDADE:
+O produto encontra-se em producao (v0.1.0), com infraestrutura operacional em Docker Swarm. O roadmap demonstra maturidade na identificacao e resolucao de vulnerabilidades de seguranca (maioria dos itens P0/P1 concluidos). Restam debitos tecnicos de arquitetura (componente monolitico DashboardClient com 2500+ linhas), ausencia de testes automatizados e ausencia de linting.
+
+VISAO RESUMIDA DO ROADMAP:
+- 40+ itens de seguranca documentados, com maioria dos criticos ja concluidos
+- Refatoracao arquitetural planejada (separacao de rotas, paginacao, virtualizacao)
+- Funcionalidades futuras mapeadas: templates, tags, subtasks, anexos, notificacoes, real-time, integracoes externas, API publica, mobile/PWA
+
+PONTOS TECNICOS RELEVANTES PARA CONTINUIDADE:
+- DashboardClient.tsx (2500+ linhas) e o componente central — refatoracao e prioridade
+- Ausencia de framework de testes automatizados
+- Ausencia de ESLint/linting configurado
+- Sistema de IDs dual (BigInt seqid + cuid string) gera complexidade
+- Query pesada findByUserId com includes aninhados e o principal gargalo
+- Papel VIEWER definido no schema mas nunca verificado em codigo
+
+
+============================================================
+2. CONTEXTO DE NEGOCIO E PROBLEMAS ABORDADOS
+============================================================
+
+CONTEXTO OPERACIONAL:
+O FLOW atua no dominio de gestao de projetos e atividades para equipes que necessitam coordenar entregas, acompanhar prazos, distribuir responsabilidades e reportar situacao de forma centralizada. A plataforma atende desde pequenas equipes ate operacoes corporativas com multiplas areas de trabalho.
+
+DORES DE GESTAO RESOLVIDAS:
+
+1. Fragmentacao de informacoes:
+   Projetos, tarefas e andamentos dispersos em planilhas, e-mails e ferramentas desconectadas. O FLOW centraliza tudo em workspaces organizados por tipo (Engenharia/TI, Operacoes, CRM, etc.).
+
+2. Falta de rastreabilidade:
+   Sem historico de quem fez o que e quando. O FLOW registra criador, modificador, data de modificacao e historico completo de acoes (card_act) para cada tarefa.
+
+3. Relatorios manuais de situacao:
+   Gestores perdem tempo compilando status de atividades manualmente. O FLOW gera automaticamente Pareceres Tecnicos com classificacao por semaforo (verde/amarelo/vermelho), KPIs, pontos criticos, oportunidades e previsao de conclusao baseada em velocidade.
+
+4. Controle de acesso inexistente ou rudimentar:
+   Colaboradores com acesso indiscriminado a todos os projetos. O FLOW implementa RBAC (Role-Based Access Control) com 4 niveis: OWNER, ADMIN, MEMBER, VIEWER, aplicados por workspace.
+
+5. Dificuldade de acompanhamento de prazos:
+   Tarefas atrasadas passam despercebidas. O FLOW oferece indicadores visuais de status (Atrasado/Hoje/No prazo/Sem data), contadores de itens pendentes e dashboard com alertas de prazos proximos.
+
+6. Processos de aprovacao informais:
+   Encerramento de atividades sem controle. O FLOW implementa fluxo formal de solicitacao/aprovacao para conclusao de boards, onde apenas o OWNER pode autorizar o encerramento.
+
+IMPACTO DE PROCESSOS DESCENTRALIZADOS:
+- Retrabalho por informacoes desatualizadas
+- Perda de prazos por falta de visibilidade
+- Decisoes baseadas em dados incompletos
+- Impossibilidade de auditoria retroativa
+- Sobrecarga de gestores na compilacao manual de status
+
+USUARIOS, PERFIS E AREAS:
+- Gestores de projeto: criam workspaces, boards, definem prazos e responsaveis
+- Lideres de equipe: administram membros, acompanham KPIs, aprovam conclusoes
+- Executores: criam e movimentam cards, registram andamentos
+- Visualizadores: consultam status sem alterar (papel VIEWER — planejado mas nao implementado na UI)
+- Areas identificadas nos tipos de workspace: Engenharia/TI, Operacoes, CRM de vendas, Educacao, Marketing, Recursos Humanos, Pequena empresa, Empresarial
+
+
+============================================================
+3. VISAO GERAL DA SOLUCAO
+============================================================
+
+ESCOPO ATUAL DO FLOW:
+O FLOW e uma aplicacao web multi-tenant que permite a criacao de areas de trabalho colaborativas, onde equipes gerenciam atividades (boards) compostas por eventos/tarefas (cards) organizados em colunas Kanban. O sistema oferece controle de acesso por papeis, historico de acoes, relatorios automatizados e exportacao PDF.
+
+MODULOS EXISTENTES:
+
+Modulo | Objetivo | Usuarios envolvidos | Principais funcoes | Status atual
+Autenticacao | Controle de acesso e identidade | Todos | Registro, login, verificacao de email, recuperacao de senha, sessao JWT | Em producao
+Workspaces | Areas de trabalho multi-tenant | OWNER, ADMIN, MEMBER, VIEWER | CRUD workspace, convites, gestao de membros, papeis | Em producao
+Boards (Atividades) | Gestao de projetos/atividades | OWNER, ADMIN, MEMBER | CRUD boards, setores, prazos, responsaveis, encerramento | Em producao
+Cards (Eventos) | Gestao de tarefas individuais | OWNER, ADMIN, MEMBER | CRUD cards, drag-and-drop, transferencia, conclusao | Em producao
+Colunas Kanban | Organizacao visual de fluxo | OWNER, ADMIN | Criar, renomear, reordenar, ocultar, copiar, excluir | Em producao
+Historico (card_act) | Rastreabilidade de acoes | Todos (leitura), OWNER/ADMIN/MEMBER (escrita) | Registrar andamentos, visualizar timeline | Em producao
+Relatorios | Visao consolidada de status | Todos (leitura) | Parecer Tecnico, KPIs, filtros, export PDF | Em producao
+Dashboard | Visao geral e metricas | Todos | KPIs mensais, contadores, alertas, prazos | Em producao
+Movimentacoes | Auditoria global | Todos | Timeline de acoes por workspace, filtros | Em producao
+Diagnostico | Metricas do sistema | Usuarios autenticados | Contadores globais, top workspaces, recomendacoes | Em producao
+Landing Page | Apresentacao do produto | Visitantes | Hero, features, pricing (3 planos), depoimentos | Em producao
+
+PRINCIPAIS FLUXOS DE USO:
+
+1. Onboarding: Registro com validacao de senha forte -> email de ativacao (24h) -> login -> criacao do primeiro workspace com colunas padrao.
+
+2. Colaboracao: OWNER convida membro por email -> email com link -> membro aceita convite no dashboard -> papel MEMBER atribuido.
+
+3. Gestao de atividade: OWNER/ADMIN cria board (nome, setor, datas) -> MEMBER cria cards nas colunas -> drag-and-drop entre colunas -> registro de andamentos -> conclusao individual ou encerramento do board.
+
+4. Encerramento controlado: MEMBER/ADMIN solicita conclusao -> OWNER recebe notificacao (banner) -> OWNER aprova/recusa -> se aprovado, todos os cards pendentes movem para Concluido com dtcon preenchido atomicamente.
+
+5. Relatorio: Usuario acessa relatorio de atividade -> sistema calcula KPIs, classifica por semaforo, identifica pontos criticos, projeta data de conclusao -> export PDF.
+
+COMO A SOLUCAO UNIFICA EQUIPES:
+- Workspaces agrupam pessoas e projetos por area
+- Convites por email com aceite in-app
+- Papeis garantem que cada membro ve e faz apenas o que lhe cabe
+- Transferencia de responsabilidade permite reatribuicao sem perda de historico
+- Dashboard unificado mostra todos os workspaces do usuario
+
+COMO SAO REGISTRADOS E REPORTADOS PROJETOS:
+- Cada board representa uma atividade/projeto com metadados (setor, datas, responsavel)
+- Cada card e uma tarefa atomica com ciclo de vida rastreado (criacao -> movimentacao -> conclusao)
+- card_act registra cada interacao humana com o card
+- ActivityLog registra eventos globais para auditoria
+- Relatorios consolidam dados em Parecer Tecnico com semaforo e projecao
+
+LIMITES CONHECIDOS DO PRODUTO ATUAL:
+- Sem notificacoes in-app (transferencias e convites dependem de banners no dashboard)
+- Sem real-time (atualizacoes requerem refresh da pagina)
+- Sem anexos/arquivos em cards
+- Sem subtasks/checklists
+- Sem tags/labels livres
+- Sem busca global (apenas busca por nome dentro do workspace ativo)
+- Sem API publica
+- Sem integracao com calendarios ou ferramentas externas
+- Sem mobile-first (UI otimizada para desktop)
+- Sem testes automatizados
+- Papel VIEWER definido mas nao implementado na UI

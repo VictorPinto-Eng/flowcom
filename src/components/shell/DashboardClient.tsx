@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { CircleCheckBig } from 'lucide-react';
-import UserMenu from './UserMenu';
+import DashboardHeader from './DashboardHeader';
 import { KanbanClient } from '../kanban';
 import { CreateWorkspaceModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
 import ActivityHistorySidebar from './ActivityHistorySidebar';
@@ -267,8 +267,6 @@ export default function DashboardClient({
 
   const [isWorkspaceColumnsModalOpen, setIsWorkspaceColumnsModalOpen] = useState(false);
   const [isPremiumGridOpen, setIsPremiumGridOpen] = useState(false);
-  const [isReportMenuOpen, setIsReportMenuOpen] = useState(false);
-  const reportMenuRef = useRef<HTMLDivElement>(null);
   const [selectedWorkspaceColumns, setSelectedWorkspaceColumns] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSectorId, setSelectedSectorId] = useState('');
@@ -290,18 +288,6 @@ export default function DashboardClient({
       .then(setPendingCompletionRequests)
       .catch(err => console.error('Erro ao buscar solicitações de finalização pendentes:', err));
   }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (reportMenuRef.current && !reportMenuRef.current.contains(event.target as Node)) {
-        setIsReportMenuOpen(false);
-      }
-    }
-    if (isReportMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isReportMenuOpen]);
 
   // Controla se o usuário navegou internamente no app (para evitar voltar para outro site)
   useEffect(() => {
@@ -892,7 +878,7 @@ export default function DashboardClient({
         icon: 'success',
         confirmButtonColor: '#7c3aed'
       });
-      window.location.href = `/dashboard?boardId=${newBoard.id}`;
+      window.location.href = `/dashboard/board/${newBoard.id}`;
     } catch (error) {
       console.error('Falha ao criar quadro:', error);
       await Swal.fire({
@@ -1157,98 +1143,36 @@ export default function DashboardClient({
 
   return (
     <div className={styles.dashboardContainer}>
-      <header className={`${styles.header} glass`}>
-        <Link
-          href="/dashboard"
-          className={styles.logo}
-          onClick={(e) => {
-            e.preventDefault();
-            window.location.href = '/dashboard';
-          }}
-        >
-          <span>FLOW</span>
-        </Link>
-        <div className={styles.userSection}>
-          <button
-            className={styles.panelTrigger}
-            onClick={() => {
-              router.push('/dashboard');
-              setClientView('ongoing');
-              setOptimisticWorkspaceId(null);
-              setSearchTerm('');
-              setSelectedSectorId('');
-              setCurrentBoard(null);
-              setCurrentWorkspace(null);
-              setIsPremiumGridOpen(true);
-            }}
-            title="Visualizar Painel de Atividades por Área de Trabalho"
-          >
-            🧩 Painel
-          </button>
-          <button
-            className={styles.myActivitiesTrigger}
-            onClick={() => {
-              router.push('/dashboard?view=my-activities');
-            }}
-            title="Listagem de todas as atividades sob sua responsabilidade ordenada por agendamento"
-          >
-            📅 Minhas Atividades
-          </button>
-          <button
-            className={styles.myEventsTrigger}
-            onClick={() => {
-              router.push('/dashboard?view=my-events');
-            }}
-            title="Listagem de todos eventos em andamento sob responsabilidade direta do seu usuário"
-          >
-            📋 Meus Eventos
-          </button>
-          <div className={styles.reportDropdown} ref={reportMenuRef}>
-            <button
-              className={styles.reportDropdownTrigger}
-              onClick={() => setIsReportMenuOpen(!isReportMenuOpen)}
-              title="Relatórios"
-            >
-              📊 Relatório
-            </button>
-            {isReportMenuOpen && (
-              <div className={styles.reportDropdownMenu}>
-                <button
-                  className={styles.reportDropdownItem}
-                  onClick={() => {
-                    router.push('/dashboard?view=movements');
-                    setClientView('movements');
-                    setIsReportMenuOpen(false);
-                  }}
-                >
-                  <span>📊 Movimentações</span>
-                  <span className={styles.reportDropdownHint}>Auditoria e Histórico</span>
-                </button>
-                <button
-                  className={styles.reportDropdownItem}
-                  onClick={() => {
-                    router.push('/reports');
-                    setIsReportMenuOpen(false);
-                  }}
-                >
-                  <span>📋 Relatório Geral</span>
-                  <span className={styles.reportDropdownHint}>Consolidado por área</span>
-                </button>
-              </div>
-            )}
-          </div>
-          <UserMenu
-            user={{
-              name: user.name,
-              email: user.email,
-              image: user.image || undefined,
-            }}
-            onCreateWorkspace={() => setIsWorkspaceModalOpen(true)}
-            onOpenActivityLog={() => setHistorySidebarBoardId('ALL')}
-            onOpenWorkspaceColumns={() => setIsWorkspaceColumnsModalOpen(true)}
-          />
-        </div>
-      </header>
+      <DashboardHeader
+        user={{
+          name: user.name,
+          email: user.email,
+          image: user.image || undefined,
+        }}
+        onCreateWorkspace={() => setIsWorkspaceModalOpen(true)}
+        onOpenActivityLog={() => setHistorySidebarBoardId('ALL')}
+        onOpenWorkspaceColumns={() => setIsWorkspaceColumnsModalOpen(true)}
+        onPanelClick={() => {
+          router.push('/dashboard');
+          setClientView('ongoing');
+          setOptimisticWorkspaceId(null);
+          setSearchTerm('');
+          setSelectedSectorId('');
+          setCurrentBoard(null);
+          setCurrentWorkspace(null);
+          setIsPremiumGridOpen(true);
+        }}
+        onMyActivitiesClick={() => {
+          router.push('/dashboard?view=my-activities');
+        }}
+        onMyEventsClick={() => {
+          router.push('/dashboard?view=my-events');
+        }}
+        onMovementsClick={() => {
+          router.push('/dashboard?view=movements');
+          setClientView('movements');
+        }}
+      />
 
       <div className={styles.workspaceLayout}>
         <main className={styles.boardArea}>
@@ -1952,14 +1876,14 @@ export default function DashboardClient({
                                       ✏️
                                     </button>
                                     <Link
-                                      href={`/dashboard?boardId=${board.id}&from=workspace`}
+                                      href={`/dashboard/board/${board.id}?from=workspace`}
                                       className={styles.tableOpenBtn}
                                       title={`Visualizar eventos em andamento (${activeCardsCount})`}
                                     >
                                       ⚡
                                     </Link>
                                     <Link
-                                      href={`/dashboard?boardId=${board.id}&view=completed&from=workspace`}
+                                      href={`/dashboard/board/${board.id}?view=completed&from=workspace`}
                                       className={styles.tableHistoryBtn}
                                       title={`Histórico de eventos concluídos (${completedCardsCount})`}
                                     >

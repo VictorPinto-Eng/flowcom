@@ -29,6 +29,7 @@ interface BoardProps {
   boardName: string;
   boardDetalhes?: string | null;
   columns: ColumnType[];
+  allCards?: (CardType & { columnId?: string; columnName?: string | null; card_act?: any[] })[];
   onAddColumn: () => void;
   onAddCard: (columnId: string, title: string, description: string, dtatvStr?: string, previstoStr?: string) => void;
   onMoveCard: (cardId: string, sourceColId: string, targetColId: string) => void;
@@ -56,6 +57,7 @@ export default function Board({
   boardName,
   boardDetalhes,
   columns,
+  allCards,
   onAddCard,
   onMoveCard,
   onCompleteCard,
@@ -85,26 +87,38 @@ export default function Board({
 
   // Gather events based on viewMode
   const displayEvents: (CardType & { columnName: string; columnId: string; seqid?: string; card_act?: any[] })[] = [];
-  columns.forEach(col => {
-    col.cards.forEach(card => {
-      if (currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN' && currentUserRole !== '') {
-        const isCreator = card.user?.id === userId;
-        const isAssigned = card.task_user?.id === userId;
-        if (!isCreator && !isAssigned) return;
-      }
 
-      // dtcon define o status: se tem data está concluído, se null está pendente
-      if (viewMode === 'completed') {
-        if (card.dtcon) {
-          displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
-        }
-      } else {
-        if (!card.dtcon) {
-          displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: col.title, columnId: col.id });
-        }
+  const addEventIfVisible = (card: any, columnTitle: string, columnId: string) => {
+    if (currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN' && currentUserRole !== '') {
+      const isCreator = card.user?.id === userId;
+      const isAssigned = card.task_user?.id === userId;
+      if (!isCreator && !isAssigned) return;
+    }
+
+    // dtcon define o status: se tem data está concluído, se null está pendente
+    if (viewMode === 'completed') {
+      if (card.dtcon) {
+        displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: columnTitle, columnId });
       }
+    } else {
+      if (!card.dtcon) {
+        displayEvents.push({ ...card, seqid: card.seqid?.toString() || card.id, columnName: columnTitle, columnId });
+      }
+    }
+  };
+
+  // Preferred source: all cards of the board (independente da coluna onde estão)
+  if (allCards && allCards.length > 0) {
+    allCards.forEach(card => {
+      addEventIfVisible(card, card.columnName || 'Sem coluna', card.columnId || '');
     });
-  });
+  } else {
+    columns.forEach(col => {
+      col.cards.forEach(card => {
+        addEventIfVisible(card, col.title, col.id);
+      });
+    });
+  }
 
   // Handlers
   const handleCreateEvent = (title: string, description: string, dtatv: string, previsto?: string) => {

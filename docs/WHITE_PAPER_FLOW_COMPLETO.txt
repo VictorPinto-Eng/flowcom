@@ -1,0 +1,1499 @@
+﻿WHITE PAPER TECNICO E ESTRATEGICO â€” FLOW
+============================================================
+Plataforma de Gestao de Projetos, Atividades, Equipes e Fluxos Operacionais
+
+VERSAO: 0.1.0
+DATA DE ELABORACAO: 2026-08-11
+CLASSIFICACAO: Informacao nao identificada nos materiais fornecidos.
+
+============================================================
+1. RESUMO EXECUTIVO
+============================================================
+
+O FLOW e uma plataforma SaaS de gestao de projetos e atividades que unifica equipes, organiza fluxos de trabalho em formato Kanban e automatiza a geracao de relatorios de situacao. Desenvolvido com arquitetura moderna (Next.js 16, React 19, PostgreSQL, Prisma ORM), o sistema opera em ambiente Docker Swarm em producao.
+
+PROPOSTA DE VALOR:
+"Gerencie seus projetos com fluxo continuo e elegancia." O FLOW centraliza a gestao de atividades, eventos (tarefas), equipes e relatorios em uma unica plataforma multi-tenant com controle de acesso granular por papeis (OWNER, ADMIN, MEMBER, VIEWER).
+
+PROBLEMAS QUE RESOLVE:
+- Descentralizacao de informacoes de projetos entre equipes
+- Falta de rastreabilidade em atividades e tarefas
+- Processos manuais de geracao de relatorios de situacao
+- Ausencia de controle de acesso e permissoes por area de trabalho
+- Dificuldade de acompanhar prazos, responsaveis e andamentos
+
+PUBLICO-ALVO IDENTIFICADO:
+- Equipes de engenharia/TI
+- Operacoes
+- CRM de vendas
+- Educacao
+- Marketing
+- Recursos Humanos
+- Pequenas empresas
+- Corporacoes (multiplos workspaces)
+
+PRINCIPAIS CAPACIDADES ATUAIS:
+- Gestao de areas de trabalho (workspaces) com convites e papeis
+- Boards (atividades) com setores, prazos e responsaveis
+- Cards (eventos/tarefas) em colunas Kanban com drag-and-drop
+- Historico de acoes (andamentos) por card
+- Relatorios de situacao com Parecer Tecnico automatizado (semaforo verde/amarelo/vermelho)
+- Transferencia de responsabilidade e de workspace
+- Fluxo de solicitacao/aprovacao para encerramento de atividades
+- Exportacao PDF de relatorios
+- Dashboard com KPIs mensais e comparativos
+- Auditoria global de movimentacoes
+- Diagnostico de servidor (metricas do sistema)
+- Autenticacao JWT com sessao revogavel, rate limiting e validacao de inputs
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
+
+ESTAGIO DE MATURIDADE:
+O produto encontra-se em producao (v0.1.0), com infraestrutura operacional em Docker Swarm. O roadmap demonstra maturidade na identificacao e resolucao de vulnerabilidades de seguranca (maioria dos itens P0/P1 concluidos). Restam debitos tecnicos de arquitetura (componente monolitico DashboardClient com 2500+ linhas), ausencia de testes automatizados e ausencia de linting.
+
+VISAO RESUMIDA DO ROADMAP:
+- 40+ itens de seguranca documentados, com maioria dos criticos ja concluidos
+- Refatoracao arquitetural planejada (separacao de rotas, paginacao, virtualizacao)
+- Funcionalidades futuras mapeadas: templates, tags, subtasks, anexos, notificacoes, real-time, integracoes externas, API publica, mobile/PWA
+
+PONTOS TECNICOS RELEVANTES PARA CONTINUIDADE:
+- DashboardClient.tsx (2500+ linhas) e o componente central â€” refatoracao e prioridade
+- Ausencia de framework de testes automatizados
+- Ausencia de ESLint/linting configurado
+- Sistema de IDs dual (BigInt seqid + cuid string) gera complexidade
+- Query pesada findByUserId com includes aninhados e o principal gargalo
+- Papel VIEWER definido no schema mas nunca verificado em codigo
+
+
+============================================================
+2. CONTEXTO DE NEGOCIO E PROBLEMAS ABORDADOS
+============================================================
+
+CONTEXTO OPERACIONAL:
+O FLOW atua no dominio de gestao de projetos e atividades para equipes que necessitam coordenar entregas, acompanhar prazos, distribuir responsabilidades e reportar situacao de forma centralizada. A plataforma atende desde pequenas equipes ate operacoes corporativas com multiplas areas de trabalho.
+
+DORES DE GESTAO RESOLVIDAS:
+
+1. Fragmentacao de informacoes:
+   Projetos, tarefas e andamentos dispersos em planilhas, e-mails e ferramentas desconectadas. O FLOW centraliza tudo em workspaces organizados por tipo (Engenharia/TI, Operacoes, CRM, etc.).
+
+2. Falta de rastreabilidade:
+   Sem historico de quem fez o que e quando. O FLOW registra criador, modificador, data de modificacao e historico completo de acoes (card_act) para cada tarefa.
+
+3. Relatorios manuais de situacao:
+   Gestores perdem tempo compilando status de atividades manualmente. O FLOW gera automaticamente Pareceres Tecnicos com classificacao por semaforo (verde/amarelo/vermelho), KPIs, pontos criticos, oportunidades e previsao de conclusao baseada em velocidade.
+
+4. Controle de acesso inexistente ou rudimentar:
+   Colaboradores com acesso indiscriminado a todos os projetos. O FLOW implementa RBAC (Role-Based Access Control) com 4 niveis: OWNER, ADMIN, MEMBER, VIEWER, aplicados por workspace.
+
+5. Dificuldade de acompanhamento de prazos:
+   Tarefas atrasadas passam despercebidas. O FLOW oferece indicadores visuais de status (Atrasado/Hoje/No prazo/Sem data), contadores de itens pendentes e dashboard com alertas de prazos proximos.
+
+6. Processos de aprovacao informais:
+   Encerramento de atividades sem controle. O FLOW implementa fluxo formal de solicitacao/aprovacao para conclusao de boards, onde apenas o OWNER pode autorizar o encerramento.
+
+IMPACTO DE PROCESSOS DESCENTRALIZADOS:
+- Retrabalho por informacoes desatualizadas
+- Perda de prazos por falta de visibilidade
+- Decisoes baseadas em dados incompletos
+- Impossibilidade de auditoria retroativa
+- Sobrecarga de gestores na compilacao manual de status
+
+USUARIOS, PERFIS E AREAS:
+- Gestores de projeto: criam workspaces, boards, definem prazos e responsaveis
+- Lideres de equipe: administram membros, acompanham KPIs, aprovam conclusoes
+- Executores: criam e movimentam cards, registram andamentos
+- Visualizadores: consultam status sem alterar (papel VIEWER â€” planejado mas nao implementado na UI)
+- Areas identificadas nos tipos de workspace: Engenharia/TI, Operacoes, CRM de vendas, Educacao, Marketing, Recursos Humanos, Pequena empresa, Empresarial
+
+
+============================================================
+3. VISAO GERAL DA SOLUCAO
+============================================================
+
+ESCOPO ATUAL DO FLOW:
+O FLOW e uma aplicacao web multi-tenant que permite a criacao de areas de trabalho colaborativas, onde equipes gerenciam atividades (boards) compostas por eventos/tarefas (cards) organizados em colunas Kanban. O sistema oferece controle de acesso por papeis, historico de acoes, relatorios automatizados e exportacao PDF.
+
+MODULOS EXISTENTES:
+
+Modulo | Objetivo | Usuarios envolvidos | Principais funcoes | Status atual
+Autenticacao | Controle de acesso e identidade | Todos | Registro, login, verificacao de email, recuperacao de senha, sessao JWT | Em producao
+Workspaces | Areas de trabalho multi-tenant | OWNER, ADMIN, MEMBER, VIEWER | CRUD workspace, convites, gestao de membros, papeis | Em producao
+Boards (Atividades) | Gestao de projetos/atividades | OWNER, ADMIN, MEMBER | CRUD boards, setores, prazos, responsaveis, encerramento | Em producao
+Cards (Eventos) | Gestao de tarefas individuais | OWNER, ADMIN, MEMBER | CRUD cards, drag-and-drop, transferencia, conclusao | Em producao
+Colunas Kanban | Organizacao visual de fluxo | OWNER, ADMIN | Criar, renomear, reordenar, ocultar, copiar, excluir | Em producao
+Historico (card_act) | Rastreabilidade de acoes | Todos (leitura), OWNER/ADMIN/MEMBER (escrita) | Registrar andamentos, visualizar timeline | Em producao
+Relatorios | Visao consolidada de status | Todos (leitura) | Parecer Tecnico, KPIs, filtros, export PDF | Em producao
+Dashboard | Visao geral e metricas | Todos | KPIs mensais, contadores, alertas, prazos | Em producao
+Movimentacoes | Auditoria global | Todos | Timeline de acoes por workspace, filtros | Em producao
+Diagnostico | Metricas do sistema | Usuarios autenticados | Contadores globais, top workspaces, recomendacoes | Em producao
+Landing Page | Apresentacao do produto | Visitantes | Hero, features, pricing (3 planos), depoimentos | Em producao
+
+PRINCIPAIS FLUXOS DE USO:
+
+1. Onboarding: Registro com validacao de senha forte -> email de ativacao (24h) -> login -> criacao do primeiro workspace com colunas padrao.
+
+2. Colaboracao: OWNER convida membro por email -> email com link -> membro aceita convite no dashboard -> papel MEMBER atribuido.
+
+3. Gestao de atividade: OWNER/ADMIN cria board (nome, setor, datas) -> MEMBER cria cards nas colunas -> drag-and-drop entre colunas -> registro de andamentos -> conclusao individual ou encerramento do board.
+
+4. Encerramento controlado: MEMBER/ADMIN solicita conclusao -> OWNER recebe notificacao (banner) -> OWNER aprova/recusa -> se aprovado, todos os cards pendentes movem para Concluido com dtcon preenchido atomicamente.
+
+5. Relatorio: Usuario acessa relatorio de atividade -> sistema calcula KPIs, classifica por semaforo, identifica pontos criticos, projeta data de conclusao -> export PDF.
+
+COMO A SOLUCAO UNIFICA EQUIPES:
+- Workspaces agrupam pessoas e projetos por area
+- Convites por email com aceite in-app
+- Papeis garantem que cada membro ve e faz apenas o que lhe cabe
+- Transferencia de responsabilidade permite reatribuicao sem perda de historico
+- Dashboard unificado mostra todos os workspaces do usuario
+
+COMO SAO REGISTRADOS E REPORTADOS PROJETOS:
+- Cada board representa uma atividade/projeto com metadados (setor, datas, responsavel)
+- Cada card e uma tarefa atomica com ciclo de vida rastreado (criacao -> movimentacao -> conclusao)
+- card_act registra cada interacao humana com o card
+- ActivityLog registra eventos globais para auditoria
+- Relatorios consolidam dados em Parecer Tecnico com semaforo e projecao
+
+LIMITES CONHECIDOS DO PRODUTO ATUAL:
+- Sem notificacoes in-app (transferencias e convites dependem de banners no dashboard)
+- Sem real-time (atualizacoes requerem refresh da pagina)
+- Sem anexos/arquivos em cards
+- Sem subtasks/checklists
+- Sem tags/labels livres
+- Sem busca global (apenas busca por nome dentro do workspace ativo)
+- Sem API publica
+- Sem integracao com calendarios ou ferramentas externas
+- Sem mobile-first (UI otimizada para desktop)
+- Sem testes automatizados
+- Papel VIEWER definido mas nao implementado na UI
+
+
+============================================================
+4. MODULOS, FUNCIONALIDADES E REGRAS DE NEGOCIO
+============================================================
+
+------------------------------------------------------------
+4.1 MODULO DE AUTENTICACAO E SESSAO
+------------------------------------------------------------
+
+Nome: Autenticacao e Gestao de Sessao
+Objetivo: Garantir identidade do usuario, controlar acesso e manter sessoes seguras.
+Problema resolvido: Acesso nao autorizado, identidade nao verificada, sessoes indefinidas.
+Usuarios/perfis: Todos os usuarios do sistema.
+
+Entradas necessarias:
+- Registro: nome, email, confirmacao de email, senha (8+ chars, 1 maiuscula, 1 minuscula, 1 digito, 1 especial)
+- Login: email, senha
+- Recuperacao: email
+- Reset: token + nova senha
+
+Processamento realizado:
+- Registro: validacao de senha, verificacao de email duplicado, hash bcryptjs (10 rounds), criacao de token de ativacao (validade 24h), envio de email via Resend API.
+- Login: verificacao de rate limiting (5 tentativas / 15 min por IP), busca por email, comparacao bcrypt, verificacao de conta ativa, revogacao de sessoes anteriores, geracao JWT (7 dias), gravacao em cookie httpOnly + tabela session.
+- Verificacao de email: validacao de token, ativacao da conta (active = true).
+- Recuperacao de senha: rate limiting (2 tentativas / hora), geracao de token (validade 1h), envio de email.
+- Reset de senha: validacao de token, hash da nova senha, revogacao de todas as sessoes do usuario.
+
+Regras de negocio identificadas:
+- Senha obrigatoriamente com 8+ caracteres, 1 maiuscula, 1 minuscula, 1 digito, 1 caractere especial
+- Email unico no sistema (case-insensitive, normalizado para lowercase)
+- Conta inativa ate verificacao por email
+- Sessao unica por usuario (login revoga sessoes anteriores)
+- Token de ativacao expira em 24 horas
+- Token de reset de senha expira em 1 hora
+- Rate limiting por IP E por email
+
+Saidas:
+- Cookie httpOnly com JWT (sameSite: strict, secure em producao)
+- Registro na tabela Session (whitelist para revogacao)
+- Emails transacionais (ativacao, recuperacao, convite)
+
+Dependencias: Resend API (envio de email), PostgreSQL (persistencia), bcryptjs (hash).
+
+Status atual: Em producao.
+
+Limitacoes e pontos de atencao:
+- JWT sem refresh token (sessao expira abruptamente apos 7 dias) â€” item S-009 pendente
+- Enumeracao de email possivel via mensagem de registro ("Este e-mail ja esta em uso") â€” item S-034 pendente
+- Rate limiting distribuido (multiplos IPs) nao totalmente mitigado â€” item S-013 pendente
+- Logging de acoes de seguranca usa console.error (nao estruturado) â€” item S-014 pendente
+
+------------------------------------------------------------
+4.2 MODULO DE WORKSPACES (AREAS DE TRABALHO)
+------------------------------------------------------------
+
+Nome: Gestao de Workspaces
+Objetivo: Organizar equipes e projetos em containers isolados com controle de acesso.
+Problema resolvido: Projetos misturados sem delimitacao de acesso, equipes sem organizacao.
+Usuarios/perfis: OWNER (criador), ADMIN, MEMBER, VIEWER.
+
+Entradas necessarias:
+- Criacao: nome (max 100 chars), tipo (predefinido), descricao (opcional, max 5000 chars)
+- Convite: email do convidado, papel (ADMIN ou MEMBER)
+- Gestao de membros: alteracao de papel, remocao
+
+Processamento realizado:
+- Criacao: sanitizacao de inputs, validacao de tamanho, criacao do workspace, criacao automatica de 3 colunas padrao ("A Fazer", "Em Progresso", "Concluido"), associacao do criador como OWNER via WorkspaceMember.
+- Convite: validacao de email, verificacao se usuario ja e membro, geracao de token unico (expira em 7 dias), envio de email diferenciado (usuario existente vs novo), registro do convite no banco.
+- Aceite de convite: validacao de token (formato UUID), verificacao de email do destinatario, verificacao de expiracao, criacao de WorkspaceMember com papel definido.
+- Gestao de membros: allowlist de papeis (OWNER/ADMIN/MEMBER), restricao de nao remover ultimo OWNER.
+
+Regras de negocio identificadas:
+- Workspace criado sempre tem OWNER (criador)
+- 3 colunas padrao criadas automaticamente: "A Fazer" (order 0), "Em Progresso" (order 1), "Concluido" (order 2)
+- Convite expira em 7 dias
+- Convite diferencia usuario existente (redireciona para login) de novo (redireciona para registro)
+- Papel padrao ao aceitar convite: MEMBER
+- Apenas OWNER pode alterar papeis e remover membros
+- Nao e possivel remover o ultimo OWNER do workspace
+- Token de convite nao e exposto em respostas de API (seguranca)
+- Role validada contra allowlist (prevencao de injecao)
+
+Saidas:
+- Workspace com colunas iniciais
+- Registro WorkspaceMember com papel
+- Email de convite com instrucoes diferenciadas
+- Banners de convites pendentes no dashboard
+
+Dependencias: Modulo de Autenticacao (usuario logado), Resend API (email).
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem limite definido de membros por workspace
+- Sem limite definido de workspaces por usuario
+- Papel VIEWER nao tem verificacao implementada na UI (item S-010 pendente)
+
+------------------------------------------------------------
+4.3 MODULO DE BOARDS (ATIVIDADES)
+------------------------------------------------------------
+
+Nome: Gestao de Boards/Atividades
+Objetivo: Representar projetos ou atividades dentro de um workspace, com metadados de prazo e responsabilidade.
+Problema resolvido: Projetos sem estrutura, sem prazos formais, sem responsavel definido.
+Usuarios/perfis: OWNER e ADMIN criam/editam; MEMBER visualiza e interage com cards internos.
+
+Entradas necessarias:
+- Criacao: workspace destino, nome (max 100 chars), detalhes (max 5000 chars), setor, data inicio, data prevista de conclusao
+- Edicao: mesmos campos + workspace destino (transferencia), usuario responsavel
+- Encerramento: confirmacao (OWNER direto) ou solicitacao + aprovacao
+
+Processamento realizado:
+- Criacao: validacao de inputs (sanitizacao XSS, limites de tamanho), verificacao de membro do workspace (BoardService.createBoard), registro com created_by e dtmod.
+- Edicao: verificacao de permissao (OWNER/ADMIN via getLoggedUser), sanitizacao, atualizacao com moduser/dtmod.
+- Encerramento (completeActivity): operacao atomica via prisma.$transaction() â€” move TODOS os cards pendentes para coluna "Concluido", seta dtcon em cada card, seta dtcon no board. Se qualquer operacao falhar, TODAS revertem.
+- Fluxo de aprovacao: MEMBER/ADMIN solicita conclusao -> OWNER recebe banner -> OWNER autoriza -> executa completeActivity.
+
+Regras de negocio identificadas:
+- Board pertence a exatamente 1 workspace
+- Board pode ter responsavel (user_seqid) â€” quem responde pela atividade
+- Setor e opcional (FOLLOW UP, SUPORTE, ENGENHARIA, CONTABILIDADE, FINANCEIRO, OBRA, QUALIDADE, RECURSOS HUMANOS, COMERCIAL, MANUTENCAO, JURIDICO)
+- Board pendente: dtcon IS NULL
+- Board concluido: dtcon IS NOT NULL
+- Encerramento atomico: nenhum card fica "orfao" em estado intermediario
+- Apenas OWNER pode encerrar diretamente; outros solicitam
+- Board pode ser transferido para outro workspace (OWNER/ADMIN)
+- Campos de auditoria obrigatorios: created_by, moduser, dtmod
+
+Saidas:
+- Board com metadados e status
+- Registro em ActivityLog ("BOARD_CREATED")
+- Notificacao (banner) de solicitacao de encerramento ao OWNER
+
+Dependencias: Modulo de Workspaces, Modulo de Colunas (para encerramento), Cards.
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem paginacao (todos os boards carregam de uma vez) â€” itens P-002/P-006 pendentes
+- Sem templates (clonar board) â€” item F-001 planejado
+- Sem campos customizados â€” item F-006 planejado
+
+------------------------------------------------------------
+4.4 MODULO DE CARDS (EVENTOS/TAREFAS)
+------------------------------------------------------------
+
+Nome: Gestao de Cards/Eventos
+Objetivo: Representar tarefas atomicas dentro de um board, com ciclo de vida rastreado.
+Problema resolvido: Tarefas sem rastreabilidade, sem responsavel, sem controle de conclusao.
+Usuarios/perfis: OWNER/ADMIN criam; MEMBER pode criar se autorizado; responsavel (taskuser) gerencia.
+
+Entradas necessarias:
+- Criacao: titulo (max 200 chars, sanitizado contra XSS), descricao (max 5000 chars, preserva newlines), board destino, coluna, datas, responsavel
+- Edicao: mesmos campos + coluna destino
+- Movimentacao: coluna destino (drag-and-drop)
+- Transferencia: novo responsavel OU novo workspace/board/coluna
+- Conclusao: confirmacao
+
+Processamento realizado:
+- Criacao: sanitizacao (remove HTML, limita tamanho), validacao de permissao (checkCardPermission), registro com created_by, moduser, dtmod obrigatorios.
+- Movimentacao (moveCard): valida dtcon â€” se move para "Concluido" seta dtcon = hoje; se move DE "Concluido" limpa dtcon. Outras colunas nao alteram dtcon.
+- Conclusao (completeCard): seta dtcon = hoje, move para coluna "Concluido".
+- Edicao: se setar dtcon via edicao, move para Concluido; se remover dtcon, move para "A Fazer".
+- Transferencia entre workspaces: valida que board/coluna destino existem e pertencem ao workspace informado; registra card_act historico.
+- Protecao dtcon: card concluido nao pode ter dtcon zerado via edicao direta (apenas via fluxos controlados).
+
+Regras de negocio identificadas:
+- dtcon e o UNICO criterio de conclusao (a coluna e consequencia, nao causa)
+- Card DEVE pertencer a um board (board_seqid NOT NULL)
+- created_by e moduser sao NOT NULL com default 1 (sistema)
+- dtmod e NOT NULL com default NOW()
+- Permissao de edicao: OWNER/ADMIN editam qualquer card; MEMBER edita apenas se criador OU responsavel (taskuser_seqid)
+- Ordem dentro da coluna controlada por sort_order
+- Movimentacao registra card_act automaticamente
+- Transferencia de responsabilidade: reatribui taskuser_seqid mantendo historico
+
+Saidas:
+- Card com estado completo (titulo, responsavel, datas, coluna, auditoria)
+- Registro card_act para cada acao
+- Registro ActivityLog para eventos globais
+- Atualizacao visual otimista no Kanban (rollback em caso de erro)
+
+Dependencias: Modulo de Boards, Modulo de Colunas, Modulo de Workspaces (permissoes).
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem subtasks/checklists â€” item F-003 planejado
+- Sem anexos/arquivos â€” item F-004 planejado
+- Sem tags/labels â€” item F-002 planejado
+- Sem dependencias entre cards â€” item F-005 planejado
+- Drag-and-drop sem alternativa de teclado (acessibilidade) â€” item U-017 pendente
+
+------------------------------------------------------------
+4.5 MODULO DE COLUNAS KANBAN
+------------------------------------------------------------
+
+Nome: Gestao de Colunas
+Objetivo: Organizar visualmente o fluxo de trabalho em etapas customizaveis por workspace.
+Problema resolvido: Fluxo rigido sem possibilidade de customizacao.
+Usuarios/perfis: OWNER e ADMIN (gerenciam); todos os membros (visualizam).
+
+Entradas: titulo (max 100 chars), ordem, visibilidade.
+
+Processamento:
+- Criar coluna: valida permissao (assertColumnPermission â€” OWNER/ADMIN), sanitiza titulo, define order.
+- Renomear: validacao de permissao, sanitizacao.
+- Reordenar: atualiza sort_order de todas as colunas afetadas.
+- Copiar: duplica coluna com todos os cards.
+- Excluir: remove coluna (CASCADE nos cards).
+- Ocultar/Exibir: toggle de campo visible.
+
+Regras de negocio:
+- Colunas sao compartilhadas por TODOS os boards do workspace
+- 3 colunas padrao criadas automaticamente no workspace novo
+- Apenas OWNER/ADMIN podem manipular colunas (seguranca S-026 corrigida)
+- Ordem controlada por sort_order
+- Visibilidade controlada por campo boolean
+
+Status atual: Em producao.
+
+Limitacoes:
+- Sem limite maximo de colunas por workspace
+- Excluir coluna remove cards em cascata (sem soft-delete)
+
+------------------------------------------------------------
+4.6 MODULO DE HISTORICO E AUDITORIA
+------------------------------------------------------------
+
+Nome: Historico de Acoes (card_act) e Auditoria Global (ActivityLog)
+Objetivo: Registrar toda interacao com cards e eventos globais para rastreabilidade.
+Problema resolvido: Impossibilidade de auditar quem fez o que e quando.
+
+Entradas:
+- card_act: descricao da acao, card associado, usuario executor, data
+- ActivityLog: tipo de acao, board, usuario, descricao, timestamp
+
+Processamento:
+- card_act: registrado automaticamente em movimentacoes, conclusoes, transferencias; registrado manualmente pelo usuario (andamentos).
+- ActivityLog: registrado automaticamente em eventos estruturais (BOARD_CREATED, CARD_MOVED, CARD_COMPLETED, COLUMN_CREATED, etc.). Validacao de boardId (numerico) e userId antes de gravar.
+
+Regras de negocio:
+- card_act e vinculado ao card (FK com CASCADE delete)
+- ActivityLog NAO tem integridade referencial (boardId e userId sao strings sem FK) â€” item M-006 pendente
+- Historico e imutavel (registros nao sao editados ou excluidos pelo usuario)
+- Indexes: boardId, userId, createdAt para consultas rapidas
+
+Status atual: Em producao.
+
+Limitacoes:
+- ActivityLog sem FK = risco de dados orfaos (item M-006)
+- Logging de seguranca usa console.error sem estrutura (item S-014)
+- Sem audit log persistente para acoes de sistema (login, tentativas) â€” item S-042 planejado
+
+------------------------------------------------------------
+4.7 MODULO DE RELATORIOS
+------------------------------------------------------------
+
+Nome: Relatorios e Parecer Tecnico
+Objetivo: Gerar visao consolidada de status de atividades com analise automatizada.
+Problema resolvido: Relatorios manuais, demorados e subjetivos.
+
+Tipos de relatorio identificados:
+
+4.7.1 RELATORIO DE ATIVIDADE (por board):
+- Parecer Tecnico Executivo com classificacao semaforo:
+  - VERDE: atividade no prazo, progresso adequado
+  - AMARELO: sinais de alerta (atrasos parciais, progresso abaixo de 50%)
+  - VERMELHO: atividade critica (percentual alto de atrasos, board atrasado)
+- KPIs: total de eventos, concluidos, pendentes, atrasados, percentual de progresso, dias em aberto
+- Pontos criticos: top 3 eventos atrasados com dias de atraso e responsavel
+- Oportunidades: marcos de progresso, eventos sem responsavel, proximos de vencimento
+- Recomendacao: acao sugerida com base na situacao
+- Previsao de velocidade: media de dias/evento, data estimada de conclusao, delta vs meta
+- Barra de progresso visual
+- Tabela de eventos com historico expandivel
+- Exportacao PDF (html2pdf.js, client-side)
+
+4.7.2 RELATORIO GLOBAL (cross-workspace):
+- Stats: atividades, eventos, acoes, lead time medio, taxa de conclusao
+- Filtros: usuario, workspace, nome de atividade, status, periodo de conclusao
+- Agrupamento por board com detalhes
+- Drill-down para eventos individuais com andamentos
+- Exportacao PDF com numero de controle deterministico (hash, nao random)
+
+4.7.3 MEUS EVENTOS (lista pessoal):
+- Tabela de todos os cards atribuidos ao usuario
+- Filtro por workspace e busca
+- Barra resumo: atrasados/hoje/no prazo/sem data
+- Exportacao PDF simplificada
+
+Status atual: Em producao.
+
+Limitacoes:
+- PDF gerado client-side (html2pdf.js ~500KB sem preload) â€” item P-005 pendente
+- Sem export CSV/Excel â€” item R-004 planejado
+- Sem dashboard de metricas de workspace (burndown, heatmap) â€” itens R-001, R-002, R-003 planejados
+
+------------------------------------------------------------
+4.8 MODULO DE DASHBOARD E METRICAS
+------------------------------------------------------------
+
+Nome: Dashboard e Welcome
+Objetivo: Oferecer visao consolidada de KPIs e acoes rapidas.
+
+Funcionalidades:
+- Saudacao personalizada por periodo do dia
+- KPIs mensais com delta vs mes anterior:
+  - Atividades criadas / concluidas
+  - Cards criados / concluidos
+- Indicadores operacionais: itens atrasados, prazos proximos (7 dias)
+- Links rapidos para acoes frequentes
+- Contadores reais por workspace (via COUNT â€” otimizado)
+
+Status atual: Em producao (WelcomeDashboard.tsx).
+
+------------------------------------------------------------
+4.9 MODULO DE DIAGNOSTICO DO SERVIDOR
+------------------------------------------------------------
+
+Nome: Diagnostico do Servidor
+Objetivo: Prover metricas do sistema para analise tecnica e decisao.
+Usuarios: Qualquer usuario autenticado (restricao por role OWNER pendente â€” item P-010).
+
+Funcionalidades:
+- Contadores globais: workspaces, boards, cards, card_actions, users, workspace_members
+- Contadores por usuario: workspaces proprios, como membro, boards/cards/actions acessiveis
+- Top workspaces por quantidade de cards
+- Recomendacoes geradas server-side
+- JSON copiavel para analise
+- Snapshot gravado no banco (1 por usuario, substitui anterior)
+
+Status atual: Em producao.
+
+Limitacoes:
+- Acessivel a qualquer usuario logado (sem restricao de role) â€” item P-010 pendente
+- Sem historico visual de snapshots â€” item P-011 pendente
+
+
+============================================================
+5. ARQUITETURA TECNICA ATUAL
+============================================================
+
+MODELO DE HOSPEDAGEM E INFRAESTRUTURA:
+- Servidor de producao: Docker Swarm em maquina Linux identificada como "hv5srvd"
+- Container registry local: 127.0.0.1:5000/flow:<commit-sha>
+- Container base: Node.js 22 Alpine (multi-stage build)
+- Porta exposta: 3000
+- Banco de dados: PostgreSQL via container pgvector (mesmo host, DATABASE_URL injetada como variavel de ambiente)
+
+AMBIENTES EXISTENTES:
+- Desenvolvimento: local (Windows 11, next dev)
+- Producao: Docker Swarm (Linux, next start)
+- Ambiente de staging: informacao nao identificada nos materiais fornecidos
+
+FRONT-END:
+- Framework: React 19.2.4
+- Renderizacao: Server Components (Next.js 16 App Router) + Client Components
+- Estilizacao: CSS Modules com design system customizado ("Ice Theme" â€” glassmorphism)
+- Icones: Lucide React 1.16.0
+- Dialogs: SweetAlert2 11.26.24 (lazy-loaded via dynamic import)
+- Fontes: Outfit (Google Fonts) + Geist (next/font)
+- Estado: useState/useEffect + URL params (useSearchParams) + sessionStorage
+- Hooks customizados: useKanban (estado Kanban), useWorkspacePermissions (RBAC)
+- PDF: html2pdf.js (carregado via CDN no momento do clique)
+
+BACK-END:
+- Runtime: Next.js 16.2.6 (App Router com Server Actions)
+- Linguagem: TypeScript 5 (strict mode)
+- Server Actions: "use server" functions em src/app/actions/ (substitui REST para mutacoes)
+- API Routes: apenas autenticacao (login, register, clear-session, forgot-password, reset-password)
+- Middleware: src/proxy.ts (verificacao JWT, redirect de rotas protegidas, limpeza de cookies invalidos)
+- Validacao: src/lib/validation.ts (sanitizacao XSS, limites de tamanho, validacao de email e IDs)
+- Rate Limiting: src/lib/rate-limit.ts (por IP + email, persistido no banco via AuthAttempt)
+
+LINGUAGENS, FRAMEWORKS E BIBLIOTECAS:
+
+Dependencias de producao:
+- next 16.2.6 â€” Framework fullstack
+- react 19.2.4 â€” UI library
+- react-dom 19.2.4 â€” React DOM renderer
+- @prisma/client 7.8.0 â€” ORM client
+- @prisma/adapter-pg 7.8.0 â€” PostgreSQL adapter com connection pooling
+- pg 8.20.0 â€” Driver PostgreSQL nativo
+- prisma 7.8.0 â€” ORM toolkit
+- bcryptjs 3.0.3 â€” Hash de senhas
+- jsonwebtoken 9.0.3 â€” Geracao e verificacao JWT
+- resend 6.12.3 â€” API de envio de email
+- lucide-react 1.16.0 â€” Biblioteca de icones
+- sweetalert2 11.26.24 â€” Modais e dialogos
+- cookie 1.1.1 â€” Parsing de cookies (instalado mas possivelmente nao utilizado â€” item M-001)
+
+Dependencias de desenvolvimento:
+- typescript 5 â€” Linguagem
+- ts-node 10.9.2 â€” Execucao de scripts TS (seed)
+- @types/jsonwebtoken 9.0.10
+- @types/node 20
+- @types/pg 8.20.0
+- @types/react 19
+- @types/react-dom 19
+
+BANCO DE DADOS:
+- Engine: PostgreSQL 14+ (via container pgvector)
+- ORM: Prisma Client 7.8.0 com adapter PrismaPg
+- Connection pooling: pg.Pool (nativo)
+- Modelos: 14 entidades
+- Migrations: Prisma Migrate (gera SQL, execucao manual em producao)
+- Seed: ts-node com dados iniciais (WorkspaceTypes + Sectors)
+- Logging: query + error + warn em dev; apenas error em prod
+
+ESTRUTURA DE SERVICOS:
+
+src/app/actions/ â€” Server Actions (camada de entrada)
+  authActions.ts
+  workspaceActions.ts
+  boardActions.ts
+  cardActions.ts
+  columnActions.ts
+  dashboardActions.ts
+  diagnosticsActions.ts
+
+src/domain/services/ â€” Logica de negocio
+  AuthService.ts
+  WorkspaceService.ts
+  BoardService.ts
+  CardService.ts
+  ColumnService.ts
+
+src/domain/repositories/ â€” Acesso a dados
+  UserRepository.ts
+  WorkspaceRepository.ts
+  BoardRepository.ts
+  CardRepository.ts
+  ColumnRepository.ts
+  ActivityLogRepository.ts
+
+src/lib/ â€” Utilitarios compartilhados
+  prisma.ts â€” Singleton do Prisma Client
+  validation.ts â€” Sanitizacao e validacao de inputs
+  rate-limit.ts â€” Rate limiting persistido
+  resend.ts â€” Envio de emails (ativacao, reset, convite)
+
+CONTAINERS E DOCKER:
+- Dockerfile multi-stage:
+  - Stage 1 (builder): node:22-alpine, instala libc6-compat, npm install, prisma generate, npm run build
+  - Stage 2 (runner): node:22-alpine, copia artefatos de build, NODE_ENV=production, npm start
+- Orquestracao: Docker Swarm (service update com rollback automatico)
+- Registry: local em 127.0.0.1:5000
+- Tag: commit SHA do git
+
+APIs:
+- Server Actions (RPC via Next.js): todas as mutacoes e queries de dominio
+- REST (apenas autenticacao):
+  - POST /api/auth/login
+  - POST /api/auth/register
+  - POST /api/auth/clear-session
+  - POST /api/auth/forgot-password
+  - POST /api/auth/reset-password
+
+AUTENTICACAO E AUTORIZACAO:
+- Autenticacao: JWT (jsonwebtoken, provavelmente HS256 com JWT_SECRET)
+- Armazenamento: cookie httpOnly, secure (prod), sameSite: strict
+- Sessao: whitelist no banco (tabela Session) â€” verificada a cada request protegido
+- Revogacao: deleteMany por userSeqid no login; delete all no reset de senha
+- Middleware: src/proxy.ts verifica JWT, rejeita tokens expirados/adulterados, limpa cookie invalido
+- Autorizacao: RBAC por workspace (OWNER > ADMIN > MEMBER > VIEWER)
+- Verificacao: getLoggedUser() em cada server action + checkCardPermission / assertColumnPermission
+
+PROCESSOS ASSINCRONOS:
+- Envio de emails (Resend API): sincrono dentro da server action (sem fila)
+- Informacao sobre filas, workers ou jobs: nao identificada nos materiais
+
+ARMAZENAMENTO DE ARQUIVOS:
+- Nao implementado. Cards nao suportam anexos (item F-004 planejado).
+
+LOGS, MONITORAMENTO E OBSERVABILIDADE:
+- Logs: console.error em catch blocks (67 ocorrencias, nao estruturado)
+- Monitoramento: /admin/diagnostics (metricas sob demanda, sem coleta continua)
+- APM: nao identificado
+- Alertas: nao identificados
+- Metricas em tempo real: nao identificadas
+
+ESTRATEGIA DE DEPLOY E VERSIONAMENTO:
+- Deploy: git pull -> docker build -> docker push (registry local) -> docker service update -> rollback automatico se falhar
+- Build: next build --webpack (Turbopack incompativel com Alpine/musl)
+- Versionamento: Git (branch main), commits com conventional commits parcial
+- CI/CD pipeline automatizada: nao identificada nos materiais (deploy aparenta ser manual via script)
+
+DEPENDENCIAS EXTERNAS:
+- Resend API: envio de emails transacionais
+- cdnjs.cloudflare.com: html2pdf.js para geracao de PDF client-side
+- GitHub/githubusercontent.com: imagens de avatar (permitido no CSP)
+
+------------------------------------------------------------
+DIAGRAMA LOGICO DA ARQUITETURA
+------------------------------------------------------------
+
+[Navegador/Cliente]
+    |
+    | HTTPS (port 443 â€” reverse proxy nao documentado)
+    |
+[Docker Swarm â€” hv5srvd]
+    |
+    +-- [Container: flow (Node 22 Alpine, port 3000)]
+    |       |
+    |       +-- [Next.js 16 App Router]
+    |       |       |
+    |       |       +-- Middleware (proxy.ts: JWT check, redirect)
+    |       |       |
+    |       |       +-- Pages/Layouts (Server Components)
+    |       |       |       |
+    |       |       |       +-- Server Actions (src/app/actions/)
+    |       |       |               |
+    |       |       |               +-- Domain Services (src/domain/services/)
+    |       |       |                       |
+    |       |       |                       +-- Repositories (src/domain/repositories/)
+    |       |       |                               |
+    |       |       |                               +-- Prisma Client (PrismaPg adapter)
+    |       |       |                                       |
+    |       |       +-- API Routes (/api/auth/*)             |
+    |       |       |                                       |
+    |       |       +-- Static Assets (.next/static)        |
+    |       |                                               |
+    |       +-- [pg.Pool] ---------------------------------+
+    |                                                       |
+    +-- [Container: pgvector (PostgreSQL 14+)] <------------+
+    |
+    +-- [Registry: 127.0.0.1:5000]
+
+[Servicos Externos]
+    |
+    +-- Resend API (emails transacionais)
+    +-- cdnjs.cloudflare.com (html2pdf.js â€” CDN)
+
+
+============================================================
+6. MODELO DE DADOS E INFORMACOES GERENCIADAS
+============================================================
+
+PRINCIPAIS ENTIDADES DO DOMINIO:
+
+1. User â€” Usuario do sistema (identidade, credenciais, estado de ativacao)
+2. Session â€” Sessao ativa (whitelist JWT para revogacao)
+3. VerificationToken â€” Tokens temporarios (ativacao de conta, reset de senha)
+4. AuthAttempt â€” Registro de tentativas para rate limiting
+5. Workspace â€” Area de trabalho multi-tenant (container de projetos e equipe)
+6. WorkspaceType â€” Tipo/categoria do workspace (predefinido)
+7. WorkspaceMember â€” Relacao N:N User<->Workspace com papel (role)
+8. WorkspaceInvite â€” Convite pendente para workspace
+9. Board â€” Atividade/projeto dentro de um workspace
+10. Card â€” Evento/tarefa dentro de um board, posicionado em uma coluna
+11. card_act â€” Registro de acao/andamento em um card
+12. Column â€” Coluna Kanban (compartilhada por workspace)
+13. Sector â€” Setor/area da atividade (predefinido)
+14. ActivityLog â€” Registro global de auditoria
+15. ServerDiagnosticSnapshot â€” Snapshot de metricas do sistema
+
+RELACOES RELEVANTES:
+
+User 1:N Workspace (como criador)
+User 1:N WorkspaceMember (participa de multiplos workspaces)
+User 1:N Session (sessao unica por vez, mas historico)
+User 1:N Board (como responsavel)
+User 1:N Card (como criador â€” CardOwner)
+User 1:N Card (como responsavel â€” CardTaskUser)
+User 1:N card_act (como executor da acao)
+User 1:N WorkspaceInvite (como remetente)
+User 1:N ServerDiagnosticSnapshot (1 snapshot ativo por usuario)
+
+Workspace 1:N Board
+Workspace 1:N Column
+Workspace 1:N WorkspaceMember
+Workspace 1:N WorkspaceInvite
+Workspace N:1 WorkspaceType
+
+Board N:1 Workspace
+Board 1:N Card
+Board N:1 Sector (opcional)
+Board N:1 User (responsavel, opcional)
+
+Card N:1 Board (obrigatorio, NOT NULL)
+Card N:1 Column (obrigatorio)
+Card N:1 User (criador, opcional)
+Card N:1 User (responsavel/taskuser, opcional)
+Card 1:N card_act
+
+Column N:1 Workspace
+Column 1:N Card
+
+REGRAS DE INTEGRIDADE E VALIDACAO:
+- card.board_seqid NOT NULL â€” card nao existe sem board
+- card.created_by NOT NULL DEFAULT 1 â€” criador sempre registrado
+- card.moduser NOT NULL DEFAULT 1 â€” modificador sempre registrado
+- card.dtmod NOT NULL DEFAULT NOW() â€” data de modificacao sempre presente
+- WorkspaceMember UNIQUE (workspaceSeqid, userSeqid) â€” um papel por usuario/workspace
+- User.email UNIQUE â€” email e identificador unico
+- Sector.name UNIQUE â€” nomes de setor nao repetem
+- VerificationToken UNIQUE (email, token) â€” par email+token unico
+- Session.token UNIQUE â€” token de sessao unico
+- CASCADE DELETE: Card -> card_act; Column -> Card; Board -> Card; Workspace -> WorkspaceMember, WorkspaceInvite, Column; User -> Session
+
+HISTORICO, AUDITORIA E RASTREABILIDADE:
+- card_act: historico completo de interacoes com cada card
+- ActivityLog: eventos globais indexados por board, user e timestamp
+- Campos de auditoria em Card: created_by, moduser, dtmod, createdAt
+- Campos de auditoria em Board: created_by, moduser, dtmod, createdAt
+- ServerDiagnosticSnapshot: metricas pontuais do sistema
+
+DADOS PESSOAIS OU SENSIVEIS TRATADOS:
+- Nome do usuario (User.name)
+- Email do usuario (User.email) â€” identificador principal
+- Senha (User.password) â€” armazenada como hash bcrypt
+- IP de acesso (AuthAttempt.ip) â€” para rate limiting
+- Tokens JWT (Session.token) â€” credencial de sessao
+- Tokens de verificacao (VerificationToken.token) â€” acesso temporario
+
+CUIDADOS LGPD:
+- Dados pessoais: nome e email sao os unicos PII identificados
+- Senha: armazenada como hash (nao reversivel) â€” adequado
+- IP: coletado para seguranca (rate limiting) â€” base legal: interesse legitimo
+- Retencao: informacao nao identificada nos materiais sobre politica de retencao ou exclusao automatica
+- Direito de exportacao de dados (art. 18 LGPD): nao implementado â€” item S-044 planejado
+- Direito de exclusao: nao implementado (sem soft-delete generico) â€” item S-043 planejado
+- Consentimento: informacao nao identificada sobre termos de uso ou politica de privacidade
+
+
+============================================================
+7. SEGURANCA, ACESSO E CONFORMIDADE
+============================================================
+
+CONTROLES CONFIRMADOS (em producao):
+
+Autenticacao:
+- Hash de senha: bcryptjs com 10 rounds de salt
+- Requisitos de senha: 8+ chars, 1 maiuscula, 1 minuscula, 1 digito, 1 especial
+- Verificacao de email obrigatoria para ativacao de conta
+- Rate limiting por IP e email (persistido no banco):
+  - LOGIN: 5 tentativas / 15 min
+  - REGISTER: 3 / hora
+  - FORGOT_PASSWORD: 2 / hora
+  - RESET_PASSWORD: 3 / hora
+  - VERIFY_EMAIL: 5 / 15 min
+  - RESEND_ACTIVATION: 3 / hora
+  - ACCEPT_INVITE: 10 / 15 min
+  - REQUEST_TRANSFER: 10 / 15 min
+  - RESPOND_TRANSFER: 10 / 15 min
+
+Sessao:
+- JWT com expiracao de 7 dias
+- Cookie: httpOnly, secure (producao), sameSite: strict
+- Whitelist de sessao no banco (tabela Session) â€” verificada em cada request
+- Sessao unica por usuario (login revoga anteriores)
+- Reset de senha revoga todas as sessoes
+- Middleware (proxy.ts): verifica JWT, limpa cookie invalido, redireciona
+
+Autorizacao:
+- RBAC por workspace: OWNER > ADMIN > MEMBER > VIEWER
+- Verificacao de role em todas as server actions (via getLoggedUser + assertColumnPermission/checkCardPermission)
+- Allowlist de roles em convites/updates (prevencao de injecao de papel)
+- Filtro de permissao por contexto: MEMBER so edita cards que criou ou e responsavel
+- OWNER-only: encerramento de board, exclusao de atividades, gestao de membros
+
+Validacao de inputs:
+- Sanitizacao XSS (remocao de HTML tags) em todos os campos de texto
+- Limites de tamanho: nome 100 chars, titulo 200 chars, descricao 5000 chars
+- Validacao de email (regex + normalize + max 254 chars)
+- Validacao de IDs sequenciais (numerico-only)
+- Validacao de token de convite (formato UUID)
+- Verificacao de email do destinatario no aceite de convite
+
+Security headers (via next.config.ts):
+- Content-Security-Policy (CSP) completo
+- Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+Integridade de dados:
+- Transacoes atomicas (prisma.$transaction) para operacoes compostas
+- Protecao de dtcon contra reabertura indevida
+- NOT NULL enforcements em campos de auditoria
+- Validacao de existencia de entidades em transferencias
+
+Protecao de segredos:
+- .env no .gitignore
+- MOCK_USER_ENABLED removido (bypass de dev eliminado)
+- Tokens de convite nao expostos em respostas de API
+- Mensagens de erro genericas para o cliente (allowlist de mensagens conhecidas)
+
+CONTROLES NAO CONFIRMADOS:
+- Criptografia de dados em repouso (disco/banco)
+- TLS termination (reverse proxy nao documentado)
+- Backup automatizado do banco de dados
+- Rotacao de JWT_SECRET
+- Monitoramento de intrusao (IDS/IPS)
+- WAF (Web Application Firewall)
+- Segregacao de rede entre containers
+- Scan de vulnerabilidades em imagens Docker
+- Politica de retencao de logs
+- Plano de resposta a incidentes
+
+RISCOS IDENTIFICADOS:
+
+1. JWT sem refresh token (S-009): sessao expira abruptamente apos 7 dias sem aviso.
+   Impacto: UX ruim + possivel perda de dados em formulario.
+   Recomendacao: Implementar sliding session ou refresh token.
+
+2. Papel VIEWER nao auditado (S-010): VIEWER pode ter acesso indevido a acoes de escrita.
+   Impacto: Possivel escalacao de privilegio.
+   Recomendacao: Auditar e implementar verificacao de VIEWER em todas as actions.
+
+3. CSP com 'unsafe-inline' e 'unsafe-eval': reduz eficacia contra XSS.
+   Impacto: XSS persistente pode executar scripts mesmo com CSP.
+   Recomendacao: Migrar para nonce-based CSP.
+
+4. Sem backup documentado: perda total de dados em caso de falha do container/disco.
+   Impacto: Critico â€” perda irreversivel de dados.
+   Recomendacao: Implementar backup automatizado com verificacao de restauracao.
+
+5. Sem monitoramento continuo: falhas e ataques podem passar despercebidos.
+   Impacto: Tempo de deteccao indefinido.
+   Recomendacao: Implementar logging estruturado + alertas.
+
+6. Enumeracao de email (S-034): possivel descobrir emails cadastrados.
+   Impacto: Facilitacao de ataques direcionados.
+   Recomendacao: Mensagem generica para registro e recuperacao.
+
+RECOMENDACOES TECNICAS DE SEGURANCA:
+- Implementar refresh token com sliding session
+- Auditar role VIEWER em todas as server actions
+- Migrar CSP para nonce-based (eliminar unsafe-inline/eval)
+- Documentar e implementar backup automatizado
+- Implementar logging estruturado (JSON) para acoes de seguranca
+- Adicionar 2FA/TOTP (item S-040 planejado)
+- Implementar soft-delete com periodo de retencao (item S-043)
+- Implementar export de dados do usuario (LGPD art. 18, item S-044)
+
+
+============================================================
+8. INTEGRACOES E DEPENDENCIAS EXTERNAS
+============================================================
+
+Sistema ou Servico | Finalidade | Tipo de integracao | Dados envolvidos | Status | Riscos e dependencias
+Resend API | Envio de emails transacionais (ativacao, reset, convite) | REST API (SDK oficial v6.12.3) | Email destino, nome, tokens de link | Em producao | Dependencia critica â€” sem Resend nao ha ativacao de conta, recuperacao de senha ou convites. Sem fallback configurado.
+cdnjs.cloudflare.com (html2pdf.js) | Geracao de PDF a partir de HTML client-side | CDN script inject | Conteudo HTML do relatorio (renderizado no browser) | Em producao | Se CDN indisponivel, geracao de PDF falha silenciosamente (item P-005). Dados do relatorio trafegam apenas no browser (nao saem para servidor externo).
+GitHub/githubusercontent.com | Imagens de avatar de usuario | Referencia de imagem via CSP | URLs de imagem publica | Em producao | Baixo risco â€” apenas imagens publicas.
+PostgreSQL (pgvector container) | Persistencia de todos os dados do sistema | Driver nativo pg + Prisma adapter | Todos os dados de dominio | Em producao | Ponto unico de falha â€” sem replicacao ou failover documentados. DATABASE_URL injetada como variavel de ambiente.
+
+INTEGRACOES PLANEJADAS (NAO ATIVAS):
+- Google Calendar / Outlook: sync de datas previstas (item I-001)
+- Slack / Teams: notificacoes em canal (item I-002)
+- Webhooks de saida: eventos do sistema para integracao custom (item I-003)
+- Importador Trello/Asana: migracao de dados (item I-004)
+- API publica REST/GraphQL: acesso programatico (item I-005)
+- Email digest semanal: engajamento (item I-006)
+
+
+============================================================
+9. OPERACAO, SUSTENTACAO E MANUTENCAO
+============================================================
+
+COMO O SISTEMA E OPERADO NO DIA A DIA:
+- Aplicacao servida via Docker Swarm em container Node.js 22 Alpine
+- Banco de dados PostgreSQL em container separado (pgvector) no mesmo host
+- Sem evidencia de dashboard de monitoramento ou alertas automaticos
+- Metricas disponibilizadas sob demanda via /admin/diagnostics
+- Logs disponibilizados via stdout do container (console.error)
+
+COMO SAO FEITAS ATUALIZACOES E DEPLOYS:
+- Processo documentado:
+  1. git pull (atualiza codigo no servidor)
+  2. docker build (imagem Node 22 Alpine com build Next.js webpack)
+  3. docker push 127.0.0.1:5000/flow:<commit-sha> (envia para registry local)
+  4. docker service update (atualiza servico no Swarm)
+  5. Rollback automatico se container nao iniciar com sucesso
+- Build utiliza obrigatoriamente --webpack (Turbopack incompativel com musl/Alpine)
+- Migrations NAO sao executadas automaticamente - SQL puro gerado e executado manualmente
+- Prisma generate executado no build (dentro do Dockerfile)
+
+DEPENDENCIAS DE INFRAESTRUTURA:
+- Servidor Linux "hv5srvd" com Docker Swarm
+- PostgreSQL (container pgvector)
+- Registry Docker local (127.0.0.1:5000)
+- Variaveis de ambiente: DATABASE_URL, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, NEXT_PUBLIC_APP_URL
+- Node.js 22 runtime
+
+PONTOS UNICOS DE FALHA:
+1. Servidor unico (hv5srvd): sem redundancia ou failover
+2. Banco PostgreSQL em container unico: sem replica ou cluster
+3. Registry local: se indisponivel, deploy falha
+4. Resend API: se indisponivel, ativacao de conta e convites param
+5. CDN cloudflare (html2pdf.js): se indisponivel, PDF nao gera
+
+ESTRATEGIA DE BACKUP:
+- Informacao nao identificada nos materiais fornecidos.
+
+COMO INVESTIGAR ERROS:
+- Logs: stdout/stderr do container Docker (console.error)
+- Diagnostico: /admin/diagnostics com metricas agregadas
+- Historico: ActivityLog e card_act para auditoria de dominio
+- Nao ha: APM, tracing distribuido, centralizacao de logs, alertas
+
+CONHECIMENTOS NECESSARIOS PARA MANTER O FLOW:
+- TypeScript 5, Next.js 16, React 19, Prisma 7, PostgreSQL
+- Docker/Docker Swarm, CSS Modules, JWT, Git
+
+REQUISITOS PARA NOVA EQUIPE:
+1. Acesso ao repositorio Git
+2. Acesso ao servidor hv5srvd (SSH)
+3. Acesso ao banco PostgreSQL
+4. Variaveis de ambiente completas
+5. Conta Resend configurada
+6. Conhecimento do ROADMAP.md
+7. Compreensao do deploy manual
+8. Schema Prisma e migracoes manuais
+9. Regra "dtcon como unico criterio de conclusao"
+10. CLAUDE.md / AGENTS.md para padroes
+
+============================================================
+10. ROADMAP, PENDENCIAS E EVOLUCOES
+============================================================
+
+EM ANDAMENTO / PARCIALMENTE CONCLUIDO:
+
+A-002 | Extrair logica de permissoes para hook/service | Arquitetura | Parcial | P1
+M-002 | Auditoria de dependencias (npm audit) | Manutencao | Parcial | P2
+
+PROXIMAS EVOLUCOES (PENDENTES P1/P2):
+
+S-009 | Refresh token / sliding session | Seguranca | Pendente | P2
+S-010 | Auditar permissoes VIEWER | Seguranca | Pendente | P2
+S-013 | Rate limiting distribuido | Seguranca | Pendente | P2
+A-001 | Unificar sistema de IDs (BigInt vs cuid) | Arquitetura | Pendente | P1
+A-010 | Quebrar DashboardClient.tsx (2500+ linhas) | Arquitetura | Pendente | P1
+A-005 | Padronizar camada de dominio | Arquitetura | Pendente | P2
+A-006 | Testes automatizados para permissoes | Arquitetura | Pendente | P2
+U-001 | Feedback otimista com rollback | UX | Pendente | P1
+U-002 | Loading states para acoes lentas | UX | Pendente | P1
+U-013 | Acessibilidade em modais (ARIA, focus trap) | UX | Pendente | P1
+M-005 | Configurar ESLint | Manutencao | Pendente | P2
+M-006 | Integridade referencial ActivityLog | Manutencao | Pendente | P2
+P-001 a P-009 | Separacao de rotas e otimizacoes | Performance | Pendente | P2
+
+MELHORIAS FUTURAS (PLANEJADAS, SEM DATA):
+
+F-001 | Templates de board | Funcionalidade
+F-002 | Tags/labels livres em cards | Funcionalidade
+F-003 | Subtasks/checklists | Funcionalidade
+F-004 | Anexos/arquivos (S3/MinIO) | Funcionalidade
+F-005 | Dependencias entre cards | Funcionalidade
+F-006 | Campos customizados por board | Funcionalidade
+F-010 | Notificacoes in-app | Colaboracao
+F-011 | Mencoes @usuario | Colaboracao
+F-012 | Real-time (WebSocket/SSE) | Colaboracao
+I-001 | Google Calendar / Outlook sync | Integracao
+I-002 | Slack / Teams notificacoes | Integracao
+I-003 | Webhooks de saida | Integracao
+I-005 | API publica REST/GraphQL | Integracao
+R-001 | Dashboard de metricas | Relatorios
+R-002 | Burndown / velocity chart | Relatorios
+R-004 | Export CSV/Excel | Relatorios
+S-040 | 2FA / TOTP | Seguranca
+S-041 | SSO (SAML / OIDC) | Seguranca
+S-043 | Soft delete + restore | Seguranca
+S-044 | Export de dados LGPD | Compliance
+M-010 | PWA + offline mode | Mobile
+U-030 | Atalhos de teclado globais | UX
+U-031 | Busca global (cmd+k) | UX
+
+DEBITOS TECNICOS (P3):
+
+S-014 | Logging estruturado | Seguranca
+A-003 | Substituir 'as any' (27 instancias) | Arquitetura
+A-007 | Helpers serializacao BigInt | Arquitetura
+A-008 | Error boundaries | Arquitetura
+A-011 | Utilitarios duplicados | Arquitetura
+A-012 | useCallback/useMemo | Arquitetura
+A-013 | Tipar states any[] | Arquitetura
+A-015 | Remover stubs Column.tsx | Arquitetura
+A-016 | Remover botoes sem handler UserMenu | Arquitetura
+P-003 | Indexes no banco | Performance
+M-001 | Remover dep 'cookie' | Manutencao
+M-003 | Padronizar erros em actions | Manutencao
+
+
+============================================================
+11. DIFERENCIAIS TECNICOS E ESTRATEGICOS
+============================================================
+
+1. CENTRALIZACAO DA GESTAO:
+   Evidencia: Multi-tenant com workspaces tipados, boards, cards. Dashboard unificado.
+
+2. CONTROLE DE ACESSO GRANULAR (RBAC):
+   Evidencia: 4 papeis, verificacao em todas as actions, hook useWorkspacePermissions.
+
+3. AUTOMACAO DE RELATORIOS COM PARECER TECNICO:
+   Evidencia: Semaforo automatico, KPIs, projecao de velocidade, export PDF.
+
+4. RASTREABILIDADE COMPLETA:
+   Evidencia: card_act, ActivityLog, campos obrigatorios created_by/moduser/dtmod.
+
+5. INTEGRIDADE DE DADOS POR DESIGN:
+   Evidencia: Transacoes atomicas, NOT NULL, protecao dtcon, consistencia coluna<->dtcon.
+
+6. FLUXOS DE APROVACAO FORMAIS:
+   Evidencia: Solicitacao/aprovacao de encerramento, transferencia com aceite.
+
+7. SEGURANCA EM PROFUNDIDADE:
+   Evidencia: Rate limiting, XSS sanitization, security headers, sessao revogavel.
+
+8. ARQUITETURA MODERNA:
+   Evidencia: Next.js 16, React 19, TypeScript strict, Prisma 7, Actions/Services/Repositories.
+
+9. OPERACAO CONTAINERIZADA:
+   Evidencia: Docker multi-stage, Swarm com rollback automatico.
+
+10. EVOLUCAO PLANEJADA:
+    Evidencia: Roadmap com 60+ itens categorizados por area e prioridade.
+
+
+============================================================
+12. LIMITACOES, RISCOS E PONTOS DE ATENCAO
+============================================================
+
+Risco ou limitacao | Impacto | Probabilidade | Evidencia | Recomendacao
+DashboardClient.tsx monolitico (2500+ linhas) | Re-renders excessivos, dificuldade de manutencao | Alta | A-010 no roadmap | Refatorar em sub-componentes e hooks
+Sem testes automatizados | Regressoes nao detectadas em mudancas | Alta | A-006 no roadmap, sem framework de teste | Implementar Jest/Vitest + testes de permissao
+Sem backup documentado do banco | Perda irreversivel de dados | Media | Nenhuma evidencia de backup | Implementar pg_dump automatizado + verificacao
+JWT sem refresh token | Sessao expira abruptamente (7 dias) | Alta | S-009 no roadmap | Sliding session ou refresh token
+Papel VIEWER nao implementado na UI | Escalacao de privilegio | Media | S-010 no roadmap | Auditar e implementar verificacao
+IDs duais (BigInt + cuid) | Bugs de tipo, conversoes manuais | Alta | A-001 no roadmap | Unificar para BigInt seqid
+CSP com unsafe-inline/eval | XSS pode executar scripts | Media | next.config.ts | Migrar para nonce-based CSP
+ActivityLog sem FK | Dados orfaos possiveis | Media | M-006 no roadmap | Adicionar foreign keys
+Sem monitoramento continuo | Falhas nao detectadas | Alta | Apenas /admin/diagnostics sob demanda | Implementar observabilidade
+Servidor unico sem redundancia | Indisponibilidade total em falha | Media | Infraestrutura atual | Avaliar redundancia
+Sem ESLint configurado | Inconsistencias de codigo | Media | M-005 no roadmap | Configurar linting
+Envio de email sincrono | Timeout em server actions | Baixa | resend.ts sem fila | Avaliar fila assincrona
+html2pdf.js via CDN sem preload | PDF falha se CDN lento | Baixa | P-005 no roadmap | Preload ou bundle local
+67 ocorrencias de console.error | Logs nao estruturados, nao audataveis | Media | S-014 no roadmap | Logger estruturado (JSON)
+Drag-and-drop sem teclado | Inacessivel para usuarios sem mouse | Media | U-017 no roadmap | Implementar alternativa keyboard
+Modais sem ARIA | Inacessivel para screen readers | Alta | U-013 no roadmap | Implementar focus trap, role=dialog
+Sem politica de retencao LGPD | Risco de nao-conformidade | Media | S-044 planejado | Implementar export + exclusao de dados
+Sem soft-delete | Exclusoes irreversiveis | Media | S-043 planejado | Lixeira com retencao 30 dias
+Query pesada findByUserId | Lentidao com crescimento de dados | Alta | P-005 no roadmap | Separar queries por contexto
+
+
+============================================================
+13. RECOMENDACOES TECNICAS PARA CONTINUIDADE
+============================================================
+
+Nota: Todas as recomendacoes abaixo sao sugestoes baseadas na analise dos materiais.
+NAO sao funcionalidades ja existentes.
+
+CURTO PRAZO (1-3 meses):
+
+Estabilizacao:
+- Implementar backup automatizado do PostgreSQL (pg_dump diario + offsite)
+- Verificar e documentar procedimento de restauracao
+- Testar rollback do Docker Swarm manualmente
+
+Correcoes criticas:
+- Auditar role VIEWER em todas as server actions (S-010)
+- Implementar refresh token / sliding session (S-009)
+- Proteger /admin/diagnostics com verificacao de role (P-010)
+
+Documentacao:
+- Criar .env.example documentado com todas as variaveis
+- Documentar procedimento de deploy passo a passo
+- Documentar procedimento de migracao de banco
+
+Seguranca:
+- Implementar logging estruturado (JSON) para acoes de seguranca
+- Revisar CSP para reduzir unsafe-inline/eval
+- Documentar plano de resposta a incidentes
+
+MEDIO PRAZO (3-6 meses):
+
+Testes:
+- Configurar framework de testes (Vitest recomendado para Next.js)
+- Escrever testes para regras de permissao (RBAC)
+- Escrever testes para logica de dtcon (conclusao)
+- Meta: 80% de cobertura em domain/services/
+
+Observabilidade:
+- Substituir console.error por logger estruturado
+- Implementar health check endpoint
+- Considerar Sentry ou similar para error tracking
+- Dashboard de metricas operacionais
+
+Padronizacao:
+- Configurar ESLint + Prettier
+- Tipar todas as props com any[] (A-013)
+- Substituir as any por tipos definidos (A-003)
+- Padronizar tratamento de erros em actions (M-003)
+
+Melhorias arquiteturais:
+- Quebrar DashboardClient.tsx em sub-componentes (A-010)
+- Separar Board/Kanban em rota propria (P-001)
+- Separar MyEvents e MyActivities em rotas proprias (P-002, P-003)
+- Implementar paginacao cursor-based para boards (P-006)
+
+Reducao de debitos tecnicos:
+- Unificar sistema de IDs — plano de migracao (A-001)
+- Adicionar indexes no banco para queries frequentes (P-003)
+- Implementar lazy load de card_act (P-007)
+
+LONGO PRAZO (6-12 meses):
+
+Escalabilidade:
+- Avaliar replicacao PostgreSQL (read replica)
+- Implementar cache layer (Redis) para queries frequentes
+- Virtualizar listas grandes (P-009)
+- Avaliar CDN para assets estaticos
+
+Governanca:
+- Implementar soft-delete com retencao (S-043)
+- Implementar export de dados LGPD (S-044)
+- Audit log persistente para acoes de sistema (S-042)
+- Politica de retencao de dados documentada
+
+Automacao:
+- CI/CD pipeline (GitHub Actions ou similar)
+- Testes automatizados no pipeline
+- Deploy automatizado com gates de qualidade
+- npm audit automatizado
+
+Evolucao de produto:
+- Notificacoes in-app (F-010)
+- Real-time com WebSocket/SSE (F-012)
+- Templates de board (F-001)
+- Subtasks/checklists (F-003)
+
+Expansao de integracoes:
+- API publica REST (I-005)
+- Webhooks de saida (I-003)
+- Integracao calendario (I-001)
+
+Estrategia de dados:
+- Dashboard analitico por workspace (R-001)
+- Metricas de velocity/burndown (R-002)
+- Export CSV/Excel (R-004)
+
+
+============================================================
+14. DIVERGENCIAS E PONTOS QUE EXIGEM VALIDACAO
+============================================================
+
+1. Reverse proxy nao documentado: A aplicacao expoe porta 3000, mas nao ha evidencia de como o TLS e terminado ou como o trafego externo chega ao container. Validar: Nginx? Traefik? Caddy?
+
+2. Backup do banco: Nenhuma evidencia de backup automatizado. Validar com equipe de infra se existe rotina externa.
+
+3. Algoritmo JWT: Codigo usa jsonwebtoken com JWT_SECRET (string). Provavelmente HS256, mas nao confirmado. Validar se e HS256 ou RS256.
+
+4. Pool size PostgreSQL: Nao ha configuracao explicita de pool size no pg.Pool. Usa defaults do driver. Validar se adequado para carga atual.
+
+5. Item M-008 duplica A-017: Ambos pedem remocao do modelo Department. A-017 ja foi concluido. Validar se M-008 pode ser removido do roadmap.
+
+6. Modelo 'Department' no schema: A-017 indica que foi removido, mas validar se a migration foi aplicada em producao.
+
+7. Campo 'cookie' em dependencias: Instalado mas nao referenciado no codigo. Validar se pode ser removido.
+
+8. Campo User.role: Item S-011 indica remocao. Validar se migration foi aplicada em producao.
+
+9. Workspace.userId (legacy) vs users_seqid: Dois campos para criador. Validar se userId (string) pode ser removido.
+
+10. CDN html2pdf.js: Versao especifica nao documentada. Validar compatibilidade e considerar bundle local.
+
+11. Resend free tier vs pago: Nao documentado qual plano. Validar limites de envio.
+
+12. Numero real de usuarios e workspaces em producao: Diagnostico menciona "MAPLE CONSTRUTORA com 568 boards" mas dados de escala geral nao documentados.
+
+13. forceConsistentCasingInFileNames: A-018 indica conclusao, mas validar se ha arquivos com casing inconsistente ja existentes.
+
+
+============================================================
+15. CONCLUSAO
+============================================================
+
+O FLOW e uma plataforma de gestao de projetos e atividades com fundacao tecnica solida e visao clara de evolucao. O sistema ja opera em producao com funcionalidades essenciais entregues: gestao de workspaces multi-tenant, boards e cards Kanban, controle de acesso RBAC, historico de acoes, relatorios automatizados com parecer tecnico e infraestrutura containerizada.
+
+NIVEL DE MATURIDADE:
+O produto esta no estagio de MVP funcional em producao (v0.1.0). A base de seguranca foi significativamente fortalecida (40+ itens de seguranca documentados, maioria dos criticos resolvidos). A arquitetura segue padroes modernos (Next.js 16, Server Actions, separacao de camadas) mas acumula debitos tecnicos identificados e documentados no roadmap.
+
+O QUE JA ESTA CONSOLIDADO:
+- Autenticacao segura com sessao revogavel e rate limiting
+- RBAC funcional por workspace (OWNER/ADMIN/MEMBER)
+- CRUD completo de workspaces, boards, cards e colunas
+- Kanban com drag-and-drop e atualizacoes otimistas
+- Relatorios com parecer tecnico automatizado (semaforo)
+- Integridade de dados (transacoes atomicas, protecao dtcon, auditoria)
+- Security headers completos
+- Validacao e sanitizacao de inputs
+- Deploy containerizado com rollback
+
+POTENCIAL DE EVOLUCAO:
+Alto. O roadmap documenta 60+ itens entre seguranca, arquitetura, UX, performance, funcionalidades, integracoes e compliance. A separacao em camadas (Actions/Services/Repositories) facilita evolucao incremental. As funcionalidades planejadas (notificacoes, real-time, templates, API publica, mobile) representam caminho natural de evolucao de produto.
+
+PRIORIDADES PARA CONTINUIDADE:
+1. Backup automatizado do banco (risco critico nao mitigado)
+2. Refatoracao do DashboardClient.tsx (bloqueador de produtividade)
+3. Framework de testes automatizados (prevencao de regressoes)
+4. Observabilidade basica (logging estruturado, health checks)
+5. Refresh token / sliding session (UX de sessao)
+
+O QUE PRECISA SER VALIDADO:
+- Existencia e adequacao de backup do banco
+- Configuracao do reverse proxy (TLS termination)
+- Plano do Resend API (limites de envio)
+- Migrations pendentes em producao (Department, User.role)
+- Escala atual do sistema (usuarios, dados, carga)
+
+
+============================================================
+16. APENDICES
+============================================================
+
+------------------------------------------------------------
+APENDICE A: GLOSSARIO DE TERMOS
+------------------------------------------------------------
+
+Workspace: Area de trabalho multi-tenant que agrupa equipes, boards e colunas.
+Board: Atividade ou projeto dentro de um workspace, com prazos e responsavel.
+Card: Evento ou tarefa atomica dentro de um board, posicionado em uma coluna Kanban.
+card_act: Registro de acao/andamento em um card (historico).
+Column: Coluna Kanban (ex: A Fazer, Em Progresso, Concluido). Compartilhada por workspace.
+Sector: Categoria fixa de atividade (ex: ENGENHARIA, SUPORTE, FINANCEIRO).
+dtcon: Campo de data de conclusao. Unico criterio para determinar se card/board esta concluido.
+dtmod: Data de ultima modificacao do registro.
+moduser: Identificador de quem realizou a ultima modificacao.
+RBAC: Role-Based Access Control. Controle de acesso baseado em papeis.
+OWNER: Papel com controle total do workspace (criar, editar, excluir, gerenciar membros).
+ADMIN: Papel com controle operacional (criar boards, gerenciar colunas, membros limitado).
+MEMBER: Papel de executor (interage com cards atribuidos ou criados por ele).
+VIEWER: Papel de leitura (definido no schema, nao implementado na UI).
+Server Action: Funcao "use server" do Next.js que executa no servidor (substitui REST para mutacoes).
+Parecer Tecnico: Relatorio automatizado com classificacao semaforo (verde/amarelo/vermelho).
+
+------------------------------------------------------------
+APENDICE B: INVENTARIO DE MODULOS
+------------------------------------------------------------
+
+1. Autenticacao (authActions, AuthService, UserRepository)
+2. Workspaces (workspaceActions, WorkspaceService, WorkspaceRepository)
+3. Boards/Atividades (boardActions, BoardService, BoardRepository)
+4. Cards/Eventos (cardActions, CardService, CardRepository)
+5. Colunas Kanban (columnActions, ColumnService, ColumnRepository)
+6. Historico/Auditoria (ActivityLogRepository, card_act)
+7. Relatorios (ActivityReportView, ReportsView, MyEventsView)
+8. Dashboard (dashboardActions, WelcomeDashboard)
+9. Diagnostico (diagnosticsActions, ServerDiagnosticSnapshot)
+10. Landing Page (page.tsx raiz)
+11. Convites (WorkspaceInvite, email, aceite)
+
+------------------------------------------------------------
+APENDICE C: INVENTARIO DE TECNOLOGIAS
+------------------------------------------------------------
+
+Categoria | Tecnologia | Versao | Finalidade
+Framework | Next.js | 16.2.6 | Fullstack (App Router, Server Actions)
+UI | React | 19.2.4 | Renderizacao de interface
+Linguagem | TypeScript | 5 | Tipagem estatica
+ORM | Prisma | 7.8.0 | Acesso a dados
+Banco | PostgreSQL | 14+ | Persistencia
+Driver DB | pg | 8.20.0 | Conexao PostgreSQL
+Auth | jsonwebtoken | 9.0.3 | JWT
+Hash | bcryptjs | 3.0.3 | Hash de senhas
+Email | Resend | 6.12.3 | Emails transacionais
+Icones | Lucide React | 1.16.0 | Icones SVG
+Dialogs | SweetAlert2 | 11.26.24 | Modais e alertas
+PDF | html2pdf.js | CDN | Geracao PDF client-side
+Container | Docker | - | Build e deploy
+Orquestracao | Docker Swarm | - | Service management
+Runtime | Node.js | 22 Alpine | Execucao
+
+------------------------------------------------------------
+APENDICE D: INVENTARIO DE INTEGRACOES
+------------------------------------------------------------
+
+Integracao | Status | Tipo
+Resend API (email) | Em producao | REST SDK
+cdnjs.cloudflare.com (html2pdf.js) | Em producao | CDN script
+GitHub/githubusercontent.com (avatares) | Em producao | Imagem URL
+Google Calendar/Outlook | Planejado | -
+Slack/Teams | Planejado | -
+Webhooks | Planejado | -
+API publica | Planejado | -
+Trello/Asana import | Planejado | -
+
+------------------------------------------------------------
+APENDICE E: DOCUMENTOS ANALISADOS
+------------------------------------------------------------
+
+1. package.json — Dependencias e scripts
+2. ROADMAP.md — Roadmap completo com 60+ itens
+3. CLAUDE.md / AGENTS.md — Padroes de desenvolvimento e infraestrutura
+4. prisma/schema.prisma — Modelo de dados completo (14 entidades)
+5. Dockerfile — Build multi-stage Node 22 Alpine
+6. next.config.ts — Security headers e CSP
+7. src/proxy.ts — Middleware de autenticacao
+8. src/lib/prisma.ts — Singleton Prisma com PrismaPg adapter
+9. src/lib/validation.ts — Sanitizacao e validacao de inputs
+10. src/lib/rate-limit.ts — Rate limiting persistido
+11. src/lib/resend.ts — Envio de emails transacionais
+12. src/hooks/useWorkspacePermissions.ts — Hook de RBAC
+13. src/types/permissions.ts — Tipos de permissao
+14. src/app/actions/ — Todas as server actions (7 arquivos)
+15. src/domain/services/ — Servicos de dominio (5 arquivos)
+16. src/domain/repositories/ — Repositorios (6 arquivos)
+17. src/components/ — Componentes UI (shell, kanban, grids, modals, views, shared)
+18. src/app/ — Paginas e rotas (dashboard, auth, admin, reports, invite, landing)
+
+------------------------------------------------------------
+APENDICE F: PERGUNTAS TECNICAS EM ABERTO
+------------------------------------------------------------
+
+1. Qual reverse proxy termina TLS antes do container?
+2. Existe backup automatizado do PostgreSQL? Com que frequencia?
+3. Qual o plano da Resend API (free/pro)? Quantos emails/mes?
+4. Quantos usuarios ativos existem em producao?
+5. Qual o volume de dados atual (boards, cards, card_acts)?
+6. A migration de remocao do Department foi aplicada?
+7. A migration de remocao do User.role foi aplicada?
+8. Existe monitoramento externo (uptime, alertas)?
+9. Qual o RTO/RPO aceitavel para o negocio?
+10. Ha algum SLA definido para disponibilidade?
+
+
+============================================================
+ENTREGAS ADICIONAIS OBRIGATORIAS
+============================================================
+
+------------------------------------------------------------
+A. LACUNAS DE INFORMACAO
+------------------------------------------------------------
+
+1. Configuracao do reverse proxy (TLS, dominio, certificado)
+2. Existencia e configuracao de backup automatizado
+3. Plano e limites do Resend API
+4. Metricas de uso real (usuarios ativos, volume de dados, carga)
+5. Politica de retencao de dados
+6. Termos de uso e politica de privacidade
+7. Plano de disaster recovery e RTO/RPO
+8. Algoritmo exato do JWT (HS256 vs RS256)
+9. Pool size do PostgreSQL em producao
+10. Monitoramento externo (uptime, alertas)
+11. SLA de disponibilidade
+12. CI/CD pipeline (se existe fora do repositorio)
+13. Testes manuais ou automatizados executados antes de deploy
+14. Processo de rollback detalhado
+15. Custos de infraestrutura (servidor, Resend, dominio)
+
+------------------------------------------------------------
+B. PERGUNTAS PARA DISCOVERY TECNICO
+------------------------------------------------------------
+
+ARQUITETURA:
+1. Existe plano de separar o front-end do back-end em servicos distintos?
+2. Server Actions sao suficientes ou ha necessidade de API REST separada?
+3. Qual a estrategia para escalar horizontalmente?
+
+INFRAESTRUTURA:
+4. Qual reverse proxy esta em uso (Nginx, Traefik, Caddy)?
+5. Existe redundancia no servidor (multi-node Swarm)?
+6. Qual o tamanho do disco e uso atual?
+7. Ha monitoramento de recursos (CPU, memoria, disco)?
+
+BANCO DE DADOS:
+8. Qual o tamanho atual do banco em GB?
+9. Ha queries lentas identificadas alem de findByUserId?
+10. Existe rotina de VACUUM/ANALYZE?
+11. Pool size esta configurado explicitamente?
+
+SEGURANCA:
+12. JWT_SECRET e rotacionado periodicamente?
+13. Ha plano de implementar 2FA?
+14. Existe WAF ou protecao DDoS?
+15. Como sao gerenciadas as variaveis de ambiente em producao?
+
+DEPLOY:
+16. Deploy e manual ou existe CI/CD?
+17. Qual a frequencia de deploys?
+18. Ha ambiente de staging?
+19. Como sao testadas mudancas antes de producao?
+
+MONITORAMENTO:
+20. Existe alerting para downtime?
+21. Como sao investigados incidentes hoje?
+22. Ha metricas de performance coletadas?
+
+TESTES:
+23. Ha testes manuais documentados?
+24. Qual framework de testes sera adotado?
+25. Ha plano de implementar testes E2E?
+
+ROADMAP:
+26. Qual a capacidade da equipe (devs, horas/semana)?
+27. Quais itens do roadmap sao prioridade absoluta para o negocio?
+28. Ha datas ou sprints definidos?
+
+METRICAS DE NEGOCIO:
+29. Quantos usuarios ativos existem?
+30. Qual a taxa de crescimento?
+31. Ha metricas de engajamento (DAU/MAU)?
+
+------------------------------------------------------------
+C. CHECKLIST DE VALIDACAO FINAL
+------------------------------------------------------------
+
+[ ] Todas as secoes obrigatorias (1-16) estao presentes
+[ ] Nenhuma funcionalidade foi inventada
+[ ] Status de cada item claramente diferenciado (producao/parcial/pendente/planejado)
+[ ] Dados sensiveis omitidos ou substituidos
+[ ] Texto em portugues do Brasil
+[ ] Formato texto simples sem Markdown
+[ ] Tabelas em formato "coluna | coluna"
+[ ] Sem emojis ou elementos decorativos
+[ ] Roadmap integrado mas diferenciado de funcionalidades entregues
+[ ] Divergencias documentadas na secao 14
+[ ] Recomendacoes claramente marcadas como sugestoes
+[ ] Lacunas de informacao explicitadas
+[ ] Perguntas de discovery priorizadas
+[ ] Fontes de evidencia citadas (arquivos, itens de roadmap)
+[ ] Documento adequado para analistas tecnicos experientes
+
+============================================================
+FIM DO DOCUMENTO
+============================================================
+

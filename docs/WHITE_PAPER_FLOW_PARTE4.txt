@@ -1,0 +1,161 @@
+﻿============================================================
+9. OPERACAO, SUSTENTACAO E MANUTENCAO
+============================================================
+
+COMO O SISTEMA E OPERADO NO DIA A DIA:
+- Aplicacao servida via Docker Swarm em container Node.js 22 Alpine
+- Banco de dados PostgreSQL em container separado (pgvector) no mesmo host
+- Sem evidencia de dashboard de monitoramento ou alertas automaticos
+- Metricas disponibilizadas sob demanda via /admin/diagnostics
+- Logs disponibilizados via stdout do container (console.error)
+
+COMO SAO FEITAS ATUALIZACOES E DEPLOYS:
+- Processo documentado:
+  1. git pull (atualiza codigo no servidor)
+  2. docker build (imagem Node 22 Alpine com build Next.js webpack)
+  3. docker push 127.0.0.1:5000/flow:<commit-sha> (envia para registry local)
+  4. docker service update (atualiza servico no Swarm)
+  5. Rollback automatico se container nao iniciar com sucesso
+- Build utiliza obrigatoriamente --webpack (Turbopack incompativel com musl/Alpine)
+- Migrations NAO sao executadas automaticamente - SQL puro gerado e executado manualmente
+- Prisma generate executado no build (dentro do Dockerfile)
+
+DEPENDENCIAS DE INFRAESTRUTURA:
+- Servidor Linux "hv5srvd" com Docker Swarm
+- PostgreSQL (container pgvector)
+- Registry Docker local (127.0.0.1:5000)
+- Variaveis de ambiente: DATABASE_URL, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, NEXT_PUBLIC_APP_URL
+- Node.js 22 runtime
+
+PONTOS UNICOS DE FALHA:
+1. Servidor unico (hv5srvd): sem redundancia ou failover
+2. Banco PostgreSQL em container unico: sem replica ou cluster
+3. Registry local: se indisponivel, deploy falha
+4. Resend API: se indisponivel, ativacao de conta e convites param
+5. CDN cloudflare (html2pdf.js): se indisponivel, PDF nao gera
+
+ESTRATEGIA DE BACKUP:
+- Informacao nao identificada nos materiais fornecidos.
+
+COMO INVESTIGAR ERROS:
+- Logs: stdout/stderr do container Docker (console.error)
+- Diagnostico: /admin/diagnostics com metricas agregadas
+- Historico: ActivityLog e card_act para auditoria de dominio
+- Nao ha: APM, tracing distribuido, centralizacao de logs, alertas
+
+CONHECIMENTOS NECESSARIOS PARA MANTER O FLOW:
+- TypeScript 5, Next.js 16, React 19, Prisma 7, PostgreSQL
+- Docker/Docker Swarm, CSS Modules, JWT, Git
+
+REQUISITOS PARA NOVA EQUIPE:
+1. Acesso ao repositorio Git
+2. Acesso ao servidor hv5srvd (SSH)
+3. Acesso ao banco PostgreSQL
+4. Variaveis de ambiente completas
+5. Conta Resend configurada
+6. Conhecimento do ROADMAP.md
+7. Compreensao do deploy manual
+8. Schema Prisma e migracoes manuais
+9. Regra "dtcon como unico criterio de conclusao"
+10. CLAUDE.md / AGENTS.md para padroes
+
+============================================================
+10. ROADMAP, PENDENCIAS E EVOLUCOES
+============================================================
+
+EM ANDAMENTO / PARCIALMENTE CONCLUIDO:
+
+A-002 | Extrair logica de permissoes para hook/service | Arquitetura | Parcial | P1
+M-002 | Auditoria de dependencias (npm audit) | Manutencao | Parcial | P2
+
+PROXIMAS EVOLUCOES (PENDENTES P1/P2):
+
+S-009 | Refresh token / sliding session | Seguranca | Pendente | P2
+S-010 | Auditar permissoes VIEWER | Seguranca | Pendente | P2
+S-013 | Rate limiting distribuido | Seguranca | Pendente | P2
+A-001 | Unificar sistema de IDs (BigInt vs cuid) | Arquitetura | Pendente | P1
+A-010 | Quebrar DashboardClient.tsx (2500+ linhas) | Arquitetura | Pendente | P1
+A-005 | Padronizar camada de dominio | Arquitetura | Pendente | P2
+A-006 | Testes automatizados para permissoes | Arquitetura | Pendente | P2
+U-001 | Feedback otimista com rollback | UX | Pendente | P1
+U-002 | Loading states para acoes lentas | UX | Pendente | P1
+U-013 | Acessibilidade em modais (ARIA, focus trap) | UX | Pendente | P1
+M-005 | Configurar ESLint | Manutencao | Pendente | P2
+M-006 | Integridade referencial ActivityLog | Manutencao | Pendente | P2
+P-001 a P-009 | Separacao de rotas e otimizacoes | Performance | Pendente | P2
+
+MELHORIAS FUTURAS (PLANEJADAS, SEM DATA):
+
+F-001 | Templates de board | Funcionalidade
+F-002 | Tags/labels livres em cards | Funcionalidade
+F-003 | Subtasks/checklists | Funcionalidade
+F-004 | Anexos/arquivos (S3/MinIO) | Funcionalidade
+F-005 | Dependencias entre cards | Funcionalidade
+F-006 | Campos customizados por board | Funcionalidade
+F-010 | Notificacoes in-app | Colaboracao
+F-011 | Mencoes @usuario | Colaboracao
+F-012 | Real-time (WebSocket/SSE) | Colaboracao
+I-001 | Google Calendar / Outlook sync | Integracao
+I-002 | Slack / Teams notificacoes | Integracao
+I-003 | Webhooks de saida | Integracao
+I-005 | API publica REST/GraphQL | Integracao
+R-001 | Dashboard de metricas | Relatorios
+R-002 | Burndown / velocity chart | Relatorios
+R-004 | Export CSV/Excel | Relatorios
+S-040 | 2FA / TOTP | Seguranca
+S-041 | SSO (SAML / OIDC) | Seguranca
+S-043 | Soft delete + restore | Seguranca
+S-044 | Export de dados LGPD | Compliance
+M-010 | PWA + offline mode | Mobile
+U-030 | Atalhos de teclado globais | UX
+U-031 | Busca global (cmd+k) | UX
+
+DEBITOS TECNICOS (P3):
+
+S-014 | Logging estruturado | Seguranca
+A-003 | Substituir 'as any' (27 instancias) | Arquitetura
+A-007 | Helpers serializacao BigInt | Arquitetura
+A-008 | Error boundaries | Arquitetura
+A-011 | Utilitarios duplicados | Arquitetura
+A-012 | useCallback/useMemo | Arquitetura
+A-013 | Tipar states any[] | Arquitetura
+A-015 | Remover stubs Column.tsx | Arquitetura
+A-016 | Remover botoes sem handler UserMenu | Arquitetura
+P-003 | Indexes no banco | Performance
+M-001 | Remover dep 'cookie' | Manutencao
+M-003 | Padronizar erros em actions | Manutencao
+
+
+============================================================
+11. DIFERENCIAIS TECNICOS E ESTRATEGICOS
+============================================================
+
+1. CENTRALIZACAO DA GESTAO:
+   Evidencia: Multi-tenant com workspaces tipados, boards, cards. Dashboard unificado.
+
+2. CONTROLE DE ACESSO GRANULAR (RBAC):
+   Evidencia: 4 papeis, verificacao em todas as actions, hook useWorkspacePermissions.
+
+3. AUTOMACAO DE RELATORIOS COM PARECER TECNICO:
+   Evidencia: Semaforo automatico, KPIs, projecao de velocidade, export PDF.
+
+4. RASTREABILIDADE COMPLETA:
+   Evidencia: card_act, ActivityLog, campos obrigatorios created_by/moduser/dtmod.
+
+5. INTEGRIDADE DE DADOS POR DESIGN:
+   Evidencia: Transacoes atomicas, NOT NULL, protecao dtcon, consistencia coluna<->dtcon.
+
+6. FLUXOS DE APROVACAO FORMAIS:
+   Evidencia: Solicitacao/aprovacao de encerramento, transferencia com aceite.
+
+7. SEGURANCA EM PROFUNDIDADE:
+   Evidencia: Rate limiting, XSS sanitization, security headers, sessao revogavel.
+
+8. ARQUITETURA MODERNA:
+   Evidencia: Next.js 16, React 19, TypeScript strict, Prisma 7, Actions/Services/Repositories.
+
+9. OPERACAO CONTAINERIZADA:
+   Evidencia: Docker multi-stage, Swarm com rollback automatico.
+
+10. EVOLUCAO PLANEJADA:
+    Evidencia: Roadmap com 60+ itens categorizados por area e prioridade.

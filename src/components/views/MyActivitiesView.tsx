@@ -387,14 +387,14 @@ return filtered.sort((a, b) => {
                       ✏️ Editar
                     </button>
                     <Link
-                      href={`/dashboard?boardId=${board.id}&from=my-activities`}
+                      href={`/dashboard/board/${board.id}?from=my-activities`}
                       className={styles.actionBtnPrimary}
                       title="Eventos"
                     >
                       ⚡ Eventos
                     </Link>
                     <Link
-                      href={`/dashboard?boardId=${board.id}&view=completed&from=my-activities`}
+                      href={`/dashboard/board/${board.id}?view=completed&from=my-activities`}
                       className={styles.actionBtnSecondary}
                       title="Ver Histórico Concluído"
                     >
@@ -493,14 +493,14 @@ return filtered.sort((a, b) => {
                             ✏️
                           </button>
                           <Link
-                            href={`/dashboard?boardId=${board.id}&from=my-activities`}
+                            href={`/dashboard/board/${board.id}?from=my-activities`}
                             className={styles.tableActionBtnOpen}
                             title="Eventos"
                           >
                             ⚡
                           </Link>
                           <Link
-                            href={`/dashboard?boardId=${board.id}&view=completed&from=my-activities`}
+                            href={`/dashboard/board/${board.id}?view=completed&from=my-activities`}
                             className={styles.tableActionBtnHistory}
                             title="Histórico Concluído"
                           >

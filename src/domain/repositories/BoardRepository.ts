@@ -66,9 +66,26 @@ export class BoardRepository {
         }
       });
 
+      // Fetch ALL cards of this board regardless of which column they're in
+      // (some legacy cards may point to columns from another workspace)
+      const allCards = await prisma.card.findMany({
+        where: { board_seqid: board.seqId },
+        orderBy: { order: 'asc' },
+        include: {
+          task_user: true,
+          users: true,
+          column: { select: { title: true, seqid: true } },
+          card_act: {
+            orderBy: { created_at: 'desc' },
+            include: { users: true }
+          }
+        }
+      });
+
       return {
         ...board,
-        columns
+        columns,
+        allCards
       };
     } catch (e) {
       console.error('Error finding board by seqId:', e);

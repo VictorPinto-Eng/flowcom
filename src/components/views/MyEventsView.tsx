@@ -707,7 +707,7 @@ const eventsSummary = useMemo(() => {
                           {ev.board?.id && (
                             <button
                               className={styles.openBoardBtn}
-                              onClick={() => router.push(`/dashboard?boardId=${ev.board.id}`)}
+                              onClick={() => router.push(`/dashboard/board/${ev.board.id}?from=my-events`)}
                               title="Abrir todos os eventos desta atividade"
                             >
                               <ExternalLink size={16} strokeWidth={2} />

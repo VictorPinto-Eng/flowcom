@@ -1,0 +1,381 @@
+﻿============================================================
+INVENTARIO DETALHADO - VOLUME DE PRODUCAO DO FLOW
+============================================================
+
+Data: 2026-08-11
+Documento tecnico: relatorio do que foi produzido ate o momento
+
+============================================================
+LEGENDA
+============================================================
+
+TIPO:
+- INICIAL = Escopo original do MVP (desenvolvimento base do produto)
+- ADITIVO = Funcionalidade adicionada apos o MVP estar operacional
+
+PRODUTO:
+- Codigo: FLOW
+- Nome: Flow — Plataforma de Gestao de Projetos e Atividades
+
+
+============================================================
+1. CODIGO DESENVOLVIDO
+============================================================
+
+BACKEND (Server Actions + Services + Repositories):
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/app/actions/authActions.ts | 300+ | 7 operacoes (register, login, verify, logout, forgot/reset password, resend activation)
+INICIAL | FLOW | src/app/actions/workspaceActions.ts | 400+ | 8 operacoes (CRUD workspace, convites, aceite, rejeicao, membros, movimentacoes)
+INICIAL | FLOW | src/app/actions/boardActions.ts | 350+ | 6 operacoes (CRUD board, completion, request/respond completion)
+INICIAL | FLOW | src/app/actions/cardActions.ts | 450+ | 8 operacoes (CRUD card, move, transfer user/workspace, complete, action logs)
+INICIAL | FLOW | src/app/actions/columnActions.ts | 250+ | 5 operacoes (add, copy, delete, reorder, toggle visibility)
+ADITIVO | FLOW | src/app/actions/dashboardActions.ts | 200+ | 3 operacoes (dashboard stats, workspace counters, KPIs)
+ADITIVO | FLOW | src/app/actions/diagnosticsActions.ts | 150+ | 1 operacao (server diagnostics com snapshot)
+
+SUBTOTAL ACTIONS: ~2.100 linhas (5 INICIAL + 2 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/domain/services/AuthService.ts | 250+ | Rate limiting, password hash, JWT, session management
+INICIAL | FLOW | src/domain/services/WorkspaceService.ts | 300+ | Workspace logic, invites, members, roles
+INICIAL | FLOW | src/domain/services/BoardService.ts | 280+ | Board CRUD, permissions, atomic completion
+INICIAL | FLOW | src/domain/services/CardService.ts | 320+ | Card CRUD, transfers, history, dtcon protection
+INICIAL | FLOW | src/domain/services/ColumnService.ts | 200+ | Column CRUD, reorder, visibility
+
+SUBTOTAL SERVICES: ~1.350 linhas (5 INICIAL)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/domain/repositories/UserRepository.ts | 200+ | Acesso a dados de usuario
+INICIAL | FLOW | src/domain/repositories/WorkspaceRepository.ts | 250+ | Acesso a dados de workspace (com lightweight mode)
+INICIAL | FLOW | src/domain/repositories/BoardRepository.ts | 220+ | Acesso a dados de board
+INICIAL | FLOW | src/domain/repositories/CardRepository.ts | 280+ | Acesso a dados de card
+INICIAL | FLOW | src/domain/repositories/ColumnRepository.ts | 150+ | Acesso a dados de coluna
+ADITIVO | FLOW | src/domain/repositories/ActivityLogRepository.ts | 180+ | Acesso a dados de auditoria global
+
+SUBTOTAL REPOSITORIES: ~1.280 linhas (5 INICIAL + 1 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/lib/prisma.ts | 30 | Singleton Prisma Client com PrismaPg adapter
+ADITIVO | FLOW | src/lib/validation.ts | 107 | Sanitizacao XSS, validacao de inputs (nome, titulo, descricao, email, seqId)
+ADITIVO | FLOW | src/lib/rate-limit.ts | 67 | Rate limiting persistido por IP + email (9 tipos de operacao)
+INICIAL | FLOW | src/lib/resend.ts | 136 | Envio de emails transacionais (ativacao, reset, convite — 3 templates)
+
+SUBTOTAL LIB: ~340 linhas (2 INICIAL + 2 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+ADITIVO | FLOW | src/proxy.ts | 47 | Middleware de autenticacao centralizado (JWT verify, redirect, cookie cleanup)
+
+TOTAL BACKEND: ~5.117 linhas
+
+
+FRONTEND (Components):
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/components/shell/DashboardClient.tsx | 2.457 | Master component: state management, modals, views, workspace switching
+INICIAL | FLOW | src/components/shell/UserMenu.tsx | 150+ | Dropdown usuario (avatar, acoes, logout)
+ADITIVO | FLOW | src/components/shell/ActivityHistorySidebar.tsx | 100+ | Sidebar slide-out de historico de acoes
+ADITIVO | FLOW | src/components/shell/WelcomeDashboard.tsx | 200+ | Welcome screen com KPIs mensais e comparativos
+
+SUBTOTAL SHELL: ~2.907 linhas (2 INICIAL + 2 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/components/kanban/KanbanClient.tsx | 80+ | Conexao hook useKanban ao Board
+INICIAL | FLOW | src/components/kanban/Board.tsx | 450+ | Kanban full view (colunas, cards, drag-drop)
+INICIAL | FLOW | src/components/kanban/Column.tsx | 180+ | Coluna individual com cards
+INICIAL | FLOW | src/components/kanban/Card.tsx | 200+ | Card visual (titulo, badge, avatar, deadline)
+INICIAL | FLOW | src/components/kanban/AddCardForm.tsx | 150+ | Form inline criar card
+
+SUBTOTAL KANBAN: ~1.060 linhas (5 INICIAL)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/components/grids/ActiveEventsGrid.tsx | 150+ | Grid de eventos ativos (pendentes)
+INICIAL | FLOW | src/components/grids/CompletedEventsGrid.tsx | 120+ | Grid de eventos concluidos
+INICIAL | FLOW | src/components/grids/BoardTopBar.tsx | 180+ | Top bar do board (nome, acoes, detalhes)
+INICIAL | FLOW | src/components/grids/CreateEventForm.tsx | 200+ | Form criar evento/card
+ADITIVO | FLOW | src/components/grids/ActionsDrawer.tsx | 140+ | Drawer de historico de acoes do card
+
+SUBTOTAL GRIDS: ~790 linhas (4 INICIAL + 1 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/components/modals/CreateWorkspaceModal.tsx | 120+ | Modal criar workspace (nome, tipo, descricao)
+ADITIVO | FLOW | src/components/modals/EditWorkspaceModal.tsx | 180+ | Modal editar workspace (geral + colaboradores)
+INICIAL | FLOW | src/components/modals/CreateActivityModal.tsx | 100+ | Modal criar atividade (legacy)
+ADITIVO | FLOW | src/components/modals/RenameActivityModal.tsx | 150+ | Modal editar board (nome, setor, datas, responsavel)
+ADITIVO | FLOW | src/components/modals/ActivityReportModal.tsx | 300+ | Modal relatorio por workspace
+ADITIVO | FLOW | src/components/modals/EditEventModal.tsx | 200+ | Modal editar card/evento
+ADITIVO | FLOW | src/components/modals/ScheduleModal.tsx | 150+ | Modal gestao de datas
+ADITIVO | FLOW | src/components/modals/PremiumWorkspaceGridModal.tsx | 250+ | Grid de workspaces com contadores e acoes
+ADITIVO | FLOW | src/components/modals/WorkspaceColumnsModal.tsx | 180+ | Modal gerenciar colunas (criar, renomear, reordenar)
+
+SUBTOTAL MODALS: ~1.630 linhas (2 INICIAL + 7 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+ADITIVO | FLOW | src/components/views/MyEventsView.tsx | 250+ | Tabela de todos os eventos do usuario (filtros, PDF)
+ADITIVO | FLOW | src/components/views/MyActivitiesView.tsx | 200+ | Boards do usuario organizados por schedule
+ADITIVO | FLOW | src/components/views/MovementsView.tsx | 220+ | Auditoria global de movimentacoes (filtros)
+ADITIVO | FLOW | src/components/views/ReportsView.tsx | 280+ | Relatorio global cross-workspace (filtros, PDF)
+ADITIVO | FLOW | src/components/views/ActivityReportView.tsx | 400+ | Relatorio por board com Parecer Tecnico e semaforo
+
+SUBTOTAL VIEWS: ~1.350 linhas (5 ADITIVO)
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/components/shared/WhatsAppButton.tsx | 50+ | Botao flutuante WhatsApp (suporte)
+
+TOTAL FRONTEND: ~7.727 linhas
+
+
+TIPOS E HOOKS:
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+ADITIVO | FLOW | src/types/permissions.ts | 63 | WorkspaceRole, WorkspacePermissions, normalizeRole
+INICIAL | FLOW | src/hooks/useKanban.ts | 200+ | Hook estado Kanban (add/move/complete cards, columns)
+ADITIVO | FLOW | src/hooks/useWorkspacePermissions.ts | 54 | Hook RBAC centralizado (isOwner, canEditBoard, etc)
+
+SUBTOTAL TYPES+HOOKS: ~317 linhas (1 INICIAL + 2 ADITIVO)
+
+
+PAGINAS E LAYOUTS:
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/app/layout.tsx | 50+ | Root layout (Geist fonts, metadata, WhatsApp)
+INICIAL | FLOW | src/app/page.tsx | 50+ | Landing page (hero, features, pricing, depoimentos)
+INICIAL | FLOW | src/app/(auth)/layout.tsx | 30+ | Layout auth (tema escuro, glass card)
+INICIAL | FLOW | src/app/(auth)/page.tsx | 150+ | Login (email/password, show/hide, forgot link)
+INICIAL | FLOW | src/app/(auth)/register/page.tsx | 150+ | Registro (nome, email, senha com requisitos visuais)
+INICIAL | FLOW | src/app/(auth)/verify/page.tsx | 80+ | Verificacao de email (token-based)
+ADITIVO | FLOW | src/app/(auth)/forgot-password/page.tsx | 100+ | Solicitar reset de senha
+ADITIVO | FLOW | src/app/(auth)/reset-password/page.tsx | 120+ | Definir nova senha (token-based)
+INICIAL | FLOW | src/app/dashboard/page.tsx | 100+ | Dashboard principal (server component, fetch data)
+INICIAL | FLOW | src/app/dashboard/layout.tsx | 50+ | Layout dashboard
+ADITIVO | FLOW | src/app/dashboard/activity/new/page.tsx | 150+ | Pagina full criar atividade (form completo)
+ADITIVO | FLOW | src/app/reports/page.tsx | 50+ | Pagina global de relatorios
+ADITIVO | FLOW | src/app/invite/accept/[token]/page.tsx | 80+ | Aceite de convite (server component)
+ADITIVO | FLOW | src/app/admin/diagnostics/page.tsx | 150+ | Diagnostico do servidor (metricas, JSON)
+INICIAL | FLOW | src/app/api/auth/login/route.ts | 80+ | API REST login
+INICIAL | FLOW | src/app/api/auth/register/route.ts | 70+ | API REST registro
+ADITIVO | FLOW | src/app/api/auth/clear-session/route.ts | 40+ | API REST limpar sessao
+ADITIVO | FLOW | src/app/api/auth/forgot-password/route.ts | 60+ | API REST forgot password
+ADITIVO | FLOW | src/app/api/auth/reset-password/route.ts | 60+ | API REST reset password
+
+SUBTOTAL PAGES+API: ~1.380 linhas (9 INICIAL + 10 ADITIVO)
+
+
+ESTILOS (CSS MODULES):
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+INICIAL | FLOW | src/app/globals.css | 250+ | Design system Ice theme (variaveis, glassmorphism, animacoes)
+INICIAL | FLOW | src/app/landing.module.css | 200+ | Estilos landing page
+INICIAL | FLOW | src/app/(auth)/auth.module.css | 150+ | Estilos auth (tema escuro, glass, gradients)
+INICIAL | FLOW | src/components/shell/DashboardClient.module.css | 400+ | Estilos dashboard principal
+INICIAL | FLOW | src/components/kanban/Board.module.css | 300+ | Estilos board Kanban
+INICIAL | FLOW | src/components/kanban/Column.module.css | 200+ | Estilos coluna
+INICIAL | FLOW | src/components/kanban/Card.module.css | 150+ | Estilos card
+ADITIVO | FLOW | Modals CSS (10 arquivos) | ~1.500 | Estilos para 10 modais
+ADITIVO | FLOW | Views CSS (5 arquivos) | ~1.000 | Estilos para 5 views
+INICIAL | FLOW | Shell CSS (4 arquivos) | ~600 | Estilos shell/navigation
+
+SUBTOTAL ESTILOS: ~4.750 linhas (7 INICIAL + 2 ADITIVO agrupados)
+
+
+CONFIGURACAO:
+
+Tipo | Produto | Arquivo | Linhas | Descricao
+ADITIVO | FLOW | next.config.ts | 35 | CSP, HSTS, X-Frame-Options, security headers (7 headers)
+INICIAL | FLOW | tsconfig.json | 25 | Configuracao TypeScript strict mode
+INICIAL | FLOW | package.json | 37 | Metadata projeto, scripts, dependencias
+INICIAL | FLOW | Dockerfile | 32 | Multi-stage build Node 22 Alpine
+INICIAL | FLOW | prisma/schema.prisma | 300+ | 14 modelos, 50+ relacionamentos, 15+ indexes
+
+SUBTOTAL CONFIG: ~429 linhas (4 INICIAL + 1 ADITIVO)
+
+
+============================================================
+2. DATABASE SCHEMA
+============================================================
+
+Tipo | Produto | Modelo | Campos | Descricao
+INICIAL | FLOW | User | 6 campos + 6 relacoes | Identidade, credenciais, estado de ativacao
+ADITIVO | FLOW | Session | 5 campos + 1 relacao | Whitelist JWT para revogacao de sessao
+INICIAL | FLOW | VerificationToken | 5 campos | Tokens ativacao e reset (24h/1h validade)
+ADITIVO | FLOW | AuthAttempt | 7 campos | Rate limiting persistido (IP + email)
+INICIAL | FLOW | Workspace | 7 campos + 5 relacoes | Area de trabalho multi-tenant
+INICIAL | FLOW | WorkspaceType | 2 campos + 1 relacao | 9 tipos predefinidos (Engenharia/TI, Operacoes, etc)
+INICIAL | FLOW | WorkspaceMember | 5 campos + 2 relacoes | N:N User-Workspace com role (OWNER/ADMIN/MEMBER/VIEWER)
+ADITIVO | FLOW | WorkspaceInvite | 7 campos + 2 relacoes | Convite 7 dias com token unico
+INICIAL | FLOW | Board | 11 campos + 4 relacoes | Atividade/projeto com datas e responsavel
+INICIAL | FLOW | Card | 14 campos + 5 relacoes | Evento/tarefa com dtcon como criterio de conclusao
+INICIAL | FLOW | card_act | 8 campos + 2 relacoes | Historico de acoes por card
+INICIAL | FLOW | Column | 5 campos + 2 relacoes | Coluna Kanban (compartilhada por workspace)
+INICIAL | FLOW | Sector | 4 campos + 1 relacao | 11 setores predefinidos (FOLLOW UP, SUPORTE, etc)
+ADITIVO | FLOW | ActivityLog | 11 campos | Auditoria global indexada
+ADITIVO | FLOW | ServerDiagnosticSnapshot | 14 campos + 1 relacao | Metricas do sistema por usuario
+
+TOTAL: 14 MODELOS (10 INICIAL + 5 ADITIVO)
+
+
+============================================================
+3. DEPENDENCIAS GERENCIADAS
+============================================================
+
+Tipo | Produto | Package | Versao | Finalidade
+INICIAL | FLOW | next | 16.2.6 | Framework fullstack (App Router, Server Actions)
+INICIAL | FLOW | react | 19.2.4 | UI library
+INICIAL | FLOW | react-dom | 19.2.4 | React DOM renderer
+INICIAL | FLOW | @prisma/client | 7.8.0 | ORM client
+INICIAL | FLOW | @prisma/adapter-pg | 7.8.0 | PostgreSQL adapter com pooling
+INICIAL | FLOW | pg | 8.20.0 | Driver PostgreSQL nativo
+INICIAL | FLOW | prisma | 7.8.0 | ORM toolkit (schema, migrations)
+INICIAL | FLOW | bcryptjs | 3.0.3 | Hash de senhas (10 rounds)
+INICIAL | FLOW | jsonwebtoken | 9.0.3 | Geracao e verificacao JWT
+INICIAL | FLOW | resend | 6.12.3 | API de envio de email transacional
+INICIAL | FLOW | lucide-react | 1.16.0 | Biblioteca de icones SVG
+ADITIVO | FLOW | sweetalert2 | 11.26.24 | Modais e dialogos (lazy-loaded)
+INICIAL | FLOW | cookie | 1.1.1 | Parsing de cookies
+INICIAL | FLOW | typescript | 5 | Linguagem (dev)
+INICIAL | FLOW | ts-node | 10.9.2 | Execucao scripts TS (dev)
+INICIAL | FLOW | @types/jsonwebtoken | 9.0.10 | Tipos JWT (dev)
+INICIAL | FLOW | @types/node | 20 | Tipos Node (dev)
+INICIAL | FLOW | @types/pg | 8.20.0 | Tipos PostgreSQL (dev)
+INICIAL | FLOW | @types/react | 19 | Tipos React (dev)
+
+TOTAL: 19 packages (18 INICIAL + 1 ADITIVO)
+
+
+============================================================
+4. INFRAESTRUTURA
+============================================================
+
+Tipo | Produto | Item | Descricao
+INICIAL | FLOW | Dockerfile multi-stage | Stage 1: build (Node 22 Alpine). Stage 2: runner (production)
+INICIAL | FLOW | Docker Swarm deployment | Registry local, tag por commit SHA, rollback automatico
+INICIAL | FLOW | Prisma setup | PrismaPg adapter, connection pooling, seed data
+ADITIVO | FLOW | Security headers | CSP, HSTS, X-Frame-Options, X-Content-Type, Referrer-Policy, Permissions-Policy, X-XSS-Protection
+ADITIVO | FLOW | Middleware autenticacao | proxy.ts — JWT verify centralizado, redirect, cookie cleanup
+
+
+============================================================
+5. DOCUMENTACAO PRODUZIDA
+============================================================
+
+Tipo | Produto | Documento | Volume | Descricao
+ADITIVO | FLOW | WHITE_PAPER_FLOW_COMPLETO.txt | 70.6 KB / 1.221 linhas | White paper tecnico e estrategico completo (16 secoes)
+ADITIVO | FLOW | ROADMAP.md | 364 linhas / 60+ items | Roadmap priorizado por area e severidade
+INICIAL | FLOW | CLAUDE.md | ~50 linhas | Padroes de arquitetura e deploy
+INICIAL | FLOW | AGENTS.md | ~100 linhas | Arquitetura multi-agente e protocolos
+ADITIVO | FLOW | INVENTARIO_VOLUME_PRODUCAO.txt | Este documento | Inventario detalhado de producao
+ADITIVO | FLOW | NUMEROS_RAPIDOS_VALUATION.txt | ~200 linhas | Analise de valor por multiplos metodos
+ADITIVO | FLOW | ANALISE_DE_VALOR_DO_FLOW.txt | ~300 linhas | Analise multidimensional de valor
+
+
+============================================================
+6. SEGURANCA IMPLEMENTADA
+============================================================
+
+Tipo | Produto | ID | Descricao | Status
+ADITIVO | FLOW | S-001 | Rate limiting com IP + email | Concluido
+ADITIVO | FLOW | S-002 | Rate limiting anti-enumeration | Concluido
+ADITIVO | FLOW | S-003 | Escape HTML em templates email | Concluido
+ADITIVO | FLOW | S-004 | MOCK_USER_ENABLED removido | Concluido
+ADITIVO | FLOW | S-005 | CSP (Content-Security-Policy) | Concluido
+ADITIVO | FLOW | S-006 | HSTS + security headers | Concluido
+ADITIVO | FLOW | S-007 | Validacao e sanitizacao inputs (XSS, tamanho) | Concluido
+ADITIVO | FLOW | S-008 | Protecao token injection | Concluido
+ADITIVO | FLOW | S-011 | Campo User.role removido | Concluido
+ADITIVO | FLOW | S-012 | Cookie sameSite: strict | Concluido
+ADITIVO | FLOW | S-021 | Rate limiting em 9 endpoints | Concluido
+ADITIVO | FLOW | S-022 | Validacao membro workspace em board | Concluido
+ADITIVO | FLOW | S-023 | getAllUsersAction removida | Concluido
+ADITIVO | FLOW | S-024 | Workspace actions com autorizacao | Concluido
+ADITIVO | FLOW | S-025 | Rate limiting com getClientIp | Concluido
+ADITIVO | FLOW | S-026 | Permissoes em column actions | Concluido
+ADITIVO | FLOW | S-027 | createWorkspaceAction segura | Concluido
+ADITIVO | FLOW | S-028 | updateBoardAction com getLoggedUser | Concluido
+ADITIVO | FLOW | S-029 | Validacao enum role (allowlist) | Concluido
+ADITIVO | FLOW | S-030 | resendActivation com rate limiting | Concluido
+ADITIVO | FLOW | S-031 | Middleware JWT centralizado | Concluido
+ADITIVO | FLOW | S-032 | JWT whitelist (tabela session) | Concluido
+ADITIVO | FLOW | S-033 | Tokens convite nao expostos | Concluido
+ADITIVO | FLOW | S-035 | API routes com allowlist de erros | Concluido
+ADITIVO | FLOW | S-036 | Sessao unica por usuario | Concluido
+
+TOTAL SEGURANCA: 25 items (todos ADITIVO — hardening pos-MVP)
+
+
+============================================================
+7. INTEGRIDADE DE DADOS (Auditoria 2026-08-06)
+============================================================
+
+Tipo | Produto | ID | Descricao | Severidade | Status
+ADITIVO | FLOW | D-001 | completeActivity em transacao atomica | CRITICO | Concluido
+ADITIVO | FLOW | D-002 | card.board_seqid NOT NULL | CRITICO | Concluido
+ADITIVO | FLOW | D-003 | created_by, moduser, dtmod NOT NULL | ALTO | Concluido
+ADITIVO | FLOW | D-004 | ActivityLog validacao boardId/userId | ALTO | Concluido
+ADITIVO | FLOW | D-005 | Protecao dtcon contra reabertura | MEDIO | Concluido
+ADITIVO | FLOW | D-006 | Validacao transferencia workspaces | MEDIO | Concluido
+ADITIVO | FLOW | D-007 | Consistencia coluna-dtcon na edicao | MEDIO | Concluido
+ADITIVO | FLOW | D-008 | moveCard valida dtcon | MEDIO | Concluido
+ADITIVO | FLOW | D-009 | Confirmacao ao concluir evento | MEDIO | Concluido
+ADITIVO | FLOW | D-010 | respondTransfer com auditoria | MEDIO | Concluido
+ADITIVO | FLOW | D-011 | dtcon como unico criterio conclusao | MEDIO | Concluido
+ADITIVO | FLOW | D-012 | ID do evento visivel em Meus Eventos | BAIXO | Concluido
+
+TOTAL INTEGRIDADE: 12 items (todos ADITIVO)
+
+
+============================================================
+8. PERFORMANCE OTIMIZADA
+============================================================
+
+Tipo | Produto | ID | Descricao | Status
+ADITIVO | FLOW | P-100 | Lazy load SweetAlert2 (dynamic import) | Concluido
+ADITIVO | FLOW | P-101 | Lazy load MyActivitiesView | Concluido
+ADITIVO | FLOW | P-102 | Lightweight mode na query workspaces | Concluido
+ADITIVO | FLOW | P-103 | Contadores reais via COUNT | Concluido
+ADITIVO | FLOW | P-104 | Pagina diagnostico admin | Concluido
+ADITIVO | FLOW | P-105 | Build com Webpack (Alpine compat) | Concluido
+
+TOTAL PERFORMANCE: 6 items (todos ADITIVO)
+
+
+============================================================
+RESUMO VOLUME TOTAL
+============================================================
+
+Metrica | INICIAL | ADITIVO | TOTAL
+Linhas backend | ~3.800 | ~1.317 | ~5.117
+Linhas frontend | ~5.200 | ~2.527 | ~7.727
+Linhas tipos/hooks | ~200 | ~117 | ~317
+Linhas paginas/API | ~810 | ~570 | ~1.380
+Linhas estilos | ~2.250 | ~2.500 | ~4.750
+Linhas config | ~394 | ~35 | ~429
+---
+TOTAL LINHAS CODIGO | ~12.654 | ~7.066 | ~19.720
+---
+Modelos Prisma | 10 | 5 | 14 (com overlap)
+Componentes UI | 14 | 16 | 30+
+Security items | 0 | 25 | 25
+Integridade dados | 0 | 12 | 12
+Performance items | 0 | 6 | 6
+Dependencias | 18 | 1 | 19
+Documentos | 2 | 5 | 7
+---
+TOTAL ARTEFATOS | ~12.654 linhas + 10 modelos | ~7.066 linhas + 48 items extras | ~19.720 linhas + 58 items
+
+
+============================================================
+LISTA DE ARTEFATOS PRODUZIDOS
+============================================================
+
+# | Tipo | Produto | Artefato | Descricao
+1 | ADITIVO | FLOW | WHITE_PAPER_FLOW_COMPLETO.txt | White paper tecnico (70.6 KB)
+2 | ADITIVO | FLOW | ROADMAP.md | Roadmap priorizado (60+ items)
+3 | INICIAL | FLOW | CLAUDE.md | Padroes de arquitetura
+4 | INICIAL | FLOW | AGENTS.md | Arquitetura multi-agente
+5 | INICIAL | FLOW | src/app/actions/ | 7 arquivos, ~2.100 linhas
+6 | INICIAL | FLOW | src/domain/services/ | 5 arquivos, ~1.350 linhas
+7 | INICIAL | FLOW | src/domain/repositories/ | 6 arquivos, ~1.280 linhas
+8 | MISTO | FLOW | src/components/ | 30+ componentes, ~7.727 linhas
+9 | INICIAL | FLOW | prisma/schema.prisma | 14 modelos completos
+10 | ADITIVO | FLOW | next.config.ts | Security headers (7 headers)
+11 | INICIAL | FLOW | Dockerfile | Multi-stage, otimizado Alpine
+12 | MISTO | FLOW | src/lib/*.ts | validation, rate-limit, resend, prisma
