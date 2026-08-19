@@ -22,7 +22,7 @@
   border-bottom: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   background: #ffffff;
   flex-wrap: wrap;
   gap: 1rem;
@@ -253,7 +253,32 @@
   color: #64748b;
 }
 
-/* Empty State */
+.filterGroup {
+  display: flex;
+  background: #f8fafc;
+  padding: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  gap: 0.25rem;
+}
+
+.filterBtn {
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activeFilter {
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.2);
+}
 .emptyState {
   text-align: center;
   padding: 5rem 2rem;

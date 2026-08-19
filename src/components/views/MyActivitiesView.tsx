@@ -35,10 +35,6 @@ interface MyActivitiesViewProps {
   workspaces: any[];
   currentUser: { id: string; name: string; email: string };
   userSeqid: string;
-  onEditBoard: (board: any) => void;
-  onCompleteBoard: (boardId: string, boardName: string) => Promise<void>;
-  onViewReport?: (board: any) => void;
-  onBack?: () => void;
 }
 
 const getSectorColors = (acronym?: string | null) => {
@@ -75,15 +71,12 @@ const getSectorColors = (acronym?: string | null) => {
 export default function MyActivitiesView({
   workspaces,
   currentUser,
-  userSeqid,
-  onEditBoard,
-  onCompleteBoard,
-  onViewReport,
-  onBack
+  userSeqid
 }: MyActivitiesViewProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
+  const [eventFilter, setEventFilter] = useState<'all' | 'with-events' | 'without-events'>('all');
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Restore layout preference on mount
@@ -124,32 +117,41 @@ export default function MyActivitiesView({
 
     // Filter by search term
     const filtered = allBoards.filter(b => {
-      if (!searchTerm) return true;
-      const lower = searchTerm.toLowerCase();
-      return (
-        b.name.toLowerCase().includes(lower) ||
-        b.seqId.toString().includes(lower) ||
-        b.workspaceName?.toLowerCase().includes(lower) ||
-        b.sector?.name.toLowerCase().includes(lower) ||
-        b.sector?.acronym.toLowerCase().includes(lower)
+      const matchesSearch = !searchTerm || (
+        b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.seqId.toString().includes(searchTerm.toLowerCase()) ||
+        b.workspaceName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.sector?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.sector?.acronym.toLowerCase().includes(searchTerm.toLowerCase())
       );
+
+      const hasEvents = b.columns?.some((col: any) =>
+          col.cards && col.cards.some((card: any) => !card.dtcon)
+        );
+      const matchesEvents = eventFilter === 'all'
+        ? true
+        : eventFilter === 'with-events'
+          ? hasEvents
+          : !hasEvents;
+
+      return matchesSearch && matchesEvents;
     });
 
-// Sort by previsto date ascending (oldest first). Unscheduled at the end.
-return filtered.sort((a, b) => {
-  if (a.previsto && b.previsto) {
-    const dA = new Date(a.previsto);
-    const dB = new Date(b.previsto);
-    return dA.getTime() - dB.getTime(); // Oldest first
-  }
-  if (a.previsto) return -1;
-  if (b.previsto) return 1;
-  
-  const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-  const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-  return timeB - timeA;
-});
-  }, [workspaces, currentUser.id, userSeqid, searchTerm]);
+    // Sort by previsto date ascending (oldest first). Unscheduled at the end.
+    return filtered.sort((a, b) => {
+      if (a.previsto && b.previsto) {
+        const dA = new Date(a.previsto);
+        const dB = new Date(b.previsto);
+        return dA.getTime() - dB.getTime();
+      }
+      if (a.previsto) return -1;
+      if (b.previsto) return 1;
+
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [workspaces, currentUser.id, userSeqid, searchTerm, eventFilter]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -247,15 +249,9 @@ return filtered.sort((a, b) => {
             </button>
           </div>
           <button
-            onClick={() => {
-              if (onBack) {
-                onBack();
-              } else {
-                router.push('/dashboard');
-              }
-            }}
+            onClick={() => router.push('/dashboard')}
             className={styles.backBtn}
-            title="Voltar para a tela anterior"
+            title="Voltar para o dashboard"
           >
             ← Voltar
           </button>
@@ -295,7 +291,7 @@ return filtered.sort((a, b) => {
           </div>
         </div>
 
-        {/* Quick Search */}
+        {/* Quick Search & Filters */}
         <div className={styles.searchBar}>
           <div className={styles.searchInputWrapper}>
             <span className={styles.searchIcon}>🔍</span>
@@ -312,6 +308,28 @@ return filtered.sort((a, b) => {
               </button>
             )}
           </div>
+
+          <div className={styles.filterGroup}>
+            <button
+              className={`${styles.filterBtn} ${eventFilter === 'all' ? styles.activeFilter : ''}`}
+              onClick={() => setEventFilter('all')}
+            >
+              Todas
+            </button>
+            <button
+              className={`${styles.filterBtn} ${eventFilter === 'with-events' ? styles.activeFilter : ''}`}
+              onClick={() => setEventFilter('with-events')}
+            >
+              Com Eventos
+            </button>
+            <button
+              className={`${styles.filterBtn} ${eventFilter === 'without-events' ? styles.activeFilter : ''}`}
+              onClick={() => setEventFilter('without-events')}
+            >
+              Sem Eventos
+            </button>
+          </div>
+
           <span className={styles.resultsCount}>
             {userActivities.length} atividade(s) encontrada(s)
           </span>
@@ -381,7 +399,7 @@ return filtered.sort((a, b) => {
                   <div className={styles.cardActions}>
                     <button
                       className={styles.actionBtnGhost}
-                      onClick={() => onEditBoard(board)}
+                      onClick={() => console.log('Editar não implementado')}
                       title="Editar Atividade"
                     >
                       ✏️ Editar
@@ -400,7 +418,7 @@ return filtered.sort((a, b) => {
                     >
                       ✅ Histórico
                     </Link>
-                    {onViewReport && (
+                    {/* {onViewReport && (
                       <button
                         className={styles.actionBtnSecondary}
                         onClick={() => onViewReport(board)}
@@ -417,7 +435,7 @@ return filtered.sort((a, b) => {
                       >
                         🔒 Encerrar
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               );
@@ -487,7 +505,7 @@ return filtered.sort((a, b) => {
                         <div className={styles.tableActionsGroup}>
                           <button
                             className={styles.tableActionBtnEdit}
-                            onClick={() => onEditBoard(board)}
+                            onClick={() => console.log('Editar não implementado nesta rota')}
                             title="Editar Atividade"
                           >
                             ✏️
@@ -506,24 +524,25 @@ return filtered.sort((a, b) => {
                           >
                             ✅
                           </Link>
-                          {onViewReport && (
-                            <button
-                              className={styles.tableActionBtnHistory}
-                              onClick={() => onViewReport(board)}
-                              title="Relatório completo da atividade"
-                            >
-                              📊
-                            </button>
-                          )}
+                          /*
+                          <button
+                            className={styles.tableActionBtnHistory}
+                            onClick={() => console.log('Relatório não implementado nesta rota')}
+                            title="Relatório completo da atividade"
+                          >
+                            📊
+                          </button>
+
                           {!board.dtcon && (
                             <button
                               className={styles.tableActionBtnLock}
-                              onClick={() => onCompleteBoard(board.id, board.name)}
+                              onClick={() => console.log('Encerrar não implementado nesta rota')}
                               title="Encerrar Atividade"
                             >
                               🔒
                             </button>
                           )}
+                          */
                         </div>
                       </td>
                     </tr>

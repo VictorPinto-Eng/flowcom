@@ -1163,7 +1163,7 @@ export default function DashboardClient({
           setIsPremiumGridOpen(true);
         }}
         onMyActivitiesClick={() => {
-          router.push('/dashboard?view=my-activities');
+          router.push('/activities');
         }}
         onMyEventsClick={() => {
           router.push('/dashboard?view=my-events');
@@ -1914,21 +1914,6 @@ export default function DashboardClient({
                 workspaces={workspaces}
                 currentUser={user}
                 userSeqid={userSeqid}
-                onEditBoard={(board: any) => setRenameBoardData({
-                  id: board.id,
-                  name: board.name,
-                  detalhes: board.detalhes,
-                  sectorId: board.sector?.id,
-                  dtatv: board.dtatv,
-                  workspaceId: board.workspaceId || workspaces.find(w => w.boards?.some((b: any) => b.id === board.id))?.seqid,
-                  user_seqid: board.user_seqid,
-                  previsto: board.previsto
-                })}
-                onCompleteBoard={handleCompleteBoard}
-                onViewReport={(board: any) => {
-                  router.push(`/dashboard?view=activity-report&boardId=${board.id}`);
-                }}
-                onBack={handleBack}
               />
             ) : clientView === 'my-events' ? (
               isLoadingMyEvents && myEvents.length === 0 ? (

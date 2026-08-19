@@ -47,6 +47,30 @@ export async function getMyEventsAction() {
   return await cardService.getMyEvents(user);
 }
 
+export async function getUserActivitiesAction() {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return [];
+  // Usa a mesma lógica que o MyActivitiesView client-side utiliza,
+  // porém trazendo tudo do servidor para a nova página
+  const workspaces = await workspaceService.getUserWorkspaces(user.id, user.seqid.toString());
+
+  const allBoards: any[] = [];
+  workspaces.forEach((ws: any) => {
+    if (ws.boards) {
+      ws.boards.forEach((b: any) => {
+        const isOwner = b.user?.id === user.id || b.user_seqid?.toString() === user.seqid.toString();
+        if (isOwner && !b.dtcon) {
+          allBoards.push({
+            ...b,
+            workspaceName: ws.name
+          });
+        }
+      });
+    }
+  });
+  return allBoards;
+}
+
 export async function getCardActionsAction(cardSeqid: string) {
   const user = await userRepo.getLoggedUser();
   if (!user) throw new Error('Não autenticado');

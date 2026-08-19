@@ -108,7 +108,7 @@ pendente, priorizado e por quê.
 | A-008 | **Adicionar error boundaries no front-end** | Sem error boundaries, um erro não tratado quebra toda a árvore de componentes. | Pendente |
 | A-009 | **Padronizar nomenclatura de arquivos (PascalCase componentes, camelCase utils)** | Mistura de convenções entre arquivos. | Pendente |
 | A-014 | **Remover código morto (`MyEventsModal.tsx`)** | Componente não importado em nenhum lugar — substituído por `MyEventsView.tsx`. | ✅ Concluído — `MyEventsModal.tsx` e `MyEventsModal.module.css` removidos (2026-06-25) |
-| A-015 | **Remover funcionalidades stub em `Column.tsx`** | `handleFollowList`, `handleMoveList`, `handleAutomationRule` são botões fake que só chamam `alert()`. | Pendente |
+| A-016 | **Tornar ações de edição e encerramento diretamente operacionais na página dedicada `/activities`** | Atualmente os handlers são stubs na nova rota para evitar erro de component boundary; integrá-los via Server Actions/Client Component. | Pendente |n.tsx`** | `handleFollowList`, `handleMoveList`, `handleAutomationRule` são botões fake que só chamam `alert()`. | Pendente |
 | A-016 | **Remover botões sem handler no `UserMenu.tsx`** | "Alternar Contas", "Gerenciar conta", "Configurações", etc. — 8 itens sem `onClick`. | Pendente |
 | A-017 | **Remover modelo `Department` do Prisma** | Nenhum código referencia este modelo. Legacy/dead code. | ✅ Concluído — modelo removido do schema + migration para drop da tabela (2026-06-25) |
 | A-018 | **Adicionar `forceConsistentCasingInFileNames` no tsconfig** | No Windows funciona, mas deploy em Linux pode quebrar por case sensitivity. | ✅ Concluído — flag adicionada ao tsconfig.json (2026-06-25) |
@@ -336,6 +336,12 @@ organizadas por área. **Não há datas nem prioridades firmes** — são ideias
 | `dtmod` | Data de MODIFICAÇÃO do registro | Setado em TODA operação que altera o card (obrigatório) |
 | `moduser` | QUEM modificou | Setado em TODA operação que altera o card (obrigatório) |
 | `created_by` | QUEM criou | Setado na criação, imutável após (obrigatório) |
+
+### Pendente — Integridade de Dados (Identificado em 2026-08-19)
+
+| ID | Item | Severidade | Justificativa |
+|----|------|------------|---------------|
+| D-013 | **Automatizar `moduser`/`dtmod` via middleware Prisma** | ALTO | Hoje depende de cada action lembrar de setar. Wrapper em `prisma.$extends` ou middleware garante auditoria 100% sem esquecimento. |
 
 ---
 

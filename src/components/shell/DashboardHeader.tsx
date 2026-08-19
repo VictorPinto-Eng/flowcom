@@ -74,11 +74,7 @@ export default function DashboardHeader({
         <button
           className={styles.myActivitiesTrigger}
           onClick={() => {
-            if (onMyActivitiesClick) {
-              onMyActivitiesClick();
-            } else {
-              router.push('/dashboard?view=my-activities');
-            }
+            window.location.href = '/activities';
           }}
           title="Listagem de todas as atividades sob sua responsabilidade ordenada por agendamento"
         >
