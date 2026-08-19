@@ -418,24 +418,22 @@ export default function MyActivitiesView({
                     >
                       ✅ Histórico
                     </Link>
-                    {/* {onViewReport && (
-                      <button
-                        className={styles.actionBtnSecondary}
-                        onClick={() => onViewReport(board)}
-                        title="Relatório completo da atividade"
-                      >
-                        📊 Relatório
-                      </button>
-                    )}
+                    <Link
+                      href={`/dashboard?view=activity-report&boardId=${board.id}&from=my-activities`}
+                      className={styles.actionBtnSecondary}
+                      title="Relatório completo da atividade"
+                    >
+                      📊 Relatório
+                    </Link>
                     {!board.dtcon && (
-                      <button
+                      <Link
+                        href={`/dashboard/board/${board.id}?view=complete-board&from=my-activities`}
                         className={styles.actionBtnWarn}
-                        onClick={() => onCompleteBoard(board.id, board.name)}
                         title="Encerrar Atividade"
                       >
                         🔒 Encerrar
-                      </button>
-                    )} */}
+                      </Link>
+                    )}
                   </div>
                 </div>
               );
@@ -524,26 +522,23 @@ export default function MyActivitiesView({
                           >
                             ✅
                           </Link>
-                          /*
-                          <button
+                          <Link
+                            href={`/dashboard?view=activity-report&boardId=${board.id}&from=my-activities`}
                             className={styles.tableActionBtnHistory}
-                            onClick={() => console.log('Relatório não implementado nesta rota')}
                             title="Relatório completo da atividade"
                           >
                             📊
-                          </button>
-
+                          </Link>
                           {!board.dtcon && (
-                            <button
+                            <Link
+                              href={`/dashboard/board/${board.id}?view=complete-board&from=my-activities`}
                               className={styles.tableActionBtnLock}
-                              onClick={() => console.log('Encerrar não implementado nesta rota')}
                               title="Encerrar Atividade"
                             >
                               🔒
-                            </button>
+                            </Link>
                           )}
-                          */
-                        </div>
+                                                  </div>
                       </td>
                     </tr>
                   );
