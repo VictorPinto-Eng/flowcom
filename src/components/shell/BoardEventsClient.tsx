@@ -96,15 +96,15 @@ export default function BoardEventsClient({
         userId={user.id}
         userSeqid={userSeqid}
         currentUserRole={currentUserRole}
-        onRenameBoard={() => setRenameBoardData({
-          id: activeBoard.id,
-          name: activeBoard.name,
+        onRenameBoard={(boardId: string, boardName: string) => setRenameBoardData({
+          id: boardId,
+          name: boardName,
           detalhes: activeBoard.detalhes,
           sectorId: activeBoard.sector?.id || activeBoard.sectorId,
-          dtatv: activeBoard.dtatv,
-          workspaceId: activeBoard.workspaceId,
-          user_seqid: activeBoard.user_seqid,
-          previsto: activeBoard.previsto
+          dtatv: activeBoard.dtatv ? new Date(activeBoard.dtatv).toISOString().split('T')[0] : null,
+          workspaceId: activeBoard.workspaceId ? activeBoard.workspaceId.toString() : null,
+          user_seqid: activeBoard.user_seqid ? activeBoard.user_seqid.toString() : null,
+          previsto: activeBoard.previsto ? new Date(activeBoard.previsto).toISOString().split('T')[0] : null
         })}
         viewMode={viewMode}
         boardDtatv={activeBoard.dtatv}

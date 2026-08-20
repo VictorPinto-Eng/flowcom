@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getSectorsAction } from '@/app/actions/boardActions';
 import { getWorkspaceMembersAction } from '@/app/actions/cardActions';
+import { getMyWorkspaces } from '@/app/actions/workspaceActions';
 import styles from './RenameActivityModal.module.css';
 
 interface RenameActivityModalProps {
@@ -51,8 +52,20 @@ export default function RenameActivityModal({
   const [workspaceId, setWorkspaceId] = useState<string>(initialWorkspaceId ? initialWorkspaceId.toString() : '');
   const [assignedUserSeqid, setAssignedUserSeqid] = useState<string>(initialUserSeqid ? initialUserSeqid.toString() : '');
   const [sectorsList, setSectorsList] = useState<{ id: number; name: string; acronym: string }[]>(sectors || []);
+  const [workspacesList, setWorkspacesList] = useState<{ id: string; seqid: any; name: string }[]>(workspaces || []);
   const [membersList, setMembersList] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fechar com ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     getSectorsAction()
@@ -62,7 +75,17 @@ export default function RenameActivityModal({
         }
       })
       .catch(err => console.error('Erro ao buscar setores online:', err));
-  }, []);
+
+    if (!workspaces || workspaces.length === 0) {
+      getMyWorkspaces({ lightweight: true })
+        .then(data => {
+          if (data) {
+            setWorkspacesList(data as { id: string; seqid: any; name: string }[]);
+          }
+        })
+        .catch(err => console.error('Erro ao buscar workspaces online:', err));
+    }
+  }, [workspaces]);
 
   // Carregar os colaboradores (membros) conforme o workspace selecionado
   useEffect(() => {
@@ -215,7 +238,7 @@ export default function RenameActivityModal({
                   onChange={(e) => setWorkspaceId(e.target.value)}
                   required
                 >
-                  {workspaces.map(w => (
+                  {workspacesList.map(w => (
                     <option key={w.id} value={w.seqid?.toString() || w.id}>
                       {w.name}
                     </option>

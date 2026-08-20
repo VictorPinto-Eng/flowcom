@@ -3,6 +3,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import RenameActivityModal from '@/components/modals/RenameActivityModal';
+import { updateBoardAction } from '@/app/actions/boardActions';
 import styles from './MyActivitiesView.module.css';
 
 interface BoardShort {
@@ -77,6 +79,7 @@ export default function MyActivitiesView({
   const [searchTerm, setSearchTerm] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   const [eventFilter, setEventFilter] = useState<'all' | 'with-events' | 'without-events'>('all');
+  const [renameBoardData, setRenameBoardData] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Restore layout preference on mount
@@ -503,7 +506,19 @@ export default function MyActivitiesView({
                         <div className={styles.tableActionsGroup}>
                           <button
                             className={styles.tableActionBtnEdit}
-                            onClick={() => console.log('Editar não implementado nesta rota')}
+                            onClick={() => {
+                              const boardData = {
+                                id: board.id,
+                                name: board.name,
+                                detalhes: board.detalhes || '',
+                                sectorId: board.sector?.id || null,
+                                dtatv: board.dtatv ? new Date(board.dtatv).toISOString().split('T')[0] : null,
+                                workspaceId: board.workspaceId ? board.workspaceId.toString() : null,
+                                user_seqid: board.user?.seqid ? board.user.seqid.toString() : null,
+                                previsto: board.previsto ? new Date(board.previsto).toISOString().split('T')[0] : null
+                              };
+                              setRenameBoardData(boardData);
+                            }}
                             title="Editar Atividade"
                           >
                             ✏️
@@ -548,6 +563,41 @@ export default function MyActivitiesView({
           </div>
         )}
       </div>
+
+      {renameBoardData && (
+        <RenameActivityModal
+          boardId={renameBoardData.id}
+          initialName={renameBoardData.name}
+          initialDetalhes={renameBoardData.detalhes}
+          initialSectorId={renameBoardData.sectorId}
+          initialDtatv={renameBoardData.dtatv}
+          initialWorkspaceId={renameBoardData.workspaceId}
+          initialUserSeqid={renameBoardData.user_seqid}
+          initialPrevisto={renameBoardData.previsto}
+          sectors={[]}
+          workspaces={[]}
+          onSubmit={async (boardId, name, detalhes, sectorId, dtatv, workspaceId, assignedUserSeqid, previsto) => {
+            try {
+              await updateBoardAction(
+                boardId,
+                name,
+                detalhes,
+                currentUser.id,
+                sectorId,
+                dtatv,
+                workspaceId,
+                assignedUserSeqid,
+                previsto
+              );
+              setRenameBoardData(null);
+              router.refresh();
+            } catch (error) {
+              console.error('Erro ao atualizar atividade:', error);
+            }
+          }}
+          onClose={() => setRenameBoardData(null)}
+        />
+      )}
 
     </div>
   );

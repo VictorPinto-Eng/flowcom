@@ -31,6 +31,11 @@ export async function getUserWorkspaces(userId: string, userSeqid?: string, opti
   return await workspaceService.getUserWorkspaces(userId, userSeqid, options);
 }
 
+export async function getMyWorkspaces(options?: { lightweight?: boolean }) {
+  const user = await userRepo.getLoggedUser();
+  return await workspaceService.getUserWorkspaces(user.id, user.seqid?.toString(), options);
+}
+
 export async function getCurrentUserAction() {
   try {
     const user = await userRepo.getLoggedUser();
