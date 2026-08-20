@@ -3,8 +3,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 import RenameActivityModal from '@/components/modals/RenameActivityModal';
-import { updateBoardAction } from '@/app/actions/boardActions';
+import { updateBoardAction, completeBoardAction, requestBoardCompletionAction } from '@/app/actions/boardActions';
 import styles from './MyActivitiesView.module.css';
 
 interface BoardShort {
@@ -93,6 +94,60 @@ export default function MyActivitiesView({
   const handleSetViewType = (type: 'grid' | 'table') => {
     setViewType(type);
     localStorage.setItem('my-activities-layout', type);
+  };
+
+  const handleEncerrarAtividade = async (boardId: string, boardName: string, isOwner: boolean) => {
+    if (!isOwner) {
+      await requestBoardCompletionAction(boardId);
+      Swal.fire({
+        title: 'Solicitação Enviada!',
+        text: 'O proprietário será notificado para aprovar o encerramento.',
+        icon: 'success',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e1e2e',
+        color: '#fff'
+      });
+      router.refresh();
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Encerrar Atividade',
+      text: `Tem certeza que deseja encerrar a atividade "${boardName}"? Todos os eventos pendentes serão marcados como concluídos.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'transparent',
+      confirmButtonText: 'Encerrar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e1e2e',
+      color: '#fff'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await completeBoardAction(boardId);
+        Swal.fire({
+          title: 'Atividade Encerrada!',
+          text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
+          icon: 'success',
+          confirmButtonColor: '#10b981',
+          background: '#1e1e2e',
+          color: '#fff'
+        });
+        router.refresh();
+      } catch (err: any) {
+        console.error('Erro ao encerrar atividade:', err);
+        Swal.fire({
+          title: 'Erro',
+          text: err?.message || 'Erro ao encerrar atividade.',
+          icon: 'error',
+          confirmButtonColor: '#7c3aed',
+          background: '#1e1e2e',
+          color: '#fff'
+        });
+      }
+    }
   };
 
   // Gather all activities (boards) across all workspaces belonging to this user
@@ -429,13 +484,14 @@ export default function MyActivitiesView({
                       📊 Relatório
                     </Link>
                     {!board.dtcon && (
-                      <Link
-                        href={`/dashboard/board/${board.id}?view=complete-board&from=my-activities`}
+                      <button
+                        type="button"
+                        onClick={() => handleEncerrarAtividade(board.id, board.name, true)}
                         className={styles.actionBtnWarn}
                         title="Encerrar Atividade"
                       >
                         🔒 Encerrar
-                      </Link>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -545,13 +601,14 @@ export default function MyActivitiesView({
                             📊
                           </Link>
                           {!board.dtcon && (
-                            <Link
-                              href={`/dashboard/board/${board.id}?view=complete-board&from=my-activities`}
+                            <button
+                              type="button"
+                              onClick={() => handleEncerrarAtividade(board.id, board.name, true)}
                               className={styles.tableActionBtnLock}
                               title="Encerrar Atividade"
                             >
                               🔒
-                            </Link>
+                            </button>
                           )}
                                                   </div>
                       </td>

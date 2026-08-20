@@ -439,13 +439,13 @@ export class BoardService {
         }
       }
 
-      // 2. Marcar TODOS os cards do board como concluídos (inclusive os que já estão na coluna "Concluído" mas ainda não têm dtcon)
+      // 2. Marcar TODOS os cards do board como concluídos e movê-los para a coluna "Concluído"
       await tx.card.updateMany({
         where: {
-          board_seqid: board.seqId,
-          dtcon: null
+          board_seqid: board.seqId
         },
         data: {
+          columnId: doneCol.seqid,
           dtcon: dtconDate,
           moduser: userSeqid,
           dtmod: new Date()
