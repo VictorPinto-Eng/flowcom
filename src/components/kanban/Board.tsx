@@ -217,10 +217,14 @@ export default function Board({
       try {
         await completeBoardAction(boardId);
         Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
           title: 'Atividade Encerrada!',
           text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
-          icon: 'success',
-          confirmButtonColor: '#10b981',
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true,
           background: '#1e1e2e',
           color: '#fff'
         });
