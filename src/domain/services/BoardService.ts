@@ -491,6 +491,18 @@ export class BoardService {
     });
   }
 
+  async hasEvents(boardId: string): Promise<boolean> {
+    const board = await this.boardRepo.findById(boardId);
+    if (!board) return false;
+
+    // Verifica se há cards com eventos (card_act)
+    const hasEvents = board.allCards?.some(card =>
+      card.card_act && card.card_act.length > 0
+    );
+
+    return hasEvents || false;
+  }
+
   private serializeBoard(board: any) {
     if (!board) return null;
     return {

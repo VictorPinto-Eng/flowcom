@@ -15,25 +15,27 @@ interface RenameActivityModalProps {
   initialWorkspaceId?: string | number | null;
   initialUserSeqid?: string | null;
   initialPrevisto?: string | Date | null;
+  hasEvents?: boolean;
   sectors?: { id: number; name: string; acronym: string }[];
   workspaces?: { id: string; seqid: any; name: string }[];
   onSubmit: (boardId: string, name: string, detalhes: string | null, sectorId?: number | null, dtatv?: string | null, workspaceId?: string, assignedUserSeqid?: string | null, previsto?: string | null) => Promise<void>;
   onClose: () => void;
 }
 
-export default function RenameActivityModal({ 
-  boardId, 
-  initialName, 
-  initialDetalhes = '', 
-  initialSectorId, 
-  initialDtatv, 
+export default function RenameActivityModal({
+  boardId,
+  initialName,
+  initialDetalhes = '',
+  initialSectorId,
+  initialDtatv,
   initialWorkspaceId,
   initialUserSeqid = '',
   initialPrevisto,
-  sectors = [], 
+  hasEvents = false,
+  sectors = [],
   workspaces = [],
-  onSubmit, 
-  onClose 
+  onSubmit,
+  onClose
 }: RenameActivityModalProps) {
   const formatDateForInput = (d: any) => {
     if (!d) return '';
@@ -260,13 +262,19 @@ export default function RenameActivityModal({
 
               <div className={styles.field}>
                 <label>Data Prevista</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   max="9999-12-31"
                   value={previsto}
                   onChange={(e) => setPrevisto(e.target.value)}
+                  disabled={hasEvents}
+                  style={hasEvents ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed', opacity: 0.7 } : {}}
                 />
-                <span className={styles.hint}>Defina ou altere a data prevista de conclusão.</span>
+                <span className={styles.hint}>
+                  {hasEvents
+                    ? 'A data prevista é calculada automaticamente a partir dos eventos cadastrados.'
+                    : 'Defina ou altere a data prevista de conclusão.'}
+                </span>
               </div>
 
               <div className={styles.buttonGroup}>

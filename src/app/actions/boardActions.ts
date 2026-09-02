@@ -241,3 +241,7 @@ export async function getPendingBoardCompletionRequestsAction() {
     };
   });
 }
+
+export async function hasBoardEventsAction(boardId: string): Promise<boolean> {
+  return await boardService.hasEvents(boardId);
+}

@@ -30,7 +30,7 @@ const MyActivitiesView = dynamic(() => import('../views/MyActivitiesView'), {
   ssr: false
 });
 import { createWorkspaceAction, updateWorkspaceAction, acceptWorkspaceInviteAction, getPendingInvitesAction, rejectWorkspaceInviteAction } from '@/app/actions/workspaceActions';
-import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs, requestBoardCompletionAction, respondBoardCompletionAction, getPendingBoardCompletionRequestsAction } from '@/app/actions/boardActions';
+import { createBoardAction, updateBoardAction, completeBoardAction, getBoardActivityLogs, requestBoardCompletionAction, respondBoardCompletionAction, getPendingBoardCompletionRequestsAction, hasBoardEventsAction } from '@/app/actions/boardActions';
 import {
   getMyEventsAction,
   updateCardPrevistoAction,
@@ -261,6 +261,7 @@ export default function DashboardClient({
 
   const [optimisticWorkspaceId, setOptimisticWorkspaceId] = useState<string | null>(null);
   const [renameBoardData, setRenameBoardData] = useState<{ id: string; name: string; detalhes?: string | null; sectorId?: number | null; dtatv?: string | Date | null; workspaceId?: string | number | null; user_seqid?: string | null; previsto?: string | Date | null } | null>(null);
+  const [hasEvents, setHasEvents] = useState<boolean>(false);
   const [historySidebarBoardId, setHistorySidebarBoardId] = useState<string | null>(null);
   const [editWorkspaceData, setEditWorkspaceData] = useState<any | null>(null);
   const [editWorkspaceTab, setEditWorkspaceTab] = useState<'general' | 'collaborators'>('general');
@@ -1408,16 +1409,20 @@ export default function DashboardClient({
                 userId={user.id}
                 userSeqid={userSeqid}
                 currentUserRole={activeWorkspacePerms.role}
-                onRenameBoard={() => setRenameBoardData({
-                  id: currentBoard.id,
-                  name: currentBoard.name,
-                  detalhes: currentBoard.detalhes,
-                  sectorId: currentBoard.sector?.id || currentBoard.sectorId,
-                  dtatv: currentBoard.dtatv,
-                  workspaceId: activeWorkspace?.seqid || currentBoard.workspaceId,
-                  user_seqid: currentBoard.user_seqid,
-                  previsto: currentBoard.previsto
-                })}
+                onRenameBoard={async () => {
+                  const hasEvents = await hasBoardEventsAction(currentBoard.id);
+                  setHasEvents(hasEvents);
+                  setRenameBoardData({
+                    id: currentBoard.id,
+                    name: currentBoard.name,
+                    detalhes: currentBoard.detalhes,
+                    sectorId: currentBoard.sector?.id || currentBoard.sectorId,
+                    dtatv: currentBoard.dtatv,
+                    workspaceId: activeWorkspace?.seqid || currentBoard.workspaceId,
+                    user_seqid: currentBoard.user_seqid,
+                    previsto: currentBoard.previsto
+                  });
+                }}
                 viewMode={viewMode}
                 boardDtatv={currentBoard.dtatv}
                 boardCreatedAt={currentBoard.createdAt}
@@ -1861,16 +1866,20 @@ export default function DashboardClient({
                                   <div className={styles.tableActionsGroup}>
                                     <button
                                       className={styles.tableEditBtn}
-                                      onClick={() => setRenameBoardData({
-                                        id: board.id,
-                                        name: board.name,
-                                        detalhes: board.detalhes,
-                                        sectorId: board.sector?.id,
-                                        dtatv: board.dtatv,
-                                        workspaceId: board.workspaceId,
-                                        user_seqid: board.user_seqid,
-                                        previsto: board.previsto
-                                      })}
+                                      onClick={async () => {
+                                        const hasEvents = await hasBoardEventsAction(board.id);
+                                        setHasEvents(hasEvents);
+                                        setRenameBoardData({
+                                          id: board.id,
+                                          name: board.name,
+                                          detalhes: board.detalhes,
+                                          sectorId: board.sector?.id,
+                                          dtatv: board.dtatv,
+                                          workspaceId: board.workspaceId,
+                                          user_seqid: board.user_seqid,
+                                          previsto: board.previsto
+                                        });
+                                      }}
                                       title="Editar Atividade"
                                     >
                                       ✏️
@@ -2030,6 +2039,7 @@ export default function DashboardClient({
           initialWorkspaceId={renameBoardData.workspaceId}
           initialUserSeqid={renameBoardData.user_seqid}
           initialPrevisto={renameBoardData.previsto}
+          hasEvents={hasEvents}
           sectors={sectors}
           workspaces={workspaces}
           onSubmit={handleRenameBoard}

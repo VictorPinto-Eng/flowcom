@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useKanban } from '@/hooks/useKanban';
 import Board from '@/components/kanban/Board';
 import RenameActivityModal from '@/components/modals/RenameActivityModal';
-import { updateBoardAction } from '@/app/actions/boardActions';
+import { updateBoardAction, hasBoardEventsAction } from '@/app/actions/boardActions';
 import DashboardHeader from './DashboardHeader';
 import styles from './DashboardClient.module.css';
 
@@ -39,6 +39,7 @@ export default function BoardEventsClient({
   );
 
   const [renameBoardData, setRenameBoardData] = useState<any | null>(null);
+  const [hasEvents, setHasEvents] = useState<boolean>(false);
 
   const handleRenameBoard = async (
     boardId: string,
@@ -96,16 +97,20 @@ export default function BoardEventsClient({
         userId={user.id}
         userSeqid={userSeqid}
         currentUserRole={currentUserRole}
-        onRenameBoard={(boardId: string, boardName: string) => setRenameBoardData({
-          id: boardId,
-          name: boardName,
-          detalhes: activeBoard.detalhes,
-          sectorId: activeBoard.sector?.id || activeBoard.sectorId,
-          dtatv: activeBoard.dtatv ? new Date(activeBoard.dtatv).toISOString().split('T')[0] : null,
-          workspaceId: activeBoard.workspaceId ? activeBoard.workspaceId.toString() : null,
-          user_seqid: activeBoard.user_seqid ? activeBoard.user_seqid.toString() : null,
-          previsto: activeBoard.previsto ? new Date(activeBoard.previsto).toISOString().split('T')[0] : null
-        })}
+        onRenameBoard={async (boardId: string, boardName: string) => {
+          const hasEvents = await hasBoardEventsAction(boardId);
+          setHasEvents(hasEvents);
+          setRenameBoardData({
+            id: boardId,
+            name: boardName,
+            detalhes: activeBoard.detalhes,
+            sectorId: activeBoard.sector?.id || activeBoard.sectorId,
+            dtatv: activeBoard.dtatv ? new Date(activeBoard.dtatv).toISOString().split('T')[0] : null,
+            workspaceId: activeBoard.workspaceId ? activeBoard.workspaceId.toString() : null,
+            user_seqid: activeBoard.user_seqid ? activeBoard.user_seqid.toString() : null,
+            previsto: activeBoard.previsto ? new Date(activeBoard.previsto).toISOString().split('T')[0] : null
+          });
+        }}
         viewMode={viewMode}
         boardDtatv={activeBoard.dtatv}
         boardCreatedAt={activeBoard.createdAt}
@@ -126,6 +131,7 @@ export default function BoardEventsClient({
           initialWorkspaceId={renameBoardData.workspaceId}
           initialUserSeqid={renameBoardData.user_seqid}
           initialPrevisto={renameBoardData.previsto}
+          hasEvents={hasEvents}
           sectors={[]}
           workspaces={[]}
           onSubmit={handleRenameBoard}

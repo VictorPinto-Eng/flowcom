@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
 import RenameActivityModal from '@/components/modals/RenameActivityModal';
-import { updateBoardAction, completeBoardAction, requestBoardCompletionAction } from '@/app/actions/boardActions';
+import { updateBoardAction, completeBoardAction, requestBoardCompletionAction, hasBoardEventsAction } from '@/app/actions/boardActions';
 import styles from './MyActivitiesView.module.css';
 
 interface BoardShort {
@@ -81,6 +81,7 @@ export default function MyActivitiesView({
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   const [eventFilter, setEventFilter] = useState<'all' | 'with-events' | 'without-events'>('all');
   const [renameBoardData, setRenameBoardData] = useState<any>(null);
+  const [hasEvents, setHasEvents] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Restore layout preference on mount
@@ -461,7 +462,21 @@ export default function MyActivitiesView({
                   <div className={styles.cardActions}>
                     <button
                       className={styles.actionBtnGhost}
-                      onClick={() => console.log('Editar não implementado')}
+                      onClick={async () => {
+                        const hasEvents = await hasBoardEventsAction(board.id);
+                        setHasEvents(hasEvents);
+                        const boardData = {
+                          id: board.id,
+                          name: board.name,
+                          detalhes: board.detalhes || '',
+                          sectorId: board.sector?.id || null,
+                          dtatv: board.dtatv ? new Date(board.dtatv).toISOString().split('T')[0] : null,
+                          workspaceId: board.workspaceId ? board.workspaceId.toString() : null,
+                          user_seqid: board.user?.seqid ? board.user.seqid.toString() : null,
+                          previsto: board.previsto ? new Date(board.previsto).toISOString().split('T')[0] : null
+                        };
+                        setRenameBoardData(boardData);
+                      }}
                       title="Editar Atividade"
                     >
                       ✏️ Editar
@@ -566,7 +581,9 @@ export default function MyActivitiesView({
                         <div className={styles.tableActionsGroup}>
                           <button
                             className={styles.tableActionBtnEdit}
-                            onClick={() => {
+                            onClick={async () => {
+                              const hasEvents = await hasBoardEventsAction(board.id);
+                              setHasEvents(hasEvents);
                               const boardData = {
                                 id: board.id,
                                 name: board.name,
@@ -635,6 +652,7 @@ export default function MyActivitiesView({
           initialWorkspaceId={renameBoardData.workspaceId}
           initialUserSeqid={renameBoardData.user_seqid}
           initialPrevisto={renameBoardData.previsto}
+          hasEvents={hasEvents}
           sectors={[]}
           workspaces={[]}
           onSubmit={async (boardId, name, detalhes, sectorId, dtatv, workspaceId, assignedUserSeqid, previsto) => {
