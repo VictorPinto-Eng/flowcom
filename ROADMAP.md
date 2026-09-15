@@ -191,6 +191,38 @@ pendente, priorizado e por quê.
 
 ---
 
+## Migração de Domínio (flow.hv5.com.br → floxie.io)
+
+### P1 — Alta
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| MIG-001 | **Atualizar domínio no deploy.sh e Docker** | Container aponta para `flow.hv5.com.br`. Precisa atualizar para `floxie.io` em todas as configs. | Pendente |
+| MIG-002 | **Configurar DNS no novo domínio** | Apontar `floxie.io` e subdomínios (ex: `app.floxie.io`) para o servidor `hv5srvd`. | Pendente |
+| MIG-003 | **Atualizar CSP e headers de segurança** | `next.config.ts` pode ter domínios hardcoded (fonts, CDNs). Verificar e atualizar. | Pendente |
+| MIG-004 | **Atualizar cookie de sessão (domain)** | Cookie pode estar configurado para `.hv5.com.br`. Migrar para `.floxie.io`. | Pendente |
+| MIG-005 | **Configurar SSL/TLS no novo domínio** | Certificado Let's Encrypt para `floxie.io`. Usar Certbot ou equivalente. | Pendente |
+
+### P2 — Média
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| MIG-006 | **Redirecionar domínio antigo (301)** | Configurar redirect de `flow.hv5.com.br` → `floxie.io` para não perder tráfego/SEO. | Pendente |
+| MIG-007 | **Atualizar links internos e emails** | Templates de e-mail (Resend) podem ter URLs hardcoded com domínio antigo. | Pendente |
+| MIG-008 | **Atualizar `.env.example` e docs** | Documentar novo domínio em `.env.example` e `AGENTS.md`. | Pendente |
+| MIG-009 | **Testar fluxo completo no novo domínio** | Login, registro, convites, dashboard — tudo deve funcionar com `floxie.io`. | Pendente |
+| MIG-010 | **Atualizar Google Analytics / Tracking** | Se houver analytics, apontar para novo domínio. | Pendente |
+
+### P3 — Baixa
+
+| ID | Item | Justificativa | Status |
+|----|------|---------------|--------|
+| MIG-011 | **Atualizar manifest.json / PWA** | Se aplicável, atualizar `start_url` e `scope` no manifest. | Pendente |
+| MIG-012 | **Limpar caches de CDN (se houver)** | CloudFlare ou similar pode ter cache do domínio antigo. | Pendente |
+| MIG-013 | **Atualizar repositório GitHub** | README, URLs de deploy, webhooks podem referenciar domínio antigo. | Pendente |
+
+---
+
 ## Performance e Arquitetura
 
 ### P2 — Separação de Rotas (Reduzir DashboardClient monolítico)
