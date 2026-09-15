@@ -69,7 +69,6 @@ export default function PanelsClient({
           {/* Header da Página */}
           <div style={{
             display: 'flex',
-            flexWrap: 'wrap',
             alignItems: 'center',
             gap: '0.5rem',
             marginBottom: '0.6rem'
@@ -87,7 +86,7 @@ export default function PanelsClient({
                 — {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}
               </span>
             </div>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
                 style={{
