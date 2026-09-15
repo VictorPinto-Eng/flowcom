@@ -376,3 +376,81 @@ export async function getPendingTransferRequestsAction() {
     description: req.description || ''
   }));
 }
+
+/**
+ * Busca um card (atividade) pelo seqid com todas as informações relacionadas.
+ * Usada pela página `/dashboard/activity/[id]` para edição/visualização.
+ */
+export async function getCardByIdAction(cardSeqid: string) {
+  const user = await userRepo.getLoggedUser();
+  if (!user) throw new Error('Não autenticado');
+
+  const card = await prisma.card.findUnique({
+    where: { seqid: BigInt(cardSeqid) },
+    include: {
+      column: {
+        include: {
+          workspace: true
+        }
+      },
+      board: true,
+      task_user: true,
+      users: true,
+      card_act: {
+        orderBy: { created_at: 'desc' },
+        include: { users: true }
+      }
+    }
+  });
+
+  if (!card) return null;
+
+  // Validar permissão
+  const userRole = await workspaceService.getUserRoleInWorkspace(
+    card.column.workspace.id,
+    BigInt(user.seqid)
+  );
+
+  const isCreator = card.users?.seqid.toString() === user.seqid.toString() || card.user_seqid?.toString() === user.seqid.toString();
+  const isAssigned = card.task_user?.seqid.toString() === user.seqid.toString() || card.taskuser_seqid?.toString() === user.seqid.toString();
+  const isAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
+
+  if (!isAdmin && !isCreator && !isAssigned) {
+    throw new Error('Permissão negada');
+  }
+
+  // Serializar BigInt e datas
+  return {
+    seqid: card.seqid.toString(),
+    title: card.title,
+    description: card.description,
+    previsto: card.previsto?.toISOString() || null,
+    dtatv: card.dtatv?.toISOString() || null,
+    dtcon: card.dtcon?.toISOString() || null,
+    dtmod: card.dtmod?.toISOString() || null,
+    created_at: card.createdAt?.toISOString() || null,
+    columnId: card.columnId,
+    columnSeqid: card.columnId?.toString(),
+    columnTitle: card.column?.title,
+    boardSeqid: card.board_seqid?.toString(),
+    boardTitle: card.board?.name,
+    workspaceId: card.column.workspace.id,
+    workspaceSeqid: card.column.workspace.seqid.toString(),
+    workspaceName: card.column.workspace.name,
+    createdBy: card.created_by?.toString(),
+    modifiedBy: card.moduser?.toString(),
+    taskUserSeqid: card.taskuser_seqid?.toString(),
+    taskUserName: card.task_user?.name,
+    userSeqid: card.user_seqid?.toString(),
+    userName: card.users?.name,
+    card_act: card.card_act.map(act => ({
+      seqid: act.seqid.toString(),
+      card_seqid: act.card_seqid?.toString(),
+      description: act.description,
+      created_at: act.created_at?.toISOString(),
+      user_seqid: act.user_seqid?.toString(),
+      userName: act.users?.name,
+      created_by: act.created_by?.toString()
+    }))
+  };
+}
