@@ -75,14 +75,13 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
     }
   }, []);
 
-  // Navegação por Enter nos campos de data (abre datepicker)
+  // Navegação por Enter nos campos de data
   const handleDateKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement | null>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
       if (nextRef?.current) {
         nextRef.current.focus();
-        nextRef.current.showPicker?.();
       } else if (submitBtnRef.current) {
         submitBtnRef.current.focus();
       }
