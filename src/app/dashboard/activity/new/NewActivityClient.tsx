@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBoardAction } from '@/app/actions/boardActions';
 import styles from './NewActivity.module.css';
@@ -49,6 +49,8 @@ interface Props {
  */
 export default function NewActivityClient({ user, workspaces, sectors, workspaceId: initialWorkspaceId }: Props) {
   const router = useRouter();
+  const previstoRef = useRef<HTMLInputElement>(null);
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
 
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>(
     initialWorkspaceId || workspaces[0]?.id || ''
@@ -63,6 +65,19 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
     return d.toISOString().split('T')[0];
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Navegação por Enter nos campos de data
+  const handleDateKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement | null>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextRef?.current) {
+        nextRef.current.focus();
+        nextRef.current.showPicker?.();
+      } else if (submitBtnRef.current) {
+        submitBtnRef.current.focus();
+      }
+    }
+  }, []);
 
   // Atalho Escape para cancelar
   const handleCancel = useCallback(() => {
@@ -254,6 +269,7 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
                 max="9999-12-31"
                 value={dtatv}
                 onChange={(e) => setDtatv(e.target.value)}
+                onKeyDown={(e) => handleDateKeyDown(e, previstoRef)}
               />
               <span className={styles.hint}>Defina a data inicial.</span>
             </div>
@@ -261,10 +277,12 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
             <div className={styles.field}>
               <label>Data Prevista</label>
               <input
+                ref={previstoRef}
                 type="date"
                 max="9999-12-31"
                 value={previsto}
                 onChange={(e) => setPrevisto(e.target.value)}
+                onKeyDown={(e) => handleDateKeyDown(e)}
               />
               <span className={styles.hint}>Previsão de conclusão (D+1 por padrão).</span>
             </div>
@@ -280,6 +298,7 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
               Cancelar
             </button>
             <button
+              ref={submitBtnRef}
               type="submit"
               className={styles.submitBtn}
               disabled={!name.trim() || !selectedWorkspaceId || submitting}
