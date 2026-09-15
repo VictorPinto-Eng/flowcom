@@ -61,13 +61,9 @@ export default function DashboardHeader({
         <button
           className={styles.panelTrigger}
           onClick={() => {
-            if (onPanelClick) {
-              onPanelClick();
-            } else {
-              router.push('/dashboard');
-            }
+            router.push('/dashboard/panels');
           }}
-          title="Visualizar Painel de Atividades por Área de Trabalho"
+          title="Visualizar Painel de Controle de Áreas de Trabalho"
         >
           🧩 Painel
         </button>
@@ -78,20 +74,16 @@ export default function DashboardHeader({
           }}
           title="Listagem de todas as atividades sob sua responsabilidade ordenada por agendamento"
         >
-          📅 Minhas Atividades
+          📅 Atividades
         </button>
         <button
           className={styles.myEventsTrigger}
           onClick={() => {
-            if (onMyEventsClick) {
-              onMyEventsClick();
-            } else {
-              router.push('/dashboard?view=my-events');
-            }
+            router.push('/dashboard/my-events');
           }}
           title="Listagem de todos eventos em andamento sob responsabilidade direta do seu usuário"
         >
-          📋 Meus Eventos
+          📋 Eventos
         </button>
         <div className={styles.reportDropdown} ref={reportMenuRef}>
           <button
