@@ -202,6 +202,11 @@ pendente, priorizado e por quê.
 | MIG-003 | **Atualizar CSP e headers de segurança** | `next.config.ts` pode ter domínios hardcoded (fonts, CDNs). Verificar e atualizar. | Pendente |
 | MIG-004 | **Atualizar cookie de sessão (domain)** | Cookie pode estar configurado para `.hv5.com.br`. Migrar para `.floxie.io`. | Pendente |
 | MIG-005 | **Configurar SSL/TLS no novo domínio** | Certificado Let's Encrypt para `floxie.io`. Usar Certbot ou equivalente. | Pendente |
+| MIG-014 | **Configurar novo servidor (Docker, Node, PostgreSQL)** | Instalar Docker Swarm, Node 22, pgvector no novo servidor. | Pendente |
+| MIG-015 | **Migrar banco de dados PostgreSQL** | Backup do banco antigo → restore no novo servidor. Verificar integridade. | Pendente |
+| MIG-016 | **Configurar registry Docker local** | `127.0.0.1:5000` precisa estar rodando no novo servidor para imagens. | Pendente |
+| MIG-017 | **Configurar variáveis de ambiente (.env)** | `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY` etc. precisam ser configurados. | Pendente |
+| MIG-018 | **Testar deploy completo no novo servidor** | Rodar `deploy.sh` e verificar se tudo funciona (build, migrate, start). | Pendente |
 
 ### P2 — Média
 
