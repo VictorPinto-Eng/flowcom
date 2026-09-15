@@ -74,14 +74,15 @@ export default function PanelsClient({
             gap: '0.5rem',
             marginBottom: '0.6rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0, whiteSpace: 'nowrap' }}>
                 Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span>
               </h1>
               <span style={{
                 color: '#64748b',
                 fontSize: '0.85rem',
-                fontWeight: 600
+                fontWeight: 600,
+                whiteSpace: 'nowrap'
               }}>
                 — {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}
               </span>
