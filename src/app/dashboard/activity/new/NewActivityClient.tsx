@@ -180,7 +180,7 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
           </div>
 
           <div className={styles.field}>
-            <label>Setor da Atividade <span className={styles.optional}>Opcional</span></label>
+            <label>Setor da Atividade</label>
             <select
               value={sectorId}
               onChange={(e) => setSectorId(e.target.value)}
