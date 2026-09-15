@@ -383,22 +383,41 @@ function parseDateBR(dateStr: string): Date {
 
 /**
  * Retorna análise mensal completa: atividades concluídas, por setor, por responsável e timeline semanal.
+ * Se workspaceSeqid for fornecido, filtra apenas essa workspace.
  */
-export async function getMonthlyAnalysisAction() {
+export async function getMonthlyAnalysisAction(workspaceSeqid?: string) {
   const user = await userRepo.getLoggedUser();
   if (!user) return null;
 
-  const userWorkspaces = await prisma.workspace.findMany({
-    where: {
-      OR: [
-        { users_seqid: user.seqid },
-        { members: { some: { userSeqid: user.seqid } } }
-      ]
-    },
-    select: { seqid: true }
-  });
+  let workspaceSeqids: bigint[];
 
-  const workspaceSeqids = userWorkspaces.map(w => w.seqid);
+  if (workspaceSeqid) {
+    // Verificar se o usuário tem acesso a esta workspace
+    const ws = await prisma.workspace.findFirst({
+      where: {
+        seqid: BigInt(workspaceSeqid),
+        OR: [
+          { users_seqid: user.seqid },
+          { members: { some: { userSeqid: user.seqid } } }
+        ]
+      },
+      select: { seqid: true }
+    });
+    if (!ws) return null;
+    workspaceSeqids = [ws.seqid];
+  } else {
+    const userWorkspaces = await prisma.workspace.findMany({
+      where: {
+        OR: [
+          { users_seqid: user.seqid },
+          { members: { some: { userSeqid: user.seqid } } }
+        ]
+      },
+      select: { seqid: true }
+    });
+    workspaceSeqids = userWorkspaces.map(w => w.seqid);
+  }
+
   if (workspaceSeqids.length === 0) return null;
 
   const now = new Date();

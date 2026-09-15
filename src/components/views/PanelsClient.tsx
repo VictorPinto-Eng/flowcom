@@ -62,11 +62,11 @@ export default function PanelsClient({
     }
   };
 
-  const handleOpenMonthlyAnalysis = async () => {
+  const handleOpenMonthlyAnalysis = async (workspaceSeqid?: string) => {
     setLoadingAnalysis(true);
     setShowMonthlyAnalysis(true);
     try {
-      const data = await getMonthlyAnalysisAction();
+      const data = await getMonthlyAnalysisAction(workspaceSeqid);
       setMonthlyData(data);
     } catch (err) {
       console.error('Erro ao buscar análise mensal:', err);
@@ -114,25 +114,6 @@ export default function PanelsClient({
               Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span> <span style={{ color: '#64748b', fontWeight: 600 }}>— {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}</span>
             </h1>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
-              <button
-                onClick={handleOpenMonthlyAnalysis}
-                style={{
-                  background: 'white',
-                  color: '#6366f1',
-                  border: '1px solid #e2e8f0',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  fontSize: '0.8rem'
-                }}
-                title="Ver análise mensal de atividades"
-              >
-                📊 Análise
-              </button>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
                 style={{
@@ -243,6 +224,9 @@ export default function PanelsClient({
                 ws={ws}
                 router={router}
                 onEdit={() => setEditingWorkspace(ws)}
+                onAnalysis={(workspaceSeqid: string) => {
+                  handleOpenMonthlyAnalysis(workspaceSeqid);
+                }}
               />
             ))}
           </div>
@@ -413,7 +397,7 @@ function StatCard({ icon, value, label, color = '#0f172a', onClick, clickable }:
   );
 }
 
-function WorkspaceCard({ ws, router, onEdit }: any) {
+function WorkspaceCard({ ws, router, onEdit, onAnalysis }: any) {
   // Simulando dados de progresso baseados nos boards da workspace para o visual do card
   const totalBoards = ws.boards?.length || 0;
   const completedBoards = ws.boards?.filter((b: any) => b.dtcon).length || 0;
@@ -449,20 +433,37 @@ function WorkspaceCard({ ws, router, onEdit }: any) {
       gap: '0.75rem'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-          {ws.name} <span style={{ cursor: 'help', fontSize: '0.75rem', color: '#94a3b8' }}>ⓘ</span>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+          {ws.name}
         </h3>
-        <span style={{
-          fontSize: '0.65rem',
-          fontWeight: 800,
-          padding: '0.2rem 0.5rem',
-          borderRadius: '4px',
-          background: '#e0f2fe',
-          color: '#0369a1',
-          textTransform: 'uppercase'
-        }}>
-          {ws.type?.name || 'OUTRO'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span style={{
+            fontSize: '0.6rem',
+            fontWeight: 800,
+            padding: '0.15rem 0.4rem',
+            borderRadius: '4px',
+            background: '#e0f2fe',
+            color: '#0369a1',
+            textTransform: 'uppercase'
+          }}>
+            {ws.type?.name || 'OUTRO'}
+          </span>
+          <button
+            onClick={() => onAnalysis?.(ws.seqid)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              padding: '0.2rem',
+              borderRadius: '4px',
+              color: '#6366f1'
+            }}
+            title="📊 Análise mensal"
+          >
+            📊
+          </button>
+        </div>
       </div>
 
       <div style={{ marginBottom: '0.25rem' }}>
