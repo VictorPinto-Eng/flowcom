@@ -91,7 +91,7 @@ export default function DashboardHeader({
             onClick={() => setIsReportMenuOpen(!isReportMenuOpen)}
             title="Relatórios"
           >
-            📊 Relatório
+            📊 Relatórios
           </button>
           {isReportMenuOpen && (
             <div className={styles.reportDropdownMenu}>
