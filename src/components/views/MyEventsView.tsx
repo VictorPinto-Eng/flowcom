@@ -14,6 +14,7 @@ import {
   transferCardAction,
   transferCardWorkspaceAction
 } from '@/app/actions/cardActions';
+import ScheduleDatePickerModal from '@/components/modals/ScheduleDatePickerModal';
 import styles from './MyEventsView.module.css';
 
 interface MyEventsViewProps {
@@ -32,6 +33,7 @@ export default function MyEventsView({ events, currentUser, userSeqid, workspace
   const [isSavingAction, setIsSavingAction] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterWorkspaceSeqid, setFilterWorkspaceSeqid] = useState<string>('');
+  const [activeDatePickerEvent, setActiveDatePickerEvent] = useState<{ id: string; title: string; previsto?: any } | null>(null);
 
   const getCardAgeText = (card: any) => {
     const startDate = card.dtatv ? new Date(card.dtatv) : (card.createdAt ? new Date(card.createdAt) : null);
@@ -645,6 +647,8 @@ const eventsSummary = useMemo(() => {
 
                   const assignedUserName = ev.task_user?.name || 'Não atribuído';
                   const isAssignedToMe = userSeqid && ev.taskuser_seqid && ev.taskuser_seqid.toString() === userSeqid;
+                  const isOwner = userSeqid && (ev.board?.user_seqid?.toString() === userSeqid || ev.created_by?.toString() === userSeqid);
+                  const canEdit = Boolean(isAssignedToMe || isOwner);
 
                   return (
                     <tr key={ev.seqid}>
@@ -665,27 +669,28 @@ const eventsSummary = useMemo(() => {
                           onClick={() => handleOpenTransferModal(ev)}
                           title="Clique para transferir esta atividade"
                         >
-                          <span className={styles.userIcon}>👤</span>
-                          <span>{assignedUserName}</span>
+                          <div className={styles.userInfoRow}>
+                            <span className={styles.userIcon}>👤</span>
+                            <span>{assignedUserName}</span>
+                          </div>
                           <span className={styles.transferIcon}>🔄</span>
                         </div>
                       </td>
                       <td>
                         <div className={styles.deadlineWrapper}>
-                          <div className={styles.dateInputContainer}>
-                            <span className={styles.calendarIcon}>
-                              {statusType === 'danger' ? '⚠️' : '📅'}
+                          <div
+                            className={`${styles.clickableDateBox} ${styles[statusType] || ''}`}
+                            onClick={() => {
+                              if (canEdit) {
+                                setActiveDatePickerEvent({ id: ev.id, title: ev.title, previsto: ev.previsto });
+                              }
+                            }}
+                            title={!canEdit ? "Apenas o responsável ou proprietário pode alterar a data programada." : "Clique para alterar a data programada"}
+                            style={{ cursor: canEdit ? 'pointer' : 'not-allowed', opacity: canEdit ? 1 : 0.7 }}
+                          >
+                            <span className={styles.dateDisplayText}>
+                              {previstoStr}
                             </span>
-                            <input
-                              type="date"
-                              max="9999-12-31"
-                              className={`${styles.gridDateInput} ${styles[statusType] || ''}`}
-                              value={ev.previsto ? new Date(ev.previsto).toISOString().split('T')[0] : ''}
-                              onChange={(e) => handlePrevistoChange(ev.id, e.target.value)}
-                              onClick={(e) => (e.target as any).showPicker?.()}
-                              disabled={!isAssignedToMe}
-                              title={!isAssignedToMe ? "Apenas o responsável pode alterar a data programada." : undefined}
-                            />
                           </div>
                           <div className={`${styles.cardAgeText} ${styles[statusType] || ''}`}>
                             {statusType === 'danger' ? '🔴' : statusType === 'warning' ? '🟡' : '⏱️'} {getCardAgeText(ev)}
@@ -963,6 +968,20 @@ const eventsSummary = useMemo(() => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal Reduzido de Seleção de Data Exata */}
+      {activeDatePickerEvent && (
+        <ScheduleDatePickerModal
+          isOpen={!!activeDatePickerEvent}
+          currentDate={activeDatePickerEvent.previsto ? new Date(activeDatePickerEvent.previsto).toISOString().split('T')[0] : null}
+          cardTitle={activeDatePickerEvent.title}
+          onClose={() => setActiveDatePickerEvent(null)}
+          onSave={(dateStr) => {
+            handlePrevistoChange(activeDatePickerEvent.id, dateStr || '');
+            setActiveDatePickerEvent(null);
+          }}
+        />
       )}
     </div>
   );

@@ -204,7 +204,6 @@ export default function ActiveEventsGrid({
                           className={`${styles.gridDateInput} ${styles[statusType] || ''}`}
                           value={dateInputVal}
                           onChange={(e) => handlePrevistoChange(event.id, e.target.value)}
-                          onClick={(e) => (e.target as any).showPicker?.()}
                           disabled={!canEditFully}
                           title={!canEditFully ? "Apenas o proprietário e responsável pode alterar a data programada." : undefined}
                         />

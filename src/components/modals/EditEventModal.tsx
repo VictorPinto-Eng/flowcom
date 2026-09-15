@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toLocalDateInputString } from '@/lib/dateUtils';
 import styles from './EditEventModal.module.css';
 
 interface EditEventModalProps {
@@ -22,13 +23,13 @@ export default function EditEventModal({ card, columns, onSave, onClose }: EditE
   const [description, setDescription] = useState(card.description || '');
   const [columnId, setColumnId] = useState((card as any).columnId || '');
   const [previsto, setPrevisto] = useState(
-    card.previsto ? new Date(card.previsto).toISOString().split('T')[0] : ''
+    card.previsto ? toLocalDateInputString(card.previsto) : ''
   );
   const [dtcon, setDtcon] = useState(
-    card.dtcon ? new Date(card.dtcon).toISOString().split('T')[0] : ''
+    card.dtcon ? toLocalDateInputString(card.dtcon) : ''
   );
   const [dtatv, setDtatv] = useState(
-    card.dtatv ? new Date(card.dtatv).toISOString().split('T')[0] : ''
+    card.dtatv ? toLocalDateInputString(card.dtatv) : ''
   );
   const [isSaving, setIsSaving] = useState(false);
 

@@ -61,6 +61,7 @@ model Card {
   task_user      User?            @relation("CardTaskUser", fields: [taskuser_seqid], references: [seqid])
   users          User?            @relation("CardOwner", fields: [user_seqid], references: [seqid])
   card_act       card_act[]
+  collaborators  CardCollaborator[]
 
   @@index([board_seqid], map: "idx_card_board_seqid")
   @@index([user_seqid], map: "idx_card_user_seqid")
@@ -84,6 +85,7 @@ model User {
   sent_invites      WorkspaceInvite[]
   sessions          Session[]
   diagnosticSnapshots ServerDiagnosticSnapshot[]
+  card_collaborators  CardCollaborator[]
 
   @@map("users")
 }
@@ -259,4 +261,17 @@ model ServerDiagnosticSnapshot {
   @@index([userSeqid], map: "idx_diagnostic_user_seqid")
   @@index([createdAt], map: "idx_diagnostic_created_at")
   @@map("server_diagnostic_snapshot")
+}
+
+model CardCollaborator {
+  seqid     BigInt   @id @default(autoincrement())
+  cardSeqid BigInt   @map("card_seqid")
+  userSeqid BigInt   @map("user_seqid")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  card      Card     @relation(fields: [cardSeqid], references: [seqid], onDelete: Cascade)
+  user      User     @relation(fields: [userSeqid], references: [seqid], onDelete: Cascade)
+
+  @@unique([cardSeqid, userSeqid])
+  @@map("card_collaborator")
 }

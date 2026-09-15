@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { CircleCheckBig } from 'lucide-react';
 import DashboardHeader from './DashboardHeader';
 import { KanbanClient } from '../kanban';
-import { CreateWorkspaceModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal } from '../modals';
+import { CreateWorkspaceModal, ActivityReportModal, RenameActivityModal, PremiumWorkspaceGridModal, WorkspaceColumnsModal, EditWorkspaceModal, WhatsNewModal } from '../modals';
 import ActivityHistorySidebar from './ActivityHistorySidebar';
 import WelcomeDashboard from './WelcomeDashboard';
 import { MyEventsView, MovementsView } from '../views';
@@ -221,7 +221,20 @@ export default function DashboardClient({
 }: DashboardClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [workspaces, setWorkspaces] = useState<WorkspaceWithDetails[]>(initialWorkspaces);
+
+  useEffect(() => {
+    const lastSeen = localStorage.getItem('whats-new-version');
+    if (lastSeen !== '1.0.0') {
+      setShowWhatsNew(true);
+    }
+  }, []);
+
+  const handleCloseWhatsNew = () => {
+    localStorage.setItem('whats-new-version', '1.0.0');
+    setShowWhatsNew(false);
+  };
 
   useEffect(() => {
     setWorkspaces(initialWorkspaces);
@@ -2369,6 +2382,9 @@ export default function DashboardClient({
             </form>
           </div>
         </div>
+      )}
+      {showWhatsNew && (
+        <WhatsNewModal onClose={handleCloseWhatsNew} />
       )}
     </div>
   );

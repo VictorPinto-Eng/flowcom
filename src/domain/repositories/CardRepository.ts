@@ -4,9 +4,9 @@ export class CardRepository {
   async findById(cardId: string) {
     return await prisma.card.findUnique({
       where: { seqid: BigInt(cardId) },
-      include: { 
-        column: { 
-          include: { workspace: true } 
+      include: {
+        column: {
+          include: { workspace: true }
         },
         board: true
       }
@@ -22,7 +22,7 @@ export class CardRepository {
 
   async findCardsByUserSeqid(userSeqid: bigint) {
     return await prisma.card.findMany({
-      where: { 
+      where: {
         taskuser_seqid: userSeqid,
         dtcon: null
       },
@@ -57,9 +57,9 @@ export class CardRepository {
     return await prisma.card.update({
       where: { seqid: BigInt(cardId) },
       data,
-      include: { 
-        column: { 
-          include: { workspace: true } 
+      include: {
+        column: {
+          include: { workspace: true }
         },
         board: true
       }

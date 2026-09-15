@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { toLocalDateInputString } from '@/lib/dateUtils';
 import styles from '../kanban/Board.module.css';
 
 interface CreateEventFormProps {
@@ -11,11 +12,11 @@ interface CreateEventFormProps {
 export default function CreateEventForm({ onSubmit, onCancel }: CreateEventFormProps) {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
-  const [dtatv, setDtatv] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dtatv, setDtatv] = useState(() => toLocalDateInputString(new Date()));
   const [previsto, setPrevisto] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return toLocalDateInputString(tomorrow);
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,10 +25,10 @@ export default function CreateEventForm({ onSubmit, onCancel }: CreateEventFormP
     onSubmit(title.trim(), desc.trim(), dtatv, previsto || undefined);
     setTitle('');
     setDesc('');
-    setDtatv(new Date().toISOString().split('T')[0]);
+    setDtatv(toLocalDateInputString(new Date()));
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    setPrevisto(tomorrow.toISOString().split('T')[0]);
+    setPrevisto(toLocalDateInputString(tomorrow));
     onCancel();
   };
 
