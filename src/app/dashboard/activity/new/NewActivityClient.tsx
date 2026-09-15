@@ -330,7 +330,7 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
                 onChange={(e) => setPrevisto(e.target.value)}
                 onKeyDown={(e) => handleDateKeyDown(e)}
               />
-              <span className={styles.hint}>Previsão de conclusão (D+1 por padrão).</span>
+              <span className={styles.hint}>Previsão de conclusão.</span>
             </div>
           </div>
 
