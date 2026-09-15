@@ -49,6 +49,8 @@ interface Props {
  */
 export default function NewActivityClient({ user, workspaces, sectors, workspaceId: initialWorkspaceId }: Props) {
   const router = useRouter();
+  const detalhesRef = useRef<HTMLTextAreaElement>(null);
+  const sectorRef = useRef<HTMLSelectElement>(null);
   const previstoRef = useRef<HTMLInputElement>(null);
   const submitBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -66,7 +68,14 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Navegação por Enter nos campos de data
+  // Navegação genérica por Enter
+  const handleEnterNext = useCallback((nextRef?: React.RefObject<HTMLElement | null>) => {
+    if (nextRef?.current) {
+      nextRef.current.focus();
+    }
+  }, []);
+
+  // Navegação por Enter nos campos de data (abre datepicker)
   const handleDateKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement | null>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -80,10 +89,15 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
     }
   }, []);
 
-  // Previne submit do formulário via Enter em qualquer campo (exceto textarea)
+  // Previne submit do formulário via Enter em campos que não têm handler próprio
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
-      e.preventDefault();
+    if (e.key === 'Enter') {
+      const target = e.target as HTMLElement;
+      // Permite Enter em campos que têm handlers próprios (name, textarea, select, dates)
+      const allowedTags = ['INPUT', 'TEXTAREA', 'SELECT'];
+      if (!allowedTags.includes(target.tagName)) {
+        e.preventDefault();
+      }
     }
   }, []);
 
@@ -232,6 +246,13 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
                 placeholder="Ex: Acompanhamento Técnico, CRM de Vendas..."
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    detalhesRef.current?.focus();
+                  }
+                }}
                 required
                 autoFocus
                 maxLength={MAX_NAME_LENGTH}
@@ -246,9 +267,17 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
           <div className={styles.field}>
             <label>Informações / Detalhes</label>
             <textarea
+              ref={detalhesRef}
               placeholder="Descreva o escopo, link do drive, observações..."
               value={detalhes}
               onChange={(e) => setDetalhes(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sectorRef.current?.focus();
+                }
+              }}
               rows={3}
             />
             <span className={styles.hint}>Insira observações relevantes sobre esta atividade.</span>
@@ -257,8 +286,18 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
           <div className={styles.field}>
             <label>Setor da Atividade</label>
             <select
+              ref={sectorRef}
               value={sectorId}
               onChange={(e) => setSectorId(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Foca no primeiro campo de data (Data de Início)
+                  const dtatvInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+                  dtatvInput?.focus();
+                }
+              }}
             >
               {sectors.map(s => (
                 <option key={s.id} value={s.id}>
