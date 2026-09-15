@@ -72,25 +72,23 @@ export default function PanelsClient({
             flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '0.75rem'
+            gap: '0.5rem',
+            marginBottom: '0.6rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span>
-              </h1>
+            <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span>
               <span style={{
                 background: '#e0e7ff',
                 color: '#4338ca',
-                padding: '0.2rem 0.6rem',
-                borderRadius: '12px',
-                fontSize: '0.75rem',
+                padding: '0.15rem 0.5rem',
+                borderRadius: '10px',
+                fontSize: '0.7rem',
                 fontWeight: 700
               }}>
-                {totalWorkspaces} total
+                {totalWorkspaces}
               </span>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            </h1>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
                 style={{
