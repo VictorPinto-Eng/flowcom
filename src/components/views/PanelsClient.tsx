@@ -74,20 +74,20 @@ export default function PanelsClient({
             gap: '0.5rem',
             marginBottom: '0.6rem'
           }}>
-            <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span>
+            <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span>Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span></span>
+              <span style={{
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                color: 'white',
+                padding: '0.15rem 0.5rem',
+                borderRadius: '20px',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap'
+              }}>
+                {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}
+              </span>
             </h1>
-            <span style={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              color: 'white',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '20px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              whiteSpace: 'nowrap'
-            }}>
-              {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}
-            </span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
