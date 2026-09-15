@@ -47,7 +47,7 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
   );
   const [name, setName] = useState('');
   const [detalhes, setDetalhes] = useState('');
-  const [sectorId, setSectorId] = useState<string>('');
+  const [sectorId, setSectorId] = useState<string>('1');
   const [dtatv, setDtatv] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [previsto, setPrevisto] = useState<string>(() => {
     const d = new Date();
