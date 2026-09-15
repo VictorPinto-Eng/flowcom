@@ -9,3 +9,4 @@ export { default as WorkspaceColumnsModal } from './WorkspaceColumnsModal';
 export { default as WhatsNewModal } from './WhatsNewModal';
 export { default as EditWorkspaceModal } from './EditWorkspaceModal';
 export { default as CreateWorkspaceModal } from './CreateWorkspaceModal';
+export { default as ActiveActivitiesModal } from './ActiveActivitiesModal';

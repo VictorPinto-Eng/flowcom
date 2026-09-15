@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardHeader from '../shell/DashboardHeader';
-import { EditWorkspaceModal, WhatsNewModal } from '../modals';
+import { EditWorkspaceModal, WhatsNewModal, ActiveActivitiesModal } from '../modals';
+import { getActiveActivitiesAction } from '@/app/actions/cardActions';
 import styles from '../shell/DashboardClient.module.css';
 
 interface PanelsClientProps {
@@ -27,6 +28,9 @@ export default function PanelsClient({
   const [searchTerm, setSearchTerm] = useState('');
   const [editingWorkspace, setEditingWorkspace] = useState<any>(null);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showActiveActivities, setShowActiveActivities] = useState(false);
+  const [activeActivitiesList, setActiveActivitiesList] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
     const lastVersionSeen = localStorage.getItem('whats-new-version');
@@ -40,6 +44,20 @@ export default function PanelsClient({
     setShowWhatsNew(false);
   };
 
+  const handleOpenActiveActivities = async () => {
+    setLoadingActivities(true);
+    setShowActiveActivities(true);
+    try {
+      const activities = await getActiveActivitiesAction();
+      setActiveActivitiesList(activities);
+    } catch (err) {
+      console.error('Erro ao buscar atividades ativas:', err);
+      setActiveActivitiesList([]);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
   const filteredWorkspaces = workspaces.filter(ws =>
     ws.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ws.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -47,9 +65,9 @@ export default function PanelsClient({
 
   // Calculando stats globais baseados nos dados reais passados
   const totalWorkspaces = workspaces.length;
-  const activeActivities = dashboardStats?.activeActivities || 0;
-  const ongoingEvents = dashboardStats?.ongoingEvents || 0;
-  const overdueEvents = dashboardStats?.overdueEvents || 0;
+  const activeActivities = dashboardStats?.operational?.inProgressBoards || 0;
+  const ongoingEvents = dashboardStats?.operational?.inProgressCards || 0;
+  const overdueEvents = dashboardStats?.operational?.overdueCards || 0;
 
   return (
     <div className={styles.dashboardContainer}>
@@ -120,7 +138,13 @@ export default function PanelsClient({
             marginBottom: '0.6rem'
           }}>
             <StatCard icon="📁" value={totalWorkspaces} label="Áreas de Trabalho" />
-            <StatCard icon="⚡" value={activeActivities} label="Atividades Ativas" />
+            <StatCard
+              icon="⚡"
+              value={activeActivities}
+              label="Atividades Ativas"
+              onClick={handleOpenActiveActivities}
+              clickable
+            />
             <StatCard icon="📋" value={ongoingEvents} label="Eventos em Andamento" />
             <StatCard icon="⚠️" value={overdueEvents} label="Eventos Atrasados" color="#ef4444" />
           </div>
@@ -214,24 +238,51 @@ export default function PanelsClient({
           {showWhatsNew && (
             <WhatsNewModal onClose={handleCloseWhatsNew} />
           )}
+
+          {showActiveActivities && (
+            <ActiveActivitiesModal
+              activities={activeActivitiesList}
+              onClose={() => {
+                setShowActiveActivities(false);
+                setActiveActivitiesList([]);
+              }}
+            />
+          )}
         </main>
       </div>
     </div>
   );
 }
 
-function StatCard({ icon, value, label, color = '#0f172a' }: any) {
+function StatCard({ icon, value, label, color = '#0f172a', onClick, clickable }: any) {
   return (
-    <div style={{
-      background: 'white',
-      padding: '0.6rem',
-      borderRadius: '10px',
-      border: '1px solid #e2e8f0',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.6rem',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'white',
+        padding: '0.6rem',
+        borderRadius: '10px',
+        border: '1px solid #e2e8f0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.6rem',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'all 0.15s ease'
+      }}
+      onMouseEnter={(e) => {
+        if (clickable) {
+          (e.currentTarget as HTMLElement).style.borderColor = '#6366f1';
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 8px rgba(99, 102, 241, 0.15)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (clickable) {
+          (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0';
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
+        }
+      }}
+    >
       <div style={{
         fontSize: '1.1rem',
         background: '#f8fafc',

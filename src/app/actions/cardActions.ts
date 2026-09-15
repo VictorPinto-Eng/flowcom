@@ -71,6 +71,50 @@ export async function getUserActivitiesAction() {
   return allBoards;
 }
 
+/**
+ * Lista todas as atividades ativas (boards não concluídos) das workspaces do usuário.
+ * Usada pelo painel de controle para exibir no modal de atividades ativas.
+ */
+export async function getActiveActivitiesAction() {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return [];
+
+  const workspaces = await workspaceService.getUserWorkspaces(user.id, user.seqid.toString());
+
+  const allActivities: any[] = [];
+  workspaces.forEach((ws: any) => {
+    if (ws.boards) {
+      ws.boards.forEach((b: any) => {
+        if (!b.dtcon) {
+          allActivities.push({
+            seqid: b.seqid?.toString() || b.id,
+            name: b.name,
+            workspaceName: ws.name,
+            workspaceId: ws.id,
+            sector: b.sector?.acronym || null,
+            sectorName: b.sector?.name || null,
+            previsto: b.previsto?.toISOString?.() || b.previsto || null,
+            dtatv: b.dtatv?.toISOString?.() || b.dtatv || null,
+            createdAt: b.createdAt?.toISOString?.() || b.createdAt || null,
+            ownerName: b.user?.name || null,
+            columnsCount: b.columns?.length || 0,
+            cardsCount: b.columns?.reduce((sum: number, col: any) => sum + (col.cards?.length || 0), 0) || 0
+          });
+        }
+      });
+    }
+  });
+
+  // Ordenar por data prevista (mais próxima primeiro)
+  allActivities.sort((a, b) => {
+    if (!a.previsto) return 1;
+    if (!b.previsto) return -1;
+    return new Date(a.previsto).getTime() - new Date(b.previsto).getTime();
+  });
+
+  return allActivities;
+}
+
 export async function getCardActionsAction(cardSeqid: string) {
   const user = await userRepo.getLoggedUser();
   if (!user) throw new Error('Não autenticado');
