@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBoardAction, getSectorsAction } from '@/app/actions/boardActions';
+import { createBoardAction } from '@/app/actions/boardActions';
 import styles from './NewActivity.module.css';
+
+// Dynamic import for SweetAlert2 (lazy load on demand)
+const getSwal = async () => {
+  const module = await import('sweetalert2');
+  return module.default;
+};
+
+const MAX_NAME_LENGTH = 100;
 
 interface User {
   id: string;
@@ -39,7 +47,7 @@ interface Props {
  * Substitui o CreateActivityModal. Alinha com o restante da aplicação
  * (que prefere páginas a modais para operações de criação).
  */
-export default function NewActivityClient({ user, workspaces, sectors: initialSectors, workspaceId: initialWorkspaceId }: Props) {
+export default function NewActivityClient({ user, workspaces, sectors, workspaceId: initialWorkspaceId }: Props) {
   const router = useRouter();
 
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>(
@@ -47,26 +55,43 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
   );
   const [name, setName] = useState('');
   const [detalhes, setDetalhes] = useState('');
-  const [sectorId, setSectorId] = useState<string>('1');
+  const [sectorId, setSectorId] = useState<string>('1'); // Follow Up por padrão
   const [dtatv, setDtatv] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [previsto, setPrevisto] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   });
-  const [sectors, setSectors] = useState<SectorType[]>(initialSectors || []);
   const [submitting, setSubmitting] = useState(false);
 
+  // Atalho Escape para cancelar
+  const handleCancel = useCallback(() => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   useEffect(() => {
-    // Refetch sectors online para garantir dados atualizados.
-    getSectorsAction()
-      .then(data => {
-        if (data) setSectors(data as SectorType[]);
-      })
-      .catch(err => console.error('Erro ao buscar setores online:', err));
-  }, []);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) {
+        handleCancel();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [submitting, handleCancel]);
 
   const selectedWorkspace = workspaces.find(w => w.id === selectedWorkspaceId);
+
+  // Validação de nome duplicado no mesmo workspace
+  const checkDuplicateName = async (workspaceId: string, boardName: string): Promise<boolean> => {
+    // Não há server action para listar boards do workspace nesta tela,
+    // mas o createBoardAction já valida duplicatas no backend.
+    // Mantemos a validação server-side para garantir consistência.
+    return false;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,29 +99,50 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
 
     setSubmitting(true);
     try {
-      await createBoardAction(
+      const Swal = await getSwal();
+
+      const result = await createBoardAction(
         selectedWorkspaceId,
         name.trim(),
-        undefined, // userId vem do getLoggedUser() no server; não passa do cliente
+        undefined,
         sectorId ? parseInt(sectorId) : undefined,
         detalhes.trim() || undefined,
         dtatv || undefined,
         previsto || undefined
       );
-      // Navega de volta para a área de trabalho onde a atividade foi criada.
+
+      // Toast de sucesso
+      await Swal.fire({
+        icon: 'success',
+        title: 'Atividade criada!',
+        text: `"${name.trim()}" foi criada com sucesso.`,
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end',
+        background: '#1e293b',
+        color: '#e2e8f0',
+        customClass: {
+          popup: 'swal2-dark-toast'
+        }
+      });
+
+      // Navega para a atividade criada (precisa do ID retornado)
+      // Se não tiver ID, volta para o dashboard com workspace selecionado
       router.push(`/dashboard?workspaceId=${selectedWorkspaceId}&success=activity-created`);
     } catch (err: any) {
       console.error('Erro ao criar atividade:', err);
+      const Swal = await getSwal();
+      await Swal.fire({
+        icon: 'error',
+        title: 'Erro ao criar atividade',
+        text: err.message || 'Não foi possível criar a atividade. Tente novamente.',
+        confirmButtonColor: '#7c3aed',
+        background: '#1e293b',
+        color: '#e2e8f0'
+      });
       setSubmitting(false);
-      alert('Não foi possível criar a atividade. Tente novamente.');
-    }
-  };
-
-  const handleCancel = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/dashboard');
     }
   };
 
@@ -125,7 +171,7 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
           <button
             className={styles.backBtn}
             onClick={handleCancel}
-            title="Voltar"
+            title="Voltar (Esc)"
             type="button"
           >
             ‹ Voltar
@@ -157,14 +203,20 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
 
           <div className={styles.field}>
             <label>Nome da Atividade</label>
-            <input
-              type="text"
-              placeholder="Ex: Acompanhamento Técnico, CRM de Vendas..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              autoFocus
-            />
+            <div className={styles.inputWithCounter}>
+              <input
+                type="text"
+                placeholder="Ex: Acompanhamento Técnico, CRM de Vendas..."
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
+                required
+                autoFocus
+                maxLength={MAX_NAME_LENGTH}
+              />
+              <span className={`${styles.charCounter} ${name.length > MAX_NAME_LENGTH * 0.9 ? styles.charCounterWarning : ''}`}>
+                {name.length}/{MAX_NAME_LENGTH}
+              </span>
+            </div>
             <span className={styles.hint}>Escolha um nome descritivo para as suas listas de controle.</span>
           </div>
 
@@ -185,7 +237,6 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
               value={sectorId}
               onChange={(e) => setSectorId(e.target.value)}
             >
-              <option value="">Nenhum Setor / Geral</option>
               {sectors.map(s => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.acronym})
@@ -236,6 +287,10 @@ export default function NewActivityClient({ user, workspaces, sectors: initialSe
               {submitting ? 'Criando...' : 'Criar Atividade'}
             </button>
           </div>
+
+          <p className={styles.shortcutHint}>
+            Pressione <kbd>Esc</kbd> para cancelar
+          </p>
         </form>
       </div>
     </div>
