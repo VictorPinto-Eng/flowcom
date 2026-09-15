@@ -69,12 +69,14 @@ export default function PanelsClient({
           {/* Header da Página */}
           <div style={{
             display: 'flex',
+            flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: '0.75rem',
             marginBottom: '0.75rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                 Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span>
               </h1>
               <span style={{
@@ -88,15 +90,15 @@ export default function PanelsClient({
                 {totalWorkspaces} total
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
                 style={{
                   background: '#6366f1',
                   color: 'white',
                   border: 'none',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
@@ -112,8 +114,8 @@ export default function PanelsClient({
                   background: 'white',
                   color: '#475569',
                   border: '1px solid #e2e8f0',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
