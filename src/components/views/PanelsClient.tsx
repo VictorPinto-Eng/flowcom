@@ -65,7 +65,7 @@ export default function PanelsClient({
       />
 
       <div className={styles.workspaceLayout}>
-        <main className={styles.boardArea} style={{ padding: '0.75rem' }}>
+        <main className={styles.boardArea} style={{ padding: '0.75rem', overflow: 'hidden' }}>
           {/* Header da Página */}
           <div style={{
             display: 'flex',
@@ -126,9 +126,9 @@ export default function PanelsClient({
           {/* Cards de Estatísticas */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '0.6rem',
-            marginBottom: '0.75rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))',
+            gap: '0.5rem',
+            marginBottom: '0.6rem'
           }}>
             <StatCard icon="📁" value={totalWorkspaces} label="Áreas de Trabalho" />
             <StatCard icon="⚡" value={activeActivities} label="Atividades Ativas" />
@@ -184,8 +184,8 @@ export default function PanelsClient({
           {/* Grid de Workspaces (Cards Premium) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '1rem'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
+            gap: '0.75rem'
           }}>
             {filteredWorkspaces.map((ws) => (
               <WorkspaceCard
