@@ -65,13 +65,13 @@ export default function PanelsClient({
       />
 
       <div className={styles.workspaceLayout}>
-        <main className={styles.boardArea} style={{ padding: '1.25rem' }}>
+        <main className={styles.boardArea} style={{ padding: '0.75rem' }}>
           {/* Header da Página */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1rem'
+            marginBottom: '0.75rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
@@ -126,9 +126,9 @@ export default function PanelsClient({
           {/* Cards de Estatísticas */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1.5rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '0.6rem',
+            marginBottom: '0.75rem'
           }}>
             <StatCard icon="📁" value={totalWorkspaces} label="Áreas de Trabalho" />
             <StatCard icon="⚡" value={activeActivities} label="Atividades Ativas" />
@@ -141,8 +141,8 @@ export default function PanelsClient({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1.25rem',
-            gap: '1rem'
+            marginBottom: '0.6rem',
+            gap: '0.75rem'
           }}>
             <div style={{
               position: 'relative',
@@ -157,10 +157,11 @@ export default function PanelsClient({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '0.6rem 1rem 0.6rem 2.5rem',
-                  borderRadius: '8px',
+                  padding: '0.45rem 0.75rem 0.45rem 2.25rem',
+                  borderRadius: '6px',
                   border: '1px solid #e2e8f0',
-                  outline: 'none'
+                  outline: 'none',
+                  fontSize: '0.85rem'
                 }}
               />
             </div>
@@ -216,7 +217,7 @@ export default function PanelsClient({
           )}
 
           {filteredWorkspaces.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
               Nenhuma área de trabalho encontrada para a pesquisa.
             </div>
           )}
@@ -234,30 +235,30 @@ function StatCard({ icon, value, label, color = '#0f172a' }: any) {
   return (
     <div style={{
       background: 'white',
-      padding: '0.85rem',
-      borderRadius: '12px',
+      padding: '0.6rem',
+      borderRadius: '10px',
       border: '1px solid #e2e8f0',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.75rem',
+      gap: '0.6rem',
       boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
     }}>
       <div style={{
-        fontSize: '1.25rem',
+        fontSize: '1.1rem',
         background: '#f8fafc',
-        width: '40px',
-        height: '40px',
+        width: '36px',
+        height: '36px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '10px',
+        borderRadius: '8px',
         border: '1px solid #f1f5f9'
       }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: color }}>{value}</div>
-        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{label}</div>
+        <div style={{ fontSize: '1rem', fontWeight: 800, color: color }}>{value}</div>
+        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{label}</div>
       </div>
     </div>
   );
