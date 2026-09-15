@@ -10,3 +10,4 @@ export { default as WhatsNewModal } from './WhatsNewModal';
 export { default as EditWorkspaceModal } from './EditWorkspaceModal';
 export { default as CreateWorkspaceModal } from './CreateWorkspaceModal';
 export { default as ActiveActivitiesModal } from './ActiveActivitiesModal';
+export { default as MonthlyAnalysisModal } from './MonthlyAnalysisModal';

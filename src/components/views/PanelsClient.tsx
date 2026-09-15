@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardHeader from '../shell/DashboardHeader';
-import { EditWorkspaceModal, WhatsNewModal, ActiveActivitiesModal } from '../modals';
+import { EditWorkspaceModal, WhatsNewModal, ActiveActivitiesModal, MonthlyAnalysisModal } from '../modals';
 import { getActiveActivitiesAction } from '@/app/actions/cardActions';
+import { getMonthlyAnalysisAction } from '@/app/actions/dashboardActions';
 import styles from '../shell/DashboardClient.module.css';
 
 interface PanelsClientProps {
@@ -31,6 +32,9 @@ export default function PanelsClient({
   const [showActiveActivities, setShowActiveActivities] = useState(false);
   const [activeActivitiesList, setActiveActivitiesList] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [showMonthlyAnalysis, setShowMonthlyAnalysis] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<any>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   useEffect(() => {
     const lastVersionSeen = localStorage.getItem('whats-new-version');
@@ -55,6 +59,20 @@ export default function PanelsClient({
       setActiveActivitiesList([]);
     } finally {
       setLoadingActivities(false);
+    }
+  };
+
+  const handleOpenMonthlyAnalysis = async () => {
+    setLoadingAnalysis(true);
+    setShowMonthlyAnalysis(true);
+    try {
+      const data = await getMonthlyAnalysisAction();
+      setMonthlyData(data);
+    } catch (err) {
+      console.error('Erro ao buscar análise mensal:', err);
+      setMonthlyData(null);
+    } finally {
+      setLoadingAnalysis(false);
     }
   };
 
@@ -96,6 +114,25 @@ export default function PanelsClient({
               Painel de Controle de <span style={{ color: '#6366f1' }}>Áreas de Trabalho</span> <span style={{ color: '#64748b', fontWeight: 600 }}>— {totalWorkspaces} {totalWorkspaces === 1 ? 'área' : 'áreas'}</span>
             </h1>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
+              <button
+                onClick={handleOpenMonthlyAnalysis}
+                style={{
+                  background: 'white',
+                  color: '#6366f1',
+                  border: '1px solid #e2e8f0',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.8rem'
+                }}
+                title="Ver análise mensal de atividades"
+              >
+                📊 Análise
+              </button>
               <button
                 onClick={() => router.push('/dashboard/workspace/new')}
                 style={{
@@ -247,6 +284,78 @@ export default function PanelsClient({
                 setActiveActivitiesList([]);
               }}
             />
+          )}
+
+          {showMonthlyAnalysis && (
+            loadingAnalysis ? (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999
+              }}>
+                <div style={{
+                  background: 'white',
+                  padding: '2rem',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
+                  <div style={{ color: '#64748b' }}>Carregando análise...</div>
+                </div>
+              </div>
+            ) : monthlyData ? (
+              <MonthlyAnalysisModal
+                data={monthlyData}
+                onClose={() => {
+                  setShowMonthlyAnalysis(false);
+                  setMonthlyData(null);
+                }}
+              />
+            ) : (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999
+              }}>
+                <div style={{
+                  background: 'white',
+                  padding: '2rem',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>❌</div>
+                  <div style={{ color: '#64748b' }}>Erro ao carregar dados.</div>
+                  <button
+                    onClick={() => setShowMonthlyAnalysis(false)}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.5rem 1rem',
+                      background: '#6366f1',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            )
           )}
         </main>
       </div>

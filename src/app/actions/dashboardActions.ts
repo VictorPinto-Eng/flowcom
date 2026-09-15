@@ -381,6 +381,128 @@ function parseDateBR(dateStr: string): Date {
   return new Date(now.getFullYear(), parseInt(month) - 1, parseInt(day));
 }
 
+/**
+ * Retorna análise mensal completa: atividades concluídas, por setor, por responsável e timeline semanal.
+ */
+export async function getMonthlyAnalysisAction() {
+  const user = await userRepo.getLoggedUser();
+  if (!user) return null;
+
+  const userWorkspaces = await prisma.workspace.findMany({
+    where: {
+      OR: [
+        { users_seqid: user.seqid },
+        { members: { some: { userSeqid: user.seqid } } }
+      ]
+    },
+    select: { seqid: true }
+  });
+
+  const workspaceSeqids = userWorkspaces.map(w => w.seqid);
+  if (workspaceSeqids.length === 0) return null;
+
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const monthLabel = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Buscar boards concluídos no mês
+  const completedBoards = await prisma.board.findMany({
+    where: {
+      dtcon: { gte: currentMonthStart, lte: currentMonthEnd },
+      workspaceId: { in: workspaceSeqids }
+    },
+    include: { sector: true, user: true }
+  });
+
+  // Buscar boards em andamento
+  const inProgressBoards = await prisma.board.count({
+    where: {
+      dtcon: null,
+      workspaceId: { in: workspaceSeqids }
+    }
+  });
+
+  // Buscar boards atrasados
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const overdueBoards = await prisma.board.count({
+    where: {
+      dtcon: null,
+      previsto: { lt: today },
+      workspaceId: { in: workspaceSeqids }
+    }
+  });
+
+  // Agrupar por setor
+  const bySectorMap = new Map<string, { count: number; name: string; acronym: string }>();
+  completedBoards.forEach(board => {
+    const sectorKey = board.sector?.acronym || 'Sem Setor';
+    const existing = bySectorMap.get(sectorKey);
+    if (existing) {
+      existing.count++;
+    } else {
+      bySectorMap.set(sectorKey, {
+        count: 1,
+        name: board.sector?.name || 'Sem Setor',
+        acronym: sectorKey
+      });
+    }
+  });
+  const bySector = Array.from(bySectorMap.values())
+    .sort((a, b) => b.count - a.count);
+
+  // Agrupar por responsável
+  const byUserMap = new Map<string, { count: number; name: string }>();
+  completedBoards.forEach(board => {
+    const userName = board.user?.name || 'Desconhecido';
+    const existing = byUserMap.get(userName);
+    if (existing) {
+      existing.count++;
+    } else {
+      byUserMap.set(userName, { count: 1, name: userName });
+    }
+  });
+  const byUser = Array.from(byUserMap.values())
+    .sort((a, b) => b.count - a.count);
+
+  // Timeline semanal (4 semanas do mês)
+  const weeklyTimeline = [1, 2, 3, 4].map(week => {
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), (week - 1) * 7 + 1);
+    const weekEnd = new Date(now.getFullYear(), now.getMonth(), week * 7, 23, 59, 59, 999);
+    const count = completedBoards.filter(b => {
+      const dtcon = new Date(b.dtcon!);
+      return dtcon >= weekStart && dtcon <= weekEnd;
+    }).length;
+    return { week, label: `Sem ${week}`, count };
+  });
+
+  // Taxa de conclusão
+  const totalBoards = completedBoards.length + inProgressBoards;
+  const completionRate = totalBoards > 0 ? Math.round((completedBoards.length / totalBoards) * 100) : 0;
+
+  // Tempo médio de conclusão
+  const boardsWithDuration = completedBoards.filter(b => b.dtatv && b.dtcon);
+  const avgDays = boardsWithDuration.length > 0
+    ? Math.round(boardsWithDuration.reduce((acc, b) => {
+        const start = new Date(b.dtatv!).getTime();
+        const end = new Date(b.dtcon!).getTime();
+        return acc + (end - start) / (1000 * 60 * 60 * 24);
+      }, 0) / boardsWithDuration.length)
+    : null;
+
+  return {
+    monthLabel,
+    totalCompleted: completedBoards.length,
+    inProgress: inProgressBoards,
+    overdue: overdueBoards,
+    completionRate,
+    avgCompletionDays: avgDays,
+    bySector,
+    byUser,
+    weeklyTimeline
+  };
+}
+
 function calcDaysOverdue(previsto: Date | string, today: Date): number {
   const d = new Date(previsto);
   d.setHours(0, 0, 0, 0);
