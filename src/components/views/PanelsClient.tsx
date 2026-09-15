@@ -65,7 +65,7 @@ export default function PanelsClient({
       />
 
       <div className={styles.workspaceLayout}>
-        <main className={styles.boardArea} style={{ padding: '0.75rem', overflow: 'hidden' }}>
+        <main className={styles.boardArea} style={{ padding: '0.75rem' }}>
           {/* Header da Página */}
           <div style={{
             display: 'flex',
