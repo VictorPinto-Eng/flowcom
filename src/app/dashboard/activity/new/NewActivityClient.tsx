@@ -100,13 +100,9 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
     }
   }, []);
 
-  // Atalho Escape para cancelar
+  // Atalho Escape para cancelar — sempre volta para o dashboard
   const handleCancel = useCallback(() => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/dashboard');
-    }
+    router.push('/dashboard');
   }, [router]);
 
   useEffect(() => {
@@ -164,9 +160,9 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
         }
       });
 
-      // Navega para a atividade criada (precisa do ID retornado)
-      // Se não tiver ID, volta para o dashboard com workspace selecionado
-      router.push(`/dashboard?workspaceId=${selectedWorkspaceId}&success=activity-created`);
+      // Navega para o dashboard com a workspace selecionada
+      // Usa replace para não adicionar entrada no histórico (evita loop ao clicar "Voltar")
+      router.replace(`/dashboard?workspaceId=${selectedWorkspaceId}&success=activity-created`);
     } catch (err: any) {
       console.error('Erro ao criar atividade:', err);
       const Swal = await getSwal();
