@@ -70,12 +70,20 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
   const handleDateKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement | null>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      e.stopPropagation();
       if (nextRef?.current) {
         nextRef.current.focus();
         nextRef.current.showPicker?.();
       } else if (submitBtnRef.current) {
         submitBtnRef.current.focus();
       }
+    }
+  }, []);
+
+  // Previne submit do formulário via Enter em qualquer campo (exceto textarea)
+  const handleFormKeyDown = useCallback((e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+      e.preventDefault();
     }
   }, []);
 
@@ -197,7 +205,7 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
           </p>
         </header>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className={styles.form}>
           <div className={styles.field}>
             <label>Área de Trabalho</label>
             <select
@@ -302,6 +310,12 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
               type="submit"
               className={styles.submitBtn}
               disabled={!name.trim() || !selectedWorkspaceId || submitting}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.currentTarget.click();
+                }
+              }}
             >
               {submitting ? 'Criando...' : 'Criar Atividade'}
             </button>
