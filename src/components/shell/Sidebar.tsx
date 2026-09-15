@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
 import styles from './Sidebar.module.css';
 
 interface BoardShort {

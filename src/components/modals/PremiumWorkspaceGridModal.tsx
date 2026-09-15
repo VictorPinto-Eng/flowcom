@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import styles from './PremiumWorkspaceGridModal.module.css';
-import Swal from 'sweetalert2';
 
 interface BoardShort {
   id: string;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
+import { swalInput } from '@/lib/swal';
 import { ColumnType, CardType } from '@/types/kanban';
 import { addCardAction, moveCardAction, completeCardAction } from '@/app/actions/cardActions';
 import { addColumnAction, copyColumnAction, deleteColumnAction } from '@/app/actions/columnActions';
@@ -35,19 +35,14 @@ export function useKanban(initialColumns: ColumnType[], boardId: string) {
   };
 
   const addColumn = async () => {
-    const { value: title } = await Swal.fire({
+    const { isConfirmed, value: title } = await swalInput({
       title: 'Nova Coluna',
       input: 'text',
-      inputLabel: 'Nome da nova coluna:',
       inputPlaceholder: 'Ex: Revisão, Aguardando...',
-      showCancelButton: true,
-      confirmButtonColor: '#7c3aed',
-      cancelButtonText: 'Cancelar',
-      background: '#1a1a1a',
-      color: '#fff'
+      cancelText: 'Cancelar'
     });
 
-    if (title && boardId) {
+    if (title && isConfirmed && boardId) {
       try {
         await addColumnAction(boardId, title);
         router.refresh();

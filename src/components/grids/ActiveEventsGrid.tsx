@@ -3,12 +3,7 @@
 import React, { useState } from 'react';
 import { CircleCheckBig } from 'lucide-react';
 import { CardType, ColumnType } from '@/types/kanban';
-
-// Dynamic import for SweetAlert2 (lazy load on demand)
-const getSwal = async () => {
-  const module = await import('sweetalert2');
-  return module.default;
-};
+import { swalConfirm } from '@/lib/swal';
 import { updateCardPrevistoAction, getWorkspaceMembersAction, transferCardAction } from '@/app/actions/cardActions';
 import ActionsDrawer from './ActionsDrawer';
 import styles from '../kanban/Board.module.css';
@@ -234,20 +229,12 @@ export default function ActiveEventsGrid({
                           <button
                             className={styles.completeEventBtn}
                             onClick={async () => {
-                              const Swal = await getSwal();
-                              const result = await Swal.fire({
-                                title: 'Concluir Evento?',
-                                text: `Deseja marcar "${event.title}" como concluído?`,
-                                icon: 'question',
-                                showCancelButton: true,
-                                confirmButtonColor: '#10b981',
-                                cancelButtonColor: '#6b7280',
-                                confirmButtonText: 'Sim, concluir!',
-                                cancelButtonText: 'Não',
-                                background: '#1a1a1a',
-                                color: '#fff'
-                              });
-                              if (result.isConfirmed) {
+                              const result = await swalConfirm(
+                                'Concluir Evento?',
+                                `Deseja marcar "${event.title}" como concluído?`,
+                                { icon: 'question', confirmText: 'Sim, concluir!', cancelText: 'Não', confirmColor: '#10b981' }
+                              );
+                              if (result) {
                                 if (onCompleteCard) {
                                   onCompleteCard(event.id, event.columnId, doneCol.id);
                                 } else {

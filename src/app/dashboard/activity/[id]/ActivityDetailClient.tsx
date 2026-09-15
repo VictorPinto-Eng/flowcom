@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Edit2, Save, X } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { swalError, swalSuccess, swalConfirm } from '@/lib/swal';
 import { updateCardAction, moveCardAction, completeCardDirectlyAction } from '@/app/actions/cardActions';
 import { toLocalDateInputString } from '@/lib/dateUtils';
 import styles from './ActivityDetail.module.css';
@@ -68,7 +68,7 @@ export default function ActivityDetailClient({ user, userSeqid, card, workspaces
 
   const handleSaveChanges = async () => {
     if (!title.trim()) {
-      Swal.fire('Erro', 'Título é obrigatório', 'error');
+      swalError('Erro', 'Título é obrigatório');
       return;
     }
 
@@ -83,35 +83,31 @@ export default function ActivityDetailClient({ user, userSeqid, card, workspaces
         dtatv || null
       );
 
-      Swal.fire('Sucesso', 'Atividade atualizada', 'success');
+      swalSuccess('Sucesso', 'Atividade atualizada');
       setIsEditing(false);
       router.refresh();
     } catch (err: any) {
-      Swal.fire('Erro', err.message || 'Falha ao atualizar', 'error');
+      swalError('Erro', err.message || 'Falha ao atualizar');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCompleteActivity = async () => {
-    const { isConfirmed } = await Swal.fire({
-      title: 'Concluir Atividade?',
-      text: `"${card.title}" será movida para concluída`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Concluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#7c3aed'
-    });
+    const isConfirmed = await swalConfirm(
+      'Concluir Atividade?',
+      `"${card.title}" será movida para concluída`,
+      { icon: 'question', confirmText: 'Concluir', cancelText: 'Cancelar' }
+    );
 
     if (!isConfirmed) return;
 
     try {
       await completeCardDirectlyAction(card.seqid);
-      Swal.fire('Sucesso', 'Atividade concluída', 'success');
+      swalSuccess('Sucesso', 'Atividade concluída');
       router.refresh();
     } catch (err: any) {
-      Swal.fire('Erro', err.message || 'Falha ao concluir', 'error');
+      swalError('Erro', err.message || 'Falha ao concluir');
     }
   };
 

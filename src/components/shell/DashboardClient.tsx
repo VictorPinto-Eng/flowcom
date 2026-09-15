@@ -49,12 +49,7 @@ import {
 import styles from './DashboardClient.module.css';
 import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
 import { normalizeRole } from '@/types/permissions';
-
-// Dynamic import for SweetAlert2 (lazy load on demand)
-const getSwal = async () => {
-  const module = await import('sweetalert2');
-  return module.default;
-};
+import { swalConfirm, swalInput, swalError, swalSuccess, swalToast, getSwalInstance } from '@/lib/swal';
 
 // Sector pastel coloring map for next-gen premium aesthetic
 const getSectorColors = (acronym?: string | null) => {
@@ -371,26 +366,12 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (successParam === 'invite-accepted') {
-      getSwal().then(Swal => {
-        Swal.fire({
-          title: 'Convite Aceito!',
-          text: 'Você agora faz parte desta área de trabalho.',
-          icon: 'success',
-          confirmButtonColor: '#7c3aed'
-        }).then(() => {
-          router.replace('/dashboard');
-        });
+      swalSuccess('Convite Aceito!', 'Você agora faz parte desta área de trabalho.').then(() => {
+        router.replace('/dashboard');
       });
     } else if (errorParam === 'invite-failed') {
-      getSwal().then(Swal => {
-        Swal.fire({
-          title: 'Erro!',
-          text: 'Não foi possível aceitar o convite. O convite pode ter expirado ou já ter sido utilizado.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
-        }).then(() => {
-          router.replace('/dashboard');
-        });
+      swalError('Erro!', 'Não foi possível aceitar o convite. O convite pode ter expirado ou já ter sido utilizado.').then(() => {
+        router.replace('/dashboard');
       });
     }
   }, [successParam, errorParam, router]);
@@ -532,22 +513,12 @@ export default function DashboardClient({
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
-    const Swal = await getSwal();
-    const result = await Swal.fire({
-      title: 'Excluir Andamento',
-      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: '✓ Excluir',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)'
-    });
-    if (!result.isConfirmed) return;
+    const result = await swalConfirm(
+      'Excluir Andamento',
+      'Esta ação não poderá ser desfeita.',
+      { confirmText: '✓ Excluir', cancelText: 'Cancelar', confirmColor: '#ef4444' }
+    );
+    if (!result) return;
     try {
       await deleteCardActionLogAction(actionSeqid.toString());
       if (selectedEvent) {
@@ -634,15 +605,9 @@ export default function DashboardClient({
   };
 
   const handleRespondTransfer = async (cardId: string, actionSeqid: string, accept: boolean) => {
-    const Swal = await getSwal();
     try {
       await respondTransferRequestAction(cardId, actionSeqid, accept);
-      await Swal.fire({
-        title: 'Sucesso!',
-        text: accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Sucesso!', accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.');
       setPendingTransfers(prev => prev.filter(x => x.seqid !== actionSeqid));
       router.refresh();
       if (selectedEvent && selectedEvent.seqid.toString() === cardId.toString()) {
@@ -650,30 +615,23 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao responder transferência:', err);
-      await Swal.fire('Erro', 'Erro ao responder transferência', 'error');
+      swalError('Erro', 'Erro ao responder transferência');
     }
   };
 
   const handleRespondBoardCompletion = async (boardId: string, logSeqid: string, accept: boolean) => {
-    const Swal = await getSwal();
     try {
       await respondBoardCompletionAction(boardId, logSeqid, accept);
-      await Swal.fire({
-        title: 'Sucesso!',
-        text: accept ? 'Atividade finalizada e encerrada.' : 'Solicitação recusada.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Sucesso!', accept ? 'Atividade finalizada e encerrada.' : 'Solicitação recusada.');
       setPendingCompletionRequests(prev => prev.filter(x => x.seqid !== logSeqid));
       router.refresh();
     } catch (err: any) {
       console.error('Erro ao responder finalização:', err);
-      await Swal.fire('Erro', 'Erro ao processar solicitação', 'error');
+      swalError('Erro', 'Erro ao processar solicitação');
     }
   };
 
   const handleAdminTransferRequest = async (event: any) => {
-    const Swal = await getSwal();
     try {
       const workspaceSeqid = activeWorkspace?.seqid?.toString() || '';
       const members = await getWorkspaceMembersAction(workspaceSeqid);
@@ -685,28 +643,22 @@ export default function DashboardClient({
         }
       });
 
-      const { value: targetUserSeqid } = await Swal.fire({
+      const { isConfirmed, value: targetUserSeqid } = await swalInput({
         title: 'Solicitar Transferência de Atividade',
         input: 'select',
         inputOptions,
         inputPlaceholder: 'Selecione o novo responsável',
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        confirmButtonText: 'Solicitar',
-        cancelButtonText: 'Cancelar',
+        confirmText: 'Solicitar',
+        cancelText: 'Cancelar',
         inputValidator: (value) => {
           if (!value) return 'Você precisa selecionar um responsável!';
+          return null;
         }
       });
 
-      if (targetUserSeqid) {
+      if (isConfirmed && targetUserSeqid) {
         await requestTransferAction(event.id || event.seqid.toString(), targetUserSeqid);
-        await Swal.fire({
-          title: 'Solicitado!',
-          text: 'Solicitação de transferência registrada no histórico do evento.',
-          icon: 'success',
-          confirmButtonColor: '#7c3aed'
-        });
+        swalSuccess('Solicitado!', 'Solicitação de transferência registrada no histórico do evento.');
         router.refresh();
         if (selectedEvent && selectedEvent.id === event.id) {
           setSelectedEvent(null);
@@ -714,31 +666,21 @@ export default function DashboardClient({
       }
     } catch (err: any) {
       console.error('Erro ao solicitar transferência:', err);
-      await Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
+      swalError('Erro', 'Erro ao solicitar transferência');
     }
   };
 
   const handleCompleteEvent = async (card: any) => {
     if (isCompletingEvent) return;
-    const Swal = await getSwal();
 
     // Confirmação antes de executar
-    const result = await Swal.fire({
-      title: 'Concluir Evento?',
-      html: `<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Deseja marcar "${card.title}" como concluído?</p>`,
-      showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: '✓ Concluir',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)'
-    });
+    const confirmed = await swalConfirm(
+      'Concluir Evento?',
+      `Deseja marcar "${card.title}" como concluído?`,
+      { confirmText: '✓ Concluir', cancelText: 'Cancelar', confirmColor: '#10b981' }
+    );
 
-    if (!result.isConfirmed) return;
+    if (!confirmed) return;
 
     setIsCompletingEvent(card.id);
 
@@ -750,21 +692,11 @@ export default function DashboardClient({
 
     try {
       await completeCardDirectlyAction(card.id, localDateStr);
-      await Swal.fire({
-        title: 'Sucesso!',
-        text: 'Evento finalizado com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Sucesso!', 'Evento finalizado com sucesso.');
       router.refresh();
     } catch (err) {
       console.error('Erro ao finalizar evento:', err);
-      await Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível finalizar o evento.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Não foi possível finalizar o evento.');
     } finally {
       setIsCompletingEvent(null);
     }
@@ -796,7 +728,6 @@ export default function DashboardClient({
   };
 
   const handleCreateWorkspace = async (data: { name: string; typeId: string; description: string }) => {
-    const Swal = await getSwal();
     try {
       const workspace = await createWorkspaceAction({
         name: data.name,
@@ -804,27 +735,16 @@ export default function DashboardClient({
         description: data.description,
       });
       setIsWorkspaceModalOpen(false);
-      await Swal.fire({
-        title: 'Sucesso!',
-        text: 'Área de trabalho criada com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Sucesso!', 'Área de trabalho criada com sucesso.');
       window.location.href = `/dashboard?workspaceId=${workspace.id}`;
     } catch (error) {
       console.error('Falha ao criar área de trabalho:', error);
-      await Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível criar a área de trabalho.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Não foi possível criar a área de trabalho.');
     }
   };
 
   const handleUpdateWorkspace = async (data: { name: string, typeId: string, description: string }) => {
     if (!editWorkspaceData) return;
-    const Swal = await getSwal();
     try {
       await updateWorkspaceAction(editWorkspaceData.id, data);
 
@@ -842,70 +762,37 @@ export default function DashboardClient({
       });
 
       setEditWorkspaceData(null);
-      await Swal.fire({
-        title: 'Atualizada!',
-        text: 'A Área de Trabalho foi atualizada com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Atualizada!', 'A Área de Trabalho foi atualizada com sucesso.');
       router.refresh();
     } catch (error: any) {
       console.error('Falha ao atualizar área de trabalho:', error);
-      await Swal.fire({
-        title: 'Erro!',
-        text: 'Erro ao atualizar área de trabalho.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Erro ao atualizar área de trabalho.');
     }
   };
 
   const handleAcceptInvite = async (token: string) => {
-    const Swal = await getSwal();
     try {
       await acceptWorkspaceInviteAction(token);
-      await Swal.fire({
-        title: 'Sucesso!',
-        text: 'Você agora faz parte desta área de trabalho.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Sucesso!', 'Você agora faz parte desta área de trabalho.');
       window.location.reload();
     } catch (err: any) {
       console.error('Erro ao aceitar convite:', err);
-      await Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível aceitar o convite.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Não foi possível aceitar o convite.');
     }
   };
 
   const handleCreateBoard = async (workspaceId: string, name: string, sectorId?: number, detalhes?: string, dtatv?: string, previsto?: string) => {
-    const Swal = await getSwal();
     try {
       const newBoard = await createBoardAction(workspaceId, name, user.id, sectorId, detalhes, dtatv, previsto);
-      await Swal.fire({
-        title: 'Atividade Criada!',
-        text: `A atividade "${name}" foi criada com sucesso.`,
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Atividade Criada!', `A atividade "${name}" foi criada com sucesso.`);
       window.location.href = `/dashboard/board/${newBoard.id}`;
     } catch (error) {
       console.error('Falha ao criar quadro:', error);
-      await Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível criar a atividade.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Não foi possível criar a atividade.');
     }
   };
 
   const handleRenameBoard = async (boardId: string, name: string, detalhes?: string | null, sectorId?: number | null, dtatv?: string | null, workspaceId?: string, assignedUserSeqid?: string | null, previsto?: string | null) => {
-    const Swal = await getSwal();
     try {
       await updateBoardAction(boardId, name, detalhes !== undefined ? detalhes : null, user.id, sectorId, dtatv, workspaceId, assignedUserSeqid, previsto);
       
@@ -959,7 +846,8 @@ export default function DashboardClient({
       });
 
       setRenameBoardData(null);
-      Swal.mixin({
+      const SwalToast = await getSwalInstance();
+      SwalToast.mixin({
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
@@ -972,8 +860,8 @@ export default function DashboardClient({
           popup: 'glass',
         },
         didOpen: (toast) => {
-          toast.addEventListener('mouseenter', Swal.stopTimer);
-          toast.addEventListener('mouseleave', Swal.resumeTimer);
+          toast.addEventListener('mouseenter', SwalToast.stopTimer);
+          toast.addEventListener('mouseleave', SwalToast.resumeTimer);
         }
       }).fire({
         icon: 'success',
@@ -983,17 +871,11 @@ export default function DashboardClient({
       });
     } catch (error: any) {
       console.error('Falha ao renomear quadro:', error);
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Não foi possível atualizar a atividade.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Não foi possível atualizar a atividade.');
     }
   };
 
   const handleCompleteBoard = async (boardId: string, boardName: string) => {
-    const Swal = await getSwal();
     const boardWorkspace = workspaces.find(ws => ws.boards?.some(b => b.id === boardId));
     // Reaproveita a permissão calculada para o workspace dono do board.
     // Quando o board está no workspace ativo, equivale a activeWorkspacePerms.
@@ -1011,29 +893,19 @@ export default function DashboardClient({
     }
 
     if (!isOwner) {
-      const result = await Swal.fire({
-        title: 'Solicitar Encerramento?',
-        text: `Deseja enviar uma solicitação de finalização para o Proprietário encerrar a atividade "${boardName}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Sim, solicitar!',
-        cancelButtonText: 'Cancelar'
-      });
+      const confirmed = await swalConfirm(
+        'Solicitar Encerramento?',
+        `Deseja enviar uma solicitação de finalização para o Proprietário encerrar a atividade "${boardName}"?`,
+        { icon: 'question', confirmText: 'Sim, solicitar!', cancelText: 'Cancelar' }
+      );
 
-      if (result.isConfirmed) {
+      if (confirmed) {
         try {
           await requestBoardCompletionAction(boardId);
-          await Swal.fire({
-            title: 'Solicitado!',
-            text: 'A solicitação de finalização foi enviada ao proprietário da atividade.',
-            icon: 'success',
-            confirmButtonColor: '#7c3aed'
-          });
+          swalSuccess('Solicitado!', 'A solicitação de finalização foi enviada ao proprietário da atividade.');
           router.refresh();
         } catch (error: any) {
-          await Swal.fire('Erro', 'Erro ao solicitar finalização', 'error');
+          swalError('Erro', 'Erro ao solicitar finalização');
         }
       }
       return;
@@ -1043,7 +915,7 @@ export default function DashboardClient({
       ? `Esta ação irá marcar <strong>${pendingCardsCount} evento${pendingCardsCount !== 1 ? 's' : ''} pendente${pendingCardsCount !== 1 ? 's' : ''}</strong> como concluído${pendingCardsCount !== 1 ? 's' : ''}.`
       : 'Nenhum evento pendente será afetado.';
 
-    const result = await Swal.fire({
+    const confirmed = await (await getSwalInstance()).fire({
       title: 'Encerrar Atividade?',
       html: `<p style="margin-bottom:0.75rem;">Deseja realmente encerrar a atividade <strong>"${boardName}"</strong>?</p><p style="font-size:0.9rem;color:#f87171;">${cardMsg}</p>`,
       icon: 'warning',
@@ -1056,7 +928,7 @@ export default function DashboardClient({
       color: '#fff'
     });
 
-    if (result.isConfirmed) {
+    if (confirmed.isConfirmed) {
       const localDate = new Date();
       const year = localDate.getFullYear();
       const month = String(localDate.getMonth() + 1).padStart(2, '0');
@@ -1083,21 +955,11 @@ export default function DashboardClient({
           });
         });
 
-        await Swal.fire({
-          title: 'Encerrada!',
-          text: 'A atividade foi concluída com sucesso.',
-          icon: 'success',
-          confirmButtonColor: '#7c3aed'
-        });
+        swalSuccess('Encerrada!', 'A atividade foi concluída com sucesso.');
         router.refresh();
       } catch (error: any) {
         console.error('Falha ao encerrar quadro:', error);
-        await Swal.fire({
-          title: 'Erro!',
-          text: 'Erro ao encerrar atividade.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
-        });
+        swalError('Erro!', 'Erro ao encerrar atividade.');
       }
     }
   };
@@ -1336,18 +1198,12 @@ export default function DashboardClient({
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     onClick={async () => {
-                      const Swal = await getSwal();
                       try {
                         await acceptWorkspaceInviteAction(invite.token);
-                        await Swal.fire({
-                          title: 'Sucesso!',
-                          text: `Você agora faz parte da área de trabalho ${invite.workspaceName}.`,
-                          icon: 'success',
-                          confirmButtonColor: '#7c3aed'
-                        });
+                        swalSuccess('Sucesso!', `Você agora faz parte da área de trabalho ${invite.workspaceName}.`);
                         window.location.reload();
                       } catch (err: any) {
-                        await Swal.fire('Erro', 'Erro ao aceitar convite', 'error');
+                        swalError('Erro', 'Erro ao aceitar convite');
                       }
                     }}
                     style={{
@@ -1366,24 +1222,18 @@ export default function DashboardClient({
                   </button>
                   <button
                     onClick={async () => {
-                      const Swal = await getSwal();
-                      const result = await Swal.fire({
-                        title: 'Recusar Convite',
-                        text: `Tem certeza que deseja recusar o convite para a área ${invite.workspaceName}?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sim, recusar',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#ef4444',
-                        cancelButtonColor: '#6b7280'
-                      });
-                      if (result.isConfirmed) {
+                      const confirmed = await swalConfirm(
+                        'Recusar Convite',
+                        `Tem certeza que deseja recusar o convite para a área ${invite.workspaceName}?`,
+                        { icon: 'warning', confirmText: 'Sim, recusar', cancelText: 'Cancelar', confirmColor: '#ef4444' }
+                      );
+                      if (confirmed) {
                         try {
                           await rejectWorkspaceInviteAction(invite.token);
                           setPendingInvites(prev => prev.filter(x => x.token !== invite.token));
-                          await Swal.fire('Recusado', 'O convite foi recusado com sucesso.', 'success');
+                          swalSuccess('Recusado', 'O convite foi recusado com sucesso.');
                         } catch (err: any) {
-                          await Swal.fire('Erro', 'Erro ao recusar convite', 'error');
+                          swalError('Erro', 'Erro ao recusar convite');
                         }
                       }
                     }}

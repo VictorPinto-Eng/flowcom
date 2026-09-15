@@ -4,7 +4,7 @@ import { ColumnType } from '@/types/kanban';
 import Card from './Card';
 import AddCardForm from './AddCardForm';
 import { useState, useRef, useEffect } from 'react';
-import Swal from 'sweetalert2';
+import { getSwalInstance } from '@/lib/swal';
 import styles from './Column.module.css';
 
 interface ColumnProps {
@@ -88,6 +88,7 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
   };
 
   const handleArchiveList = async () => {
+    const Swal = await getSwalInstance();
     const result = await Swal.fire({
       title: 'Arquivar Lista',
       html: `<p style="font-size: 0.95rem; color: #fff; margin: 0; font-weight: 600;">${column.title}</p>`,
@@ -113,7 +114,8 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
     setIsMenuOpen(false);
   };
 
-  const handleMoveList = () => {
+  const handleMoveList = async () => {
+    const Swal = await getSwalInstance();
     Swal.fire({
       title: 'Em breve',
       html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Recurso de movimentação sequencial de lista!</p>',
@@ -128,7 +130,8 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
     setIsMenuOpen(false);
   };
 
-  const handleAutomationRule = (ruleType: string) => {
+  const handleAutomationRule = async (ruleType: string) => {
+    const Swal = await getSwalInstance();
     Swal.fire({
       title: 'Automação criada',
       html: `<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Regra para <strong style="color:#fff">${ruleType}</strong> adicionada com sucesso!</p>`,

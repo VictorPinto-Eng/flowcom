@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
+import { swalInput, getSwalInstance } from '@/lib/swal';
 import styles from './WorkspaceColumnsModal.module.css';
 import { addColumnAction, deleteColumnAction, updateColumnOrderAction } from '@/app/actions/columnActions';
 
@@ -35,74 +35,53 @@ export default function WorkspaceColumnsModal({ workspace, onClose }: WorkspaceC
   }, [workspace]);
 
   const handleAddColumn = async () => {
-    const { value: title } = await Swal.fire({
+    const { isConfirmed, value: title } = await swalInput({
       title: 'Nova Lista',
       input: 'text',
       inputPlaceholder: 'Nome da lista...',
-      showCancelButton: true,
-      confirmButtonColor: '#7c3aed',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: '✓ Criar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)',
+      confirmText: '✓ Criar',
+      cancelText: 'Cancelar',
       inputValidator: (value) => {
         if (!value || !value.trim()) return 'Digite um nome para a lista';
+        return null;
       }
     });
-    if (!title || !title.trim()) return;
+    if (!(isConfirmed && title) || !title.trim()) return;
 
     try {
       await addColumnAction(workspace.seqid, title.trim());
       router.refresh();
     } catch (err) {
       console.error('Erro ao criar lista:', err);
+      const Swal = await getSwalInstance();
       Swal.fire({
         title: 'Erro',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao criar lista.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '320px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        confirmButtonColor: '#7c3aed'
       });
     }
   };
 
   const handleDeleteColumn = async (colId: string) => {
-    const result = await Swal.fire({
+    const result = await getSwalInstance().then(Swal => Swal.fire({
       title: 'Excluir Lista',
       html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Tem certeza que deseja excluir esta lista?</p>',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'transparent',
       confirmButtonText: '✓ Excluir',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)'
-    });
+      cancelButtonText: 'Cancelar'
+    }));
     if (result.isConfirmed) {
       try {
         await deleteColumnAction(colId);
         router.refresh();
       } catch (err) {
         console.error('Erro ao excluir lista:', err);
+        const Swal = await getSwalInstance();
         Swal.fire({
           title: 'Erro',
           html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao excluir lista.</p>',
-          confirmButtonColor: '#7c3aed',
-          background: '#1e1e2e',
-          color: '#fff',
-          width: '320px',
-          padding: '1.5rem',
-          backdrop: 'rgba(0,0,0,0.6)'
+          confirmButtonColor: '#7c3aed'
         });
       }
     }

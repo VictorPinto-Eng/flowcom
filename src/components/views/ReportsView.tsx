@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import Swal from 'sweetalert2';
+import { getSwalInstance } from '@/lib/swal';
 import styles from './ReportsView.module.css';
 
 interface CardAction {
@@ -323,7 +323,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
 
   const handlePrint = async () => {
     if (!isLoaded) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Dados não carregados',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Primeiro carregue os dados clicando no botão "Carregar Relatório".</p>',
         confirmButtonColor: '#7c3aed',
@@ -336,7 +336,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       return;
     }
     if (sortedGroupedCards.length === 0) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Sem dados',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum dado para gerar o PDF. Verifique os filtros.</p>',
         confirmButtonColor: '#7c3aed',
@@ -351,7 +351,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Pop-up bloqueado',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o relatório.</p>',
         confirmButtonColor: '#7c3aed',
@@ -477,7 +477,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Erro no PDF',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF. Tentando imprimir normalmente...</p>',
         confirmButtonColor: '#7c3aed',
@@ -652,7 +652,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           className={styles.loadReportBtn}
           onClick={() => {
             if (!validateDateFilter(draftDtconStart) || !validateDateFilter(draftDtconEnd)) {
-              Swal.fire({
+              getSwalInstance().then(Swal => Swal.fire({
                 title: 'Datas inválidas',
                 html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Por favor, selecione datas válidas.</p>',
                 confirmButtonColor: '#7c3aed',
@@ -661,7 +661,7 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
                 width: '320px',
                 padding: '1.5rem',
                 backdrop: 'rgba(0,0,0,0.6)'
-              });
+              }));
               return;
             }
             setFilterUser(draftUser);

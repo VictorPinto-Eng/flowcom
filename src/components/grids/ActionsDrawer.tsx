@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Swal from 'sweetalert2';
+import { swalConfirm, swalError, swalToast } from '@/lib/swal';
 import { addCardActionLogAction, updateCardActionLogAction, deleteCardActionLogAction } from '@/app/actions/cardActions';
 import styles from '../kanban/Board.module.css';
 
@@ -75,43 +75,23 @@ export default function ActionsDrawer({
   };
 
   const handleDeleteAction = async (actionSeqid: string) => {
-    const result = await Swal.fire({
-      title: 'Excluir andamento?',
-      text: 'Esta ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Sim, excluir!',
-      cancelButtonText: 'Cancelar',
-      background: '#1a1a1a',
-      color: '#fff'
-    });
+    const result = await swalConfirm(
+      'Excluir andamento?',
+      'Esta ação não poderá ser desfeita.',
+      { icon: 'warning', confirmText: 'Sim, excluir!', cancelText: 'Cancelar', confirmColor: '#ef4444' }
+    );
 
-    if (result.isConfirmed) {
+    if (result) {
       try {
         await deleteCardActionLogAction(actionSeqid);
         onUpdate({
           ...event,
           card_act: event.card_act.filter((a: any) => a.seqid !== actionSeqid)
         });
-        Swal.fire({
-          title: 'Excluído!',
-          text: 'O andamento foi removido.',
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false,
-          background: '#1a1a1a',
-          color: '#fff'
-        });
+        swalToast('Excluído!', { icon: 'success', timer: 1500 });
       } catch (err) {
         console.error(err);
-        Swal.fire({
-          title: 'Erro!',
-          text: 'Não foi possível excluir o andamento.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
-        });
+        swalError('Erro!', 'Não foi possível excluir o andamento.');
       }
     }
   };

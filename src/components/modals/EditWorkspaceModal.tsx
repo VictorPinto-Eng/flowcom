@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './CreateWorkspaceModal.module.css';
-import Swal from 'sweetalert2';
+import { swalToast, swalConfirm, swalError, swalSuccess } from '@/lib/swal';
 import {
   getWorkspaceMembersWithRolesAction,
   getWorkspaceInvitesAction,
@@ -88,90 +88,50 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
       await sendWorkspaceInviteAction(workspace.id, inviteEmail.trim(), inviteRole);
       setInviteEmail('');
       await loadMembersAndInvites();
-      Swal.fire({
-        title: 'Enviado!',
-        text: 'Convite enviado com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Enviado!', 'Convite enviado com sucesso.');
     } catch (err: any) {
       console.error('Erro ao enviar convite:', err);
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Erro ao enviar convite.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Erro ao enviar convite.');
     } finally {
       setIsInviting(false);
     }
   };
 
   const handleCancelInvite = async (inviteSeqid: string) => {
-    const confirmCancel = await Swal.fire({
-      title: 'Cancelar convite?',
-      text: 'Tem certeza de que deseja cancelar este convite?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, cancelar',
-      cancelButtonText: 'Não',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280'
-    });
+    const confirmCancel = await swalConfirm(
+      'Cancelar convite?',
+      'Tem certeza de que deseja cancelar este convite?',
+      { icon: 'warning', confirmText: 'Sim, cancelar', cancelText: 'Não', confirmColor: '#ef4444' }
+    );
 
-    if (!confirmCancel.isConfirmed) return;
+    if (!confirmCancel) return;
 
     try {
       await cancelWorkspaceInviteAction(inviteSeqid);
       await loadMembersAndInvites();
-      Swal.fire({
-        title: 'Cancelado!',
-        text: 'O convite foi cancelado com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Cancelado!', 'O convite foi cancelado com sucesso.');
     } catch (err: any) {
       console.error('Erro ao cancelar convite:', err);
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Erro ao cancelar convite.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Erro ao cancelar convite.');
     }
   };
 
   const handleRemoveMember = async (userSeqid: string, userName: string) => {
-    const confirmRemove = await Swal.fire({
-      title: 'Remover colaborador?',
-      text: `Tem certeza de que deseja remover ${userName} deste workspace?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, remover',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280'
-    });
+    const confirmRemove = await swalConfirm(
+      'Remover colaborador?',
+      `Tem certeza de que deseja remover ${userName} deste workspace?`,
+      { icon: 'warning', confirmText: 'Sim, remover', cancelText: 'Cancelar', confirmColor: '#ef4444' }
+    );
 
-    if (!confirmRemove.isConfirmed) return;
+    if (!confirmRemove) return;
 
     try {
       await removeWorkspaceMemberAction(workspace.id, userSeqid);
       await loadMembersAndInvites();
-      Swal.fire({
-        title: 'Removido!',
-        text: 'Colaborador removido com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      swalSuccess('Removido!', 'Colaborador removido com sucesso.');
     } catch (err: any) {
       console.error('Erro ao remover membro:', err);
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Erro ao remover colaborador.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Erro ao remover colaborador.');
     }
   };
 
@@ -179,22 +139,10 @@ export default function EditWorkspaceModal({ workspace, types, currentUserSeqid,
     try {
       await updateWorkspaceMemberRoleAction(workspace.id, userSeqid, role);
       await loadMembersAndInvites();
-      Swal.fire({
-        title: 'Função Atualizada!',
-        text: 'Função do colaborador atualizada com sucesso.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed',
-        timer: 1500,
-        showConfirmButton: false
-      });
+      swalToast('Função Atualizada!', { icon: 'success', timer: 1500 });
     } catch (err: any) {
       console.error('Erro ao atualizar cargo:', err);
-      Swal.fire({
-        title: 'Erro!',
-        text: 'Erro ao atualizar função.',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
+      swalError('Erro!', 'Erro ao atualizar função.');
     }
   };
 

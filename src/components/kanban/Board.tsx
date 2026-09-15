@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2';
+import { swalConfirm, swalError, swalInput, swalSuccess, swalToast } from '@/lib/swal';
 import { ColumnType, CardType } from '@/types/kanban';
 import { updateCardAction, getWorkspaceMembersAction, requestTransferAction, respondTransferRequestAction } from '@/app/actions/cardActions';
 import { completeBoardAction, requestBoardCompletionAction } from '@/app/actions/boardActions';
@@ -137,49 +137,38 @@ export default function Board({
         }
       });
 
-      const { value: targetUserSeqid } = await Swal.fire({
+      const { isConfirmed, value: targetUserSeqid } = await swalInput({
         title: 'Solicitar Transferência de Atividade',
         input: 'select',
         inputOptions,
         inputPlaceholder: 'Selecione o novo responsável',
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        confirmButtonText: 'Solicitar',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
+        confirmText: 'Solicitar',
+        cancelText: 'Cancelar',
+        inputValidator: (value: string) => {
           if (!value) return 'Você precisa selecionar um responsável!';
+          return null;
         }
       });
 
-      if (targetUserSeqid) {
+      if (targetUserSeqid && isConfirmed) {
         await requestTransferAction(event.id || event.seqid?.toString() || '', targetUserSeqid);
-        Swal.fire({
-          title: 'Solicitado!',
-          text: 'Solicitação de transferência registrada no histórico do evento.',
-          icon: 'success',
-          confirmButtonColor: '#7c3aed'
-        });
+        await swalSuccess('Solicitado!', 'Solicitação de transferência registrada no histórico do evento.');
         router.refresh();
       }
     } catch (err: any) {
       console.error('Erro ao solicitar transferência:', err);
-      Swal.fire('Erro', 'Erro ao solicitar transferência', 'error');
+      await swalError('Erro', 'Erro ao solicitar transferência');
     }
   };
 
   const handleRespondTransfer = async (cardId: string, actionSeqid: string, accept: boolean) => {
     try {
       await respondTransferRequestAction(cardId, actionSeqid, accept);
-      Swal.fire({
-        title: 'Sucesso!',
-        text: accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed'
-      });
+      await swalSuccess('Sucesso!', accept ? 'Transferência aceita com sucesso.' : 'Transferência recusada.');
       router.refresh();
     } catch (err: any) {
       console.error('Erro ao responder transferência:', err);
-      Swal.fire('Erro', 'Erro ao responder transferência', 'error');
+      await swalError('Erro', 'Erro ao responder transferência');
     }
   };
 
@@ -188,57 +177,30 @@ export default function Board({
 
     if (!isOwner) {
       await requestBoardCompletionAction(boardId);
-      Swal.fire({
-        title: 'Solicitação Enviada!',
-        text: 'O proprietário será notificado para aprovar o encerramento.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff'
-      });
+      await swalSuccess('Solicitação Enviada!', 'O proprietário será notificado para aprovar o encerramento.');
       router.refresh();
       return;
     }
 
-    const result = await Swal.fire({
-      title: 'Encerrar Atividade',
-      text: 'Tem certeza que deseja encerrar esta atividade? Todos os eventos pendentes serão marcados como concluídos.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: 'Encerrar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff'
-    });
+    const confirmed = await swalConfirm(
+      'Encerrar Atividade',
+      'Tem certeza que deseja encerrar esta atividade? Todos os eventos pendentes serão marcados como concluídos.',
+      {
+        icon: 'warning',
+        confirmColor: '#ef4444',
+        confirmText: 'Encerrar',
+        cancelText: 'Cancelar'
+      }
+    );
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         await completeBoardAction(boardId);
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Atividade Encerrada!',
-          text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
-          showConfirmButton: false,
-          timer: 3500,
-          timerProgressBar: true,
-          background: '#1e1e2e',
-          color: '#fff'
-        });
+        await swalToast('Atividade Encerrada!', { icon: 'success', timer: 3500 });
         router.refresh();
       } catch (err: any) {
         console.error('Erro ao encerrar atividade:', err);
-        Swal.fire({
-          title: 'Erro',
-          text: err?.message || 'Erro ao encerrar atividade.',
-          icon: 'error',
-          confirmButtonColor: '#7c3aed',
-          background: '#1e1e2e',
-          color: '#fff'
-        });
+        await swalError('Erro', err?.message || 'Erro ao encerrar atividade.');
       }
     }
   };

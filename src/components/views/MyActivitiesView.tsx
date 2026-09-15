@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Swal from 'sweetalert2';
+import { swalSuccess, swalConfirm, swalToast, swalError } from '@/lib/swal';
 import RenameActivityModal from '@/components/modals/RenameActivityModal';
 import { updateBoardAction, completeBoardAction, requestBoardCompletionAction, hasBoardEventsAction } from '@/app/actions/boardActions';
 import styles from './MyActivitiesView.module.css';
@@ -100,57 +100,25 @@ export default function MyActivitiesView({
   const handleEncerrarAtividade = async (boardId: string, boardName: string, isOwner: boolean) => {
     if (!isOwner) {
       await requestBoardCompletionAction(boardId);
-      Swal.fire({
-        title: 'Solicitação Enviada!',
-        text: 'O proprietário será notificado para aprovar o encerramento.',
-        icon: 'success',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff'
-      });
+      swalSuccess('Solicitação Enviada!', 'O proprietário será notificado para aprovar o encerramento.');
       router.refresh();
       return;
     }
 
-    const result = await Swal.fire({
-      title: 'Encerrar Atividade',
-      text: `Tem certeza que deseja encerrar a atividade "${boardName}"? Todos os eventos pendentes serão marcados como concluídos.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'transparent',
-      confirmButtonText: 'Encerrar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff'
-    });
+    const confirmed = await swalConfirm(
+      'Encerrar Atividade',
+      `Tem certeza que deseja encerrar a atividade "${boardName}"? Todos os eventos pendentes serão marcados como concluídos.`,
+      { icon: 'warning', confirmText: 'Encerrar', cancelText: 'Cancelar', confirmColor: '#ef4444' }
+    );
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         await completeBoardAction(boardId);
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Atividade Encerrada!',
-          text: 'Todos os eventos foram concluídos e a atividade foi finalizada.',
-          showConfirmButton: false,
-          timer: 3500,
-          timerProgressBar: true,
-          background: '#1e1e2e',
-          color: '#fff'
-        });
+        swalToast('Atividade Encerrada!', { icon: 'success', timer: 3500 });
         router.refresh();
       } catch (err: any) {
         console.error('Erro ao encerrar atividade:', err);
-        Swal.fire({
-          title: 'Erro',
-          text: err?.message || 'Erro ao encerrar atividade.',
-          icon: 'error',
-          confirmButtonColor: '#7c3aed',
-          background: '#1e1e2e',
-          color: '#fff'
-        });
+        swalError('Erro', err?.message || 'Erro ao encerrar atividade.');
       }
     }
   };

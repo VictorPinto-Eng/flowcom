@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { getSwalInstance } from '@/lib/swal';
 import {
   updateCardPrevistoAction,
   addCardActionLogAction,
@@ -231,6 +231,7 @@ const eventsSummary = useMemo(() => {
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
+    const Swal = await getSwalInstance();
     const result = await Swal.fire({
       title: 'Excluir Andamento',
       html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
@@ -347,7 +348,7 @@ const eventsSummary = useMemo(() => {
 
   const handleGeneratePdf = async () => {
     if (filteredAndSortedEvents.length === 0) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Sem dados',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum evento para gerar o PDF.</p>',
         confirmButtonColor: '#7c3aed',
@@ -362,7 +363,7 @@ const eventsSummary = useMemo(() => {
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Pop-up bloqueado',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
         confirmButtonColor: '#7c3aed',
@@ -463,7 +464,7 @@ const eventsSummary = useMemo(() => {
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Erro',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
         confirmButtonColor: '#7c3aed',

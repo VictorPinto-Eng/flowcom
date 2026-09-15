@@ -3,13 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBoardAction } from '@/app/actions/boardActions';
+import { swalToast, swalError } from '@/lib/swal';
 import styles from './NewActivity.module.css';
-
-// Dynamic import for SweetAlert2 (lazy load on demand)
-const getSwal = async () => {
-  const module = await import('sweetalert2');
-  return module.default;
-};
 
 const MAX_NAME_LENGTH = 100;
 
@@ -131,8 +126,6 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
 
     setSubmitting(true);
     try {
-      const Swal = await getSwal();
-
       const result = await createBoardAction(
         selectedWorkspaceId,
         name.trim(),
@@ -144,36 +137,14 @@ export default function NewActivityClient({ user, workspaces, sectors, workspace
       );
 
       // Toast de sucesso
-      await Swal.fire({
-        icon: 'success',
-        title: 'Atividade criada!',
-        text: `"${name.trim()}" foi criada com sucesso.`,
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end',
-        background: '#1e293b',
-        color: '#e2e8f0',
-        customClass: {
-          popup: 'swal2-dark-toast'
-        }
-      });
+      swalToast('Atividade criada!', { icon: 'success', timer: 2000 });
 
       // Navega para o dashboard com a workspace selecionada
       // Usa replace para não adicionar entrada no histórico (evita loop ao clicar "Voltar")
       router.replace(`/dashboard?workspaceId=${selectedWorkspaceId}&success=activity-created`);
     } catch (err: any) {
       console.error('Erro ao criar atividade:', err);
-      const Swal = await getSwal();
-      await Swal.fire({
-        icon: 'error',
-        title: 'Erro ao criar atividade',
-        text: err.message || 'Não foi possível criar a atividade. Tente novamente.',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e293b',
-        color: '#e2e8f0'
-      });
+      swalError('Erro ao criar atividade', err.message || 'Não foi possível criar a atividade. Tente novamente.');
       setSubmitting(false);
     }
   };

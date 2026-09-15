@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Swal from 'sweetalert2';
+import { getSwalInstance } from '@/lib/swal';
 import styles from './MovementsView.module.css';
 import { getMovementsAction } from '@/app/actions/workspaceActions';
 
@@ -151,7 +151,7 @@ export default function MovementsView({ currentUser, workspaces, onBack }: Movem
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Pop-up bloqueado',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
         confirmButtonColor: '#7c3aed',
@@ -251,7 +251,7 @@ export default function MovementsView({ currentUser, workspaces, onBack }: Movem
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      Swal.fire({
+      (await getSwalInstance()).fire({
         title: 'Erro',
         html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
         confirmButtonColor: '#7c3aed',
