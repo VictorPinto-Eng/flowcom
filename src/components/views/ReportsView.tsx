@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { getSwalInstance } from '@/lib/swal';
+import { swalFireComplex } from '@/lib/swal';
 import styles from './ReportsView.module.css';
 
 interface CardAction {
@@ -323,43 +323,31 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
 
   const handlePrint = async () => {
     if (!isLoaded) {
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Dados não carregados',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Primeiro carregue os dados clicando no botão "Carregar Relatório".</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '360px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Primeiro carregue os dados clicando no botão "Carregar Relatório".</p>',
+        confirmButtonColor: '#6366f1',
+        width: '360px'
       });
       return;
     }
     if (sortedGroupedCards.length === 0) {
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Sem dados',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum dado para gerar o PDF. Verifique os filtros.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '360px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Nenhum dado para gerar o PDF. Verifique os filtros.</p>',
+        confirmButtonColor: '#6366f1',
+        width: '360px'
       });
       return;
     }
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Pop-up bloqueado',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o relatório.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '360px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Ative a exibição de pop-ups para gerar o relatório.</p>',
+        confirmButtonColor: '#6366f1',
+        width: '360px'
       });
       return;
     }
@@ -477,15 +465,11 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Erro no PDF',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF. Tentando imprimir normalmente...</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '360px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Ocorreu um erro ao gerar o PDF. Tentando imprimir normalmente...</p>',
+        confirmButtonColor: '#6366f1',
+        width: '360px'
       });
       pdfWindow.close();
       window.print();
@@ -652,16 +636,12 @@ export default function ReportsView({ initialCards, isGlobal, workspaceName, wor
           className={styles.loadReportBtn}
           onClick={() => {
             if (!validateDateFilter(draftDtconStart) || !validateDateFilter(draftDtconEnd)) {
-              getSwalInstance().then(Swal => Swal.fire({
+              swalFireComplex({
                 title: 'Datas inválidas',
-                html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Por favor, selecione datas válidas.</p>',
-                confirmButtonColor: '#7c3aed',
-                background: '#1e1e2e',
-                color: '#fff',
-                width: '320px',
-                padding: '1.5rem',
-                backdrop: 'rgba(0,0,0,0.6)'
-              }));
+                html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Por favor, selecione datas válidas.</p>',
+                confirmButtonColor: '#6366f1',
+                width: '320px'
+              });
               return;
             }
             setFilterUser(draftUser);

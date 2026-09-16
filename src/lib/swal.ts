@@ -221,3 +221,42 @@ export async function getSwalInstance() {
   injectStyles();
   return getSwal();
 }
+
+/**
+ * Dispara um Swal complexo (com custom html, width, etc.) aplicando
+ * automaticamente o tema premium dark. Evita dialogs 'desfigurados' quando
+ * o chamador também passa background/color/backdrop antigos inline.
+ *
+ * Exemplo:
+ *   await swalFireComplex({
+ *     title: 'Excluir Lista',
+ *     html: '<p>...custom...</p>',
+ *     showCancelButton: true,
+ *     confirmButtonText: '✓ Excluir',
+ *     confirmButtonColor: '#ef4444',
+ *     width: '360px'
+ *   });
+ */
+export async function swalFireComplex(config: Record<string, any>): Promise<any> {
+  injectStyles();
+  const Swal = await getSwal();
+  const {
+    // Remove estilos antigos que conflitam com o tema premium
+    background: _bg,
+    color: _color,
+    backdrop: _backdrop,
+    padding: _padding,
+    cancelButtonColor: _cancelColor,
+    ...rest
+  } = config;
+
+  // Normaliza customClass se o chamador não forneceu
+  return Swal.fire({
+    ...premiumTheme,
+    ...rest,
+    customClass: {
+      ...premiumTheme.customClass,
+      ...(config.customClass || {})
+    }
+  });
+}

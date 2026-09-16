@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { swalInput, getSwalInstance } from '@/lib/swal';
+import { swalInput, swalFireComplex } from '@/lib/swal';
 import styles from './WorkspaceColumnsModal.module.css';
 import { addColumnAction, deleteColumnAction, updateColumnOrderAction } from '@/app/actions/columnActions';
 
@@ -53,35 +53,33 @@ export default function WorkspaceColumnsModal({ workspace, onClose }: WorkspaceC
       router.refresh();
     } catch (err) {
       console.error('Erro ao criar lista:', err);
-      const Swal = await getSwalInstance();
-      Swal.fire({
+      await swalFireComplex({
         title: 'Erro',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao criar lista.</p>',
-        confirmButtonColor: '#7c3aed'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Erro ao criar lista.</p>',
+        confirmButtonColor: '#6366f1'
       });
     }
   };
 
   const handleDeleteColumn = async (colId: string) => {
-    const result = await getSwalInstance().then(Swal => Swal.fire({
+    const result = await swalFireComplex({
       title: 'Excluir Lista',
-      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Tem certeza que deseja excluir esta lista?</p>',
+      html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Tem certeza que deseja excluir esta lista?</p>',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       confirmButtonText: '✓ Excluir',
       cancelButtonText: 'Cancelar'
-    }));
+    });
     if (result.isConfirmed) {
       try {
         await deleteColumnAction(colId);
         router.refresh();
       } catch (err) {
         console.error('Erro ao excluir lista:', err);
-        const Swal = await getSwalInstance();
-        Swal.fire({
+        await swalFireComplex({
           title: 'Erro',
-          html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Erro ao excluir lista.</p>',
-          confirmButtonColor: '#7c3aed'
+          html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Erro ao excluir lista.</p>',
+          confirmButtonColor: '#6366f1'
         });
       }
     }

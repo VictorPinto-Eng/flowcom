@@ -49,7 +49,7 @@ import {
 import styles from './DashboardClient.module.css';
 import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
 import { normalizeRole } from '@/types/permissions';
-import { swalConfirm, swalInput, swalError, swalSuccess, swalToast, getSwalInstance } from '@/lib/swal';
+import { swalConfirm, swalInput, swalError, swalSuccess, swalToast, swalFireComplex } from '@/lib/swal';
 
 // Sector pastel coloring map for next-gen premium aesthetic
 const getSectorColors = (acronym?: string | null) => {
@@ -846,27 +846,7 @@ export default function DashboardClient({
       });
 
       setRenameBoardData(null);
-      const SwalToast = await getSwalInstance();
-      SwalToast.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 2500,
-        timerProgressBar: true,
-        background: '#ffffff',
-        color: '#0f172a',
-        iconColor: '#7c3aed',
-        customClass: {
-          popup: 'glass',
-        },
-        didOpen: (toast) => {
-          toast.addEventListener('mouseenter', SwalToast.stopTimer);
-          toast.addEventListener('mouseleave', SwalToast.resumeTimer);
-        }
-      }).fire({
-        icon: 'success',
-        title: 'Atividade atualizada com sucesso!'
-      }).then(() => {
+      swalToast('Atividade atualizada com sucesso!', { icon: 'success', timer: 2500 }).then(() => {
         router.refresh();
       });
     } catch (error: any) {
@@ -915,17 +895,14 @@ export default function DashboardClient({
       ? `Esta ação irá marcar <strong>${pendingCardsCount} evento${pendingCardsCount !== 1 ? 's' : ''} pendente${pendingCardsCount !== 1 ? 's' : ''}</strong> como concluído${pendingCardsCount !== 1 ? 's' : ''}.`
       : 'Nenhum evento pendente será afetado.';
 
-    const confirmed = await (await getSwalInstance()).fire({
+    const confirmed = await swalFireComplex({
       title: 'Encerrar Atividade?',
-      html: `<p style="margin-bottom:0.75rem;">Deseja realmente encerrar a atividade <strong>"${boardName}"</strong>?</p><p style="font-size:0.9rem;color:#f87171;">${cardMsg}</p>`,
+      html: `<p style="margin-bottom:0.75rem;color:#e2e8f0;">Deseja realmente encerrar a atividade <strong>"${boardName}"</strong>?</p><p style="font-size:0.9rem;color:#f87171;">${cardMsg}</p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
       confirmButtonText: pendingCardsCount > 0 ? `Sim, encerrar (${pendingCardsCount} eventos)` : 'Sim, encerrar!',
-      cancelButtonText: 'Cancelar',
-      background: '#1a1a1a',
-      color: '#fff'
+      cancelButtonText: 'Cancelar'
     });
 
     if (confirmed.isConfirmed) {

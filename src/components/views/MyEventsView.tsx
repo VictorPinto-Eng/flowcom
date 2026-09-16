@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
-import { getSwalInstance } from '@/lib/swal';
+import { swalFireComplex } from '@/lib/swal';
 import {
   updateCardPrevistoAction,
   addCardActionLogAction,
@@ -231,20 +231,14 @@ const eventsSummary = useMemo(() => {
   };
 
   const handleDeleteAction = async (actionSeqid: bigint) => {
-    const Swal = await getSwalInstance();
-    const result = await Swal.fire({
+    const result = await swalFireComplex({
       title: 'Excluir Andamento',
-      html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Esta ação não poderá ser desfeita.</p>',
+      html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Esta ação não poderá ser desfeita.</p>',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'transparent',
       confirmButtonText: '✓ Excluir',
       cancelButtonText: 'Cancelar',
-      background: '#1e1e2e',
-      color: '#fff',
-      width: '360px',
-      padding: '1.5rem',
-      backdrop: 'rgba(0,0,0,0.6)'
+      width: '360px'
     });
     if (!result.isConfirmed) return;
     try {
@@ -348,30 +342,22 @@ const eventsSummary = useMemo(() => {
 
   const handleGeneratePdf = async () => {
     if (filteredAndSortedEvents.length === 0) {
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Sem dados',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Nenhum evento para gerar o PDF.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '320px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Nenhum evento para gerar o PDF.</p>',
+        confirmButtonColor: '#6366f1',
+        width: '320px'
       });
       return;
     }
 
     const pdfWindow = window.open('', '_blank');
     if (!pdfWindow) {
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Pop-up bloqueado',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '360px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Ative a exibição de pop-ups para gerar o PDF.</p>',
+        confirmButtonColor: '#6366f1',
+        width: '360px'
       });
       return;
     }
@@ -464,15 +450,11 @@ const eventsSummary = useMemo(() => {
       pdfWindow.location.replace(blobUrl);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      (await getSwalInstance()).fire({
+      await swalFireComplex({
         title: 'Erro',
-        html: '<p style="font-size: 0.9rem; color: #94a3b8; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
-        confirmButtonColor: '#7c3aed',
-        background: '#1e1e2e',
-        color: '#fff',
-        width: '320px',
-        padding: '1.5rem',
-        backdrop: 'rgba(0,0,0,0.6)'
+        html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Ocorreu um erro ao gerar o PDF.</p>',
+        confirmButtonColor: '#6366f1',
+        width: '320px'
       });
       pdfWindow.close();
     }
