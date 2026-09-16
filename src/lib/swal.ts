@@ -151,9 +151,11 @@ export async function swalToast(title: string, options?: { icon?: 'success' | 'e
     icon: options?.icon || 'success',
     title,
     showConfirmButton: false,
+    showCancelButton: false,
     timer: options?.timer || 2500,
     timerProgressBar: true,
-    ...premiumTheme
+    background: '#1e293b',
+    color: '#e2e8f0'
   });
 }
 
@@ -191,7 +193,9 @@ export async function swalError(title: string, text?: string) {
     ...premiumTheme,
     title,
     text: text || '',
-    icon: 'error'
+    icon: 'error',
+    showConfirmButton: true,
+    showCancelButton: false
   });
 }
 
@@ -202,15 +206,17 @@ export async function swalSuccess(title: string, text?: string) {
   injectStyles();
   const Swal = await getSwal();
   return Swal.fire({
-    ...premiumTheme,
     toast: true,
     position: 'top-end',
     icon: 'success',
     title,
     text: text || '',
     showConfirmButton: false,
+    showCancelButton: false,
     timer: 2500,
-    timerProgressBar: true
+    timerProgressBar: true,
+    background: '#1e293b',
+    color: '#e2e8f0'
   });
 }
 
