@@ -40,51 +40,74 @@ function injectStyles() {
       border: 1px solid rgba(99, 102, 241, 0.2) !important;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
       backdrop-filter: blur(12px) !important;
-      padding: 1.5rem !important;
+      padding: 1.25rem 1.5rem !important;
       max-width: 380px !important;
     }
-    .swal2-premium-title {
+    .swal2-premium .swal2-title {
       font-size: 1rem !important;
       font-weight: 700 !important;
       color: #e2e8f0 !important;
       padding-bottom: 0.25rem !important;
+      margin: 0 !important;
     }
-    .swal2-premium-text {
+    .swal2-premium .swal2-html-container {
       font-size: 0.8rem !important;
       color: #94a3b8 !important;
       line-height: 1.5 !important;
+      margin: 0 0 0.75rem 0 !important;
+      padding: 0 !important;
+      overflow-wrap: break-word !important;
     }
-    .swal2-premium-confirm {
+    .swal2-premium .swal2-actions {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0.5rem !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      flex-wrap: wrap !important;
+    }
+    .swal2-premium .swal2-confirm {
       background: #6366f1 !important;
       border: none !important;
       border-radius: 8px !important;
       padding: 0.5rem 1.25rem !important;
       font-size: 0.8rem !important;
       font-weight: 600 !important;
+      min-height: 38px !important;
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
       transition: all 0.2s ease !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important;
     }
-    .swal2-premium-confirm:hover {
+    .swal2-premium .swal2-confirm:hover {
       background: #4f46e5 !important;
       transform: translateY(-1px) !important;
       box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
     }
-    .swal2-premium-cancel {
+    .swal2-premium .swal2-cancel {
       background: rgba(51, 65, 85, 0.5) !important;
       border: 1px solid rgba(148, 163, 184, 0.15) !important;
       border-radius: 8px !important;
       padding: 0.5rem 1.25rem !important;
       font-size: 0.8rem !important;
       font-weight: 600 !important;
+      min-height: 38px !important;
       color: #94a3b8 !important;
       transition: all 0.2s ease !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important;
     }
-    .swal2-premium-cancel:hover {
+    .swal2-premium .swal2-cancel:hover {
       background: rgba(51, 65, 85, 0.8) !important;
       color: #e2e8f0 !important;
     }
     .swal2-premium .swal2-icon {
-      margin: 0.5rem auto 0.75rem !important;
+      margin: 0 auto 0.75rem !important;
       width: 48px !important;
       height: 48px !important;
       border-width: 2px !important;
