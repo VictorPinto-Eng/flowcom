@@ -20,6 +20,7 @@ interface BoardShort {
   columns?: any[];
   workspaceId?: string | number | null;
   workspaceName?: string;
+  workspaceSeqid?: string;
   user?: {
     id: string;
     seqid?: string;
@@ -80,6 +81,7 @@ export default function MyActivitiesView({
   const [searchTerm, setSearchTerm] = useState('');
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   const [eventFilter, setEventFilter] = useState<'all' | 'with-events' | 'without-events'>('all');
+  const [filterWorkspaceSeqid, setFilterWorkspaceSeqid] = useState<string>('');
   const [renameBoardData, setRenameBoardData] = useState<any>(null);
   const [hasEvents, setHasEvents] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -134,19 +136,20 @@ export default function MyActivitiesView({
         ws.boards.forEach((b: any) => {
           // Check if user is the owner/assigned user of the board
           const isOwner = b.user?.id === currentUser.id || b.user_seqid?.toString() === userSeqid;
-          
+
           // Exclude completed/closed activities (where dtcon is set)
           if (isOwner && !b.dtcon) {
             allBoards.push({
               ...b,
-              workspaceName: ws.name
+              workspaceName: ws.name,
+              workspaceSeqid: ws.seqid?.toString() || ws.id
             });
           }
         });
       }
     });
 
-    // Filter by search term
+    // Filter by search term and workspace
     const filtered = allBoards.filter(b => {
       const matchesSearch = !searchTerm || (
         b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -155,6 +158,8 @@ export default function MyActivitiesView({
         b.sector?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.sector?.acronym.toLowerCase().includes(searchTerm.toLowerCase())
       );
+
+      const matchesWorkspace = !filterWorkspaceSeqid || b.workspaceSeqid === filterWorkspaceSeqid;
 
       const hasEvents = b.columns?.some((col: any) =>
           col.cards && col.cards.some((card: any) => !card.dtcon)
@@ -165,7 +170,7 @@ export default function MyActivitiesView({
           ? hasEvents
           : !hasEvents;
 
-      return matchesSearch && matchesEvents;
+      return matchesSearch && matchesWorkspace && matchesEvents;
     });
 
     // Sort by previsto date ascending (oldest first). Unscheduled at the end.
@@ -182,7 +187,7 @@ export default function MyActivitiesView({
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return timeB - timeA;
     });
-  }, [workspaces, currentUser.id, userSeqid, searchTerm, eventFilter]);
+  }, [workspaces, currentUser.id, userSeqid, searchTerm, filterWorkspaceSeqid, eventFilter]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -341,6 +346,21 @@ export default function MyActivitiesView({
           </div>
 
           <div className={styles.filterGroup}>
+            <select
+              className={styles.workspaceFilterSelect}
+              value={filterWorkspaceSeqid}
+              onChange={(e) => setFilterWorkspaceSeqid(e.target.value)}
+              aria-label="Filtrar por área"
+            >
+              <option value="">Todas as áreas</option>
+              {workspaces.map((ws: any) => (
+                <option key={ws.seqid?.toString() || ws.id} value={ws.seqid?.toString() || ws.id}>
+                  {ws.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.filterGroup}>
             <button
               className={`${styles.filterBtn} ${eventFilter === 'all' ? styles.activeFilter : ''}`}
               onClick={() => setEventFilter('all')}
@@ -364,6 +384,19 @@ export default function MyActivitiesView({
           <span className={styles.resultsCount}>
             {userActivities.length} atividade(s) encontrada(s)
           </span>
+          {(searchTerm || filterWorkspaceSeqid || eventFilter !== 'all') && (
+            <button
+              type="button"
+              className={styles.clearFiltersBtn}
+              onClick={() => {
+                setSearchTerm('');
+                setFilterWorkspaceSeqid('');
+                setEventFilter('all');
+              }}
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
 
         {/* Activities List/Grid */}
