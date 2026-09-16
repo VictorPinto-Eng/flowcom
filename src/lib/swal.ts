@@ -196,16 +196,21 @@ export async function swalError(title: string, text?: string) {
 }
 
 /**
- * Sucesso discreto
+ * Sucesso discreto — toast que some sozinho, sem botão
  */
 export async function swalSuccess(title: string, text?: string) {
   injectStyles();
   const Swal = await getSwal();
   return Swal.fire({
     ...premiumTheme,
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
     title,
     text: text || '',
-    icon: 'success'
+    showConfirmButton: false,
+    timer: 2500,
+    timerProgressBar: true
   });
 }
 

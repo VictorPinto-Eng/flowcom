@@ -4,7 +4,7 @@ import { ColumnType } from '@/types/kanban';
 import Card from './Card';
 import AddCardForm from './AddCardForm';
 import { useState, useRef, useEffect } from 'react';
-import { swalFireComplex } from '@/lib/swal';
+import { swalToast, swalFireComplex } from '@/lib/swal';
 import styles from './Column.module.css';
 
 interface ColumnProps {
@@ -109,24 +109,12 @@ export default function Column({ column, onAddCard, onMoveCard, onCopy, onDelete
   };
 
   const handleMoveList = async () => {
-    await swalFireComplex({
-      title: 'Em breve',
-      html: '<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Recurso de movimentação sequencial de lista!</p>',
-      confirmButtonColor: '#6366f1',
-      confirmButtonText: 'Ok',
-      width: '320px'
-    });
+    swalToast('Em breve!', { icon: 'info' });
     setIsMenuOpen(false);
   };
 
   const handleAutomationRule = async (ruleType: string) => {
-    await swalFireComplex({
-      title: 'Automação criada',
-      html: `<p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">Regra para <strong style="color:#e2e8f0">${ruleType}</strong> adicionada com sucesso!</p>`,
-      confirmButtonColor: '#6366f1',
-      confirmButtonText: 'Ok',
-      width: '320px'
-    });
+    swalToast(`Regra criada: ${ruleType}`, { icon: 'success' });
     setIsMenuOpen(false);
   };
 

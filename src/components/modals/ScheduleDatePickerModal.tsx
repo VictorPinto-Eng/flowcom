@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { swalFireComplex } from '@/lib/swal';
+import { swalError } from '@/lib/swal';
 import styles from './ScheduleDatePickerModal.module.css';
 
 interface ScheduleDatePickerModalProps {
@@ -51,20 +51,12 @@ export default function ScheduleDatePickerModal({
 
   const handleSaveClick = async () => {
     if (!dateVal) {
-      await swalFireComplex({
-        icon: 'warning',
-        title: 'Data Obrigatória',
-        text: 'Por favor, selecione uma data válida.'
-      });
+      swalError('Data Obrigatória', 'Por favor, selecione uma data válida.');
       return;
     }
 
     if (dateVal < todayStr) {
-      await swalFireComplex({
-        icon: 'warning',
-        title: 'Data Inválida',
-        text: 'Não é permitido selecionar datas anteriores a hoje.'
-      });
+      swalError('Data Inválida', 'Não é permitido selecionar datas anteriores a hoje.');
       return;
     }
 
