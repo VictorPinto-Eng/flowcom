@@ -3,7 +3,19 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import DashboardHeader from '@/components/shell/DashboardHeader';
-import MyActivitiesView from './MyActivitiesView';
+import dynamic from 'next/dynamic';
+
+// ssr: false garante que a view só renderize no cliente,
+// onde o localStorage de preferência de layout já está disponível —
+// evitando o flash de grid→lista no carregamento.
+const MyActivitiesView = dynamic(() => import('./MyActivitiesView'), {
+  loading: () => (
+    <div style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
+      <p>Carregando suas atividades...</p>
+    </div>
+  ),
+  ssr: false
+});
 import UserMenu from '@/components/shell/UserMenu';
 import styles from '@/components/shell/DashboardClient.module.css';
 
