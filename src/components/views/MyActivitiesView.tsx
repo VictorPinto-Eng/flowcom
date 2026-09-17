@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { swalSuccess, swalConfirm, swalToast, swalError } from '@/lib/swal';
@@ -79,20 +79,18 @@ export default function MyActivitiesView({
 }: MyActivitiesViewProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
+  const [viewType, setViewType] = useState<'grid' | 'table'>(() => {
+    // Inicializa direto com a preferência salva para evitar flash de grid→lista
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('my-activities-layout') === 'table' ? 'table' : 'grid';
+    }
+    return 'grid';
+  });
   const [eventFilter, setEventFilter] = useState<'all' | 'with-events' | 'without-events'>('all');
   const [filterWorkspaceSeqid, setFilterWorkspaceSeqid] = useState<string>('');
   const [renameBoardData, setRenameBoardData] = useState<any>(null);
   const [hasEvents, setHasEvents] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // Restore layout preference on mount
-  useEffect(() => {
-    const savedLayout = localStorage.getItem('my-activities-layout');
-    if (savedLayout === 'grid' || savedLayout === 'table') {
-      setViewType(savedLayout);
-    }
-  }, []);
 
   const handleSetViewType = (type: 'grid' | 'table') => {
     setViewType(type);
