@@ -66,6 +66,7 @@ pendente, priorizado e por quê.
 | S-032 | **JWT sem mecanismo de revogação** | Não há blacklist/session store. Se conta é comprometida, não é possível invalidar sessões ativas. Reset de senha não invalida JWTs existentes. | ✅ Concluído — tabela `session` (whitelist), `getSession` verifica DB, `resetPassword` revoga todas as sessões do usuário (2026-06-20) |
 | S-033 | **Tokens de convite expostos via `getWorkspaceInvitesAction`** | A action retorna o `token` na resposta. Combinado com falta de auth (S-024), qualquer pessoa pode obter tokens válidos e entrar em workspaces. | ✅ Concluído — campo `token` removido da resposta de `getWorkspaceInvites`; admins usam `seqid` para cancelar convites (2026-06-20) |
 | S-037 | **CHECK `auth_attempts_type_check` desatualizado vs `RATE_LIMIT_CONFIG`** | A constraint no banco só aceitava 9 dos 10 tipos de rate limit — `TEST_EMAIL` (teste de email em `/admin/diagnostics`) estourava `23514` e derrubava o fluxo. Tabela criada manualmente, fora do Prisma Migrate, sem migration no repo. | ✅ Concluído — constraint recriada com os 10 tipos (`migrations/2026_09_26_auth_attempts_type_check.sql`, aplicada manualmente em prod) + comentário no schema listando os tipos (2026-09-26) |
+| S-038 | **Rotacionar senha do banco `new-api-y7sr-newapi-db-1`** | A senha apareceu em texto plano no output de uma inspeção de containers no servidor (2026-09-26). Serviço de terceiros no mesmo host, mas credencial vazada. | Pendente — `ALTER USER newapi WITH PASSWORD`, atualizar `POSTGRES_PASSWORD`/`SQL_DSN` em `/docker/new-api-y7sr/.env` e `docker compose up -d --force-recreate newapi-db newapi` |
 
 ### P3 — Baixa
 
@@ -180,6 +181,7 @@ pendente, priorizado e por quê.
 | M-002 | **Auditar e atualizar dependências com CVEs** | Rodar `npm audit` e corrigir vulnerabilidades conhecidas. | ✅ Parcial — hono (high) corrigido; 5 moderate restantes em deps transitivas do Prisma CLI e Next.js (sem fix disponível sem breaking change) (2026-06-20) |
 | M-005 | **Configurar ESLint e scripts de lint** | Nenhuma ferramenta de linting configurada. Sem `.eslintrc`, sem script `lint` no package.json. | Pendente |
 | M-006 | **`ActivityLog` sem integridade referencial** | `boardId` e `userId` são strings sem `@relation`. Não há FK no banco — dados podem ficar órfãos. | Pendente |
+| M-010 | **Sanidade das env vars na subida** | `RESEND_API_KEY` em produção continha um byte ESC (27) — undici rejeitava o header (`invalid Authorization header`) e o envio de email falhava com mensagem engolida pelo SDK. Validar em startup (bytes de controle/ANSI em chaves) ou falhar rápido com mensagem clara. | Pendente |
 
 ### P3 — Baixa
 
@@ -407,3 +409,6 @@ organizadas por área. **Não há datas nem prioridades firmes** — são ideias
 | S-005 | CSP implementado via `headers()` em `next.config.ts` | 20/06/2026 | `next.config.ts` |
 | S-006 | HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy | 20/06/2026 | `next.config.ts` |
 | S-037 | CHECK `auth_attempts_type_check` recriada com os 10 tipos de rate limit + `RESEND_API_KEY` sanitizada (byte ESC removido de `secrets/floxie-app.env`) | 26/09/2026 | `migrations/2026_09_26_auth_attempts_type_check.sql`, `schema.prisma` |
+| S-039 | `/admin/diagnostics` restrito a administradores via env `ADMIN_EMAILS` (antes qualquer usuário logado via métricas, emails e IPs de todos) | 26/09/2026 | `src/lib/admin.ts`, `diagnosticsActions.ts`, `.env.example` |
+| U-021 | Painel de Evolução do Produto em `/admin/diagnostics` — cadastros/mês, WAU/MAU, retenção, ativação, churn, ações/semana, veredito com score + insights, últimos acessos e tentativas de login por IP | 26/09/2026 | `src/app/admin/diagnostics/page.tsx`, `diagnosticsActions.ts` |
+| U-022 | Alertas Estruturais em `/admin/diagnostics` — 13 verificações de integridade (ActivityLog órfão, cards cross-workspace, sessões expiradas, força bruta, boards sem coluna, convites/tokens vencidos etc.) com severidade CRÍTICO/ATENÇÃO/INFO e penalidade no score do veredito | 26/09/2026 | `src/app/admin/diagnostics/page.tsx`, `diagnosticsActions.ts` |
