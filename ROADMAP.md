@@ -65,6 +65,7 @@ pendente, priorizado e por quê.
 | S-031 | **Criar middleware.ts para proteção centralizada de rotas** | Não existe middleware Next.js. Proteção depende de cada action chamar `getLoggedUser()`. Se um dev esquecer, a rota fica exposta. | ✅ Concluído — `src/proxy.ts` fortalecido com verificação JWT (rejeita tokens expirados/adulterados, limpa cookie inválido) (2026-06-20) |
 | S-032 | **JWT sem mecanismo de revogação** | Não há blacklist/session store. Se conta é comprometida, não é possível invalidar sessões ativas. Reset de senha não invalida JWTs existentes. | ✅ Concluído — tabela `session` (whitelist), `getSession` verifica DB, `resetPassword` revoga todas as sessões do usuário (2026-06-20) |
 | S-033 | **Tokens de convite expostos via `getWorkspaceInvitesAction`** | A action retorna o `token` na resposta. Combinado com falta de auth (S-024), qualquer pessoa pode obter tokens válidos e entrar em workspaces. | ✅ Concluído — campo `token` removido da resposta de `getWorkspaceInvites`; admins usam `seqid` para cancelar convites (2026-06-20) |
+| S-037 | **CHECK `auth_attempts_type_check` desatualizado vs `RATE_LIMIT_CONFIG`** | A constraint no banco só aceitava 9 dos 10 tipos de rate limit — `TEST_EMAIL` (teste de email em `/admin/diagnostics`) estourava `23514` e derrubava o fluxo. Tabela criada manualmente, fora do Prisma Migrate, sem migration no repo. | ✅ Concluído — constraint recriada com os 10 tipos (`migrations/2026_09_26_auth_attempts_type_check.sql`, aplicada manualmente em prod) + comentário no schema listando os tipos (2026-09-26) |
 
 ### P3 — Baixa
 
@@ -108,8 +109,9 @@ pendente, priorizado e por quê.
 | A-008 | **Adicionar error boundaries no front-end** | Sem error boundaries, um erro não tratado quebra toda a árvore de componentes. | Pendente |
 | A-009 | **Padronizar nomenclatura de arquivos (PascalCase componentes, camelCase utils)** | Mistura de convenções entre arquivos. | Pendente |
 | A-014 | **Remover código morto (`MyEventsModal.tsx`)** | Componente não importado em nenhum lugar — substituído por `MyEventsView.tsx`. | ✅ Concluído — `MyEventsModal.tsx` e `MyEventsModal.module.css` removidos (2026-06-25) |
-| A-016 | **Tornar ações de edição e encerramento diretamente operacionais na página dedicada `/activities`** | Atualmente os handlers são stubs na nova rota para evitar erro de component boundary; integrá-los via Server Actions/Client Component. | Pendente |n.tsx`** | `handleFollowList`, `handleMoveList`, `handleAutomationRule` são botões fake que só chamam `alert()`. | Pendente |
-| A-016 | **Remover botões sem handler no `UserMenu.tsx`** | "Alternar Contas", "Gerenciar conta", "Configurações", etc. — 8 itens sem `onClick`. | Pendente |
+| A-016 | **Tornar ações de edição e encerramento diretamente operacionais na página dedicada `/activities`** | Atualmente os handlers são stubs na nova rota para evitar erro de component boundary; integrá-los via Server Actions/Client Component. | Pendente |
+| A-019 | **Botões fake no menu da coluna (`Column.tsx`)** | `handleMoveList` só mostra toast "Em breve!" e `handleAutomationRule` finge sucesso ("Regra criada!") sem criar nada; `handleFollowList` alterna estado local sem persistência. Implementar de verdade ou remover. | Pendente |
+| A-020 | **Remover botões sem handler no `UserMenu.tsx`** | "Alternar Contas", "Gerenciar conta", "Perfil e visibilidade", "Cartões", "Configurações", "Tema", "Ajuda", "Atalhos" — 8 itens sem `onClick`. | Pendente |
 | A-017 | **Remover modelo `Department` do Prisma** | Nenhum código referencia este modelo. Legacy/dead code. | ✅ Concluído — modelo removido do schema + migration para drop da tabela (2026-06-25) |
 | A-018 | **Adicionar `forceConsistentCasingInFileNames` no tsconfig** | No Windows funciona, mas deploy em Linux pode quebrar por case sensitivity. | ✅ Concluído — flag adicionada ao tsconfig.json (2026-06-25) |
 
@@ -404,3 +406,4 @@ organizadas por área. **Não há datas nem prioridades firmes** — são ideias
 | U-012 | Novo Fluxo e Colunas visíveis apenas para Owner/Admin no Kanban | 18/06/2026 | `393d88f` |
 | S-005 | CSP implementado via `headers()` em `next.config.ts` | 20/06/2026 | `next.config.ts` |
 | S-006 | HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy | 20/06/2026 | `next.config.ts` |
+| S-037 | CHECK `auth_attempts_type_check` recriada com os 10 tipos de rate limit + `RESEND_API_KEY` sanitizada (byte ESC removido de `secrets/floxie-app.env`) | 26/09/2026 | `migrations/2026_09_26_auth_attempts_type_check.sql`, `schema.prisma` |

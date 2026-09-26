@@ -228,7 +228,7 @@ model AuthAttempt {
   id String @id @default(cuid())
   ip String
   email String?
-  type String // LOGIN, REGISTER, FORGOT_PASSWORD, RESET_PASSWORD
+  type String // LOGIN, REGISTER, FORGOT_PASSWORD, RESET_PASSWORD, VERIFY_EMAIL, RESEND_ACTIVATION, ACCEPT_INVITE, REQUEST_TRANSFER, RESPOND_TRANSFER, TEST_EMAIL (CHECK auth_attempts_type_check no banco)
   count Int @default(0)
   lastAttempt DateTime @default(now())
   createdAt DateTime @default(now())
